@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/site/assets/css/produtos.css">
+    <title>Casa Só Pimenta / Produtos / Pimentas</title>
+</head>
+
+<body>
+    <header>
+        <a href="/site/pages/index.html" class="logo-section"><img src="/site/imgs/logo.jpeg" alt=""></a>
+        <section class="categoria-section">
+            <ul class="menu-principal">
+                <li><a href="/site/pages/index.html">Home</a></li>
+                <li><a href="/site/pages/produtos/pimentas/index.html">Pimentas</a></li>
+
+                <li class="dropdown">
+                    <button class="dropdown-btn">
+                        Produtos naturais
+                        <img src="/site/imgs/icones/seta-baixo.png" alt="">
+                    </button>
+
+                    <ul class="submenu">
+                        <li><a href="/site/pages/produtos/produtosNaturais/farinhas/index.html">Farinhas</a></li>
+                        <li><a href="/site/pages/produtos/produtosNaturais/castanhas/index.html">Castanhas</a></li>
+                    </ul>
+                </li>
+
+                <li><a href="/site/pages/produtos/temperos/index.html">Temperos</a></li>
+                <li><a href="/site/pages/produtos/outro/index.html">Outros</a></li>
+                <li><a href="/site/pages/sobre/index.html">Sobre</a></li>
+            </ul>
+        </section>
+        <a href="#" class="carrinho-section" id="abrirCarrinho">
+            <div class="carrinho-wrapper">
+                <img src="/site/imgs/icones/carrinho.png" alt="Carrinho">
+                <span class="badge-carrinho" id="badgeCarrinho">0</span>
+            </div>
+        </a>
+        <a href="/site/pages/login/index.html" class="usuario-section">
+            <img src="/site/imgs/icones/usuario.svg" alt="">
+            <p>Login/Cadastrar</p>
+        </a>
+    </header>
+
+    <main>
+        <section class="topo-section">
+            <h1>Farinhas</h1>
+
+            <input type="search" name="" id="" class="pesquisa">
+            <img src="/site/imgs/icones/lupa.png" alt="">
+        </section>
+
+        <section class="produtos-section" data-categoria="farinhas"></section>
+
+    </main>
+
+    <footer>
+        <section class="redes-section">
+            <a href="https://web.facebook.com/casasopimenta?locale=pt_BR" target="_blank" rel="noopener noreferrer"><img
+                    src="/site/imgs/icones/redesSociais/facebook.png" alt="facebook"></a>
+            <a href="https://www.tiktok.com/@casa.so.pimenta" target="_blank" rel="noopener noreferrer"><img
+                    src="/site/imgs/icones/redesSociais/tik-tok.png" alt="tiktok"></a>
+            <a href="https://www.instagram.com/casasopimenta/" target="_blank" rel="noopener noreferrer"><img
+                    src="/site/imgs/icones/redesSociais/instagram.png" alt="instagram"></a>
+        </section>
+
+        <ul class="navegacao-section">
+            <a href="">
+                <li>Onde estamos?</li>
+            </a><a href="">
+                <li>Troca e Devoluções</li>
+            </a><a href="">
+                <li>Políticas de privacidade</li>
+            </a>
+        </ul>
+
+        <section class="pagamentos-section">
+            <div><img src="/site/imgs/icones/pagamento/elo.png" alt=""></div>
+            <div><img src="/site/imgs/icones/pagamento/masterCard.jpg" alt=""></div>
+            <div><img src="/site/imgs/icones/pagamento/visa.webp" alt=""></div>
+            <div><img src="/site/imgs/icones/pagamento/pix.png" alt=""></div>
+        </section>
+
+        <p>© Copyright Casa Só Pimenta BH - 2026 - Todos os direitos reservados</p>
+    </footer>
+
+    <div class="carrinho-overlay" id="carrinhoOverlay"></div> <!--deixar o fundo fosco quando clicar no carrinho-->
+
+    <aside class="carrinho-drawer" id="campoCarrinho">
+        <div class="carrinho-topo">
+            <button class="fechar-carrinho" id="fecharCarrinho">
+                <img src="/site/imgs/icones/x.png" alt="Fechar carrinho">
+            </button>
+
+            <div class="txtCarrinho">
+                <h1>Seu carrinho</h1>
+            </div>
+        </div>
+
+        <div id="produtoCarrinho" class="produto-carrinho">
+            <!-- produtos entram aqui -->
+        </div>
+
+        <div class="carrinho-rodape" id="carrinhoRodape">
+            <div class="total-carrinho">
+                <span>Total:</span>
+                <strong id="totalCarrinho">R$ 0,00</strong>
+            </div>
+
+            <button class="btn-finalizar-pedido" id="btnFinalizarPedido">
+                Finalizar pedido
+            </button>
+        </div>
+    </aside>
+
+    <script src="/site/assets/js/header.js"></script>
+    <script src="/site/assets/js/produtos.js"></script>
+    <script src="/site/assets/js/carrinho.js"></script>
+</body>
+
+</html>

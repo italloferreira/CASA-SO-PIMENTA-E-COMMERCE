@@ -1,0 +1,40 @@
+{
+  "kits": [
+    {
+      "id": 1,
+      "img": "/site/imgs/carrossel/img1.jfif",
+      "titulo": "Titulo1",
+      "valor": 9.80,
+      "ingredientes": [
+        "farinha de beterraba",
+        "farinha de uva",
+        "maca peruana",
+        "gengibre em po",
+        "guarana em po"
+      ]
+    },
+    {
+      "id": 2,
+      "img": "/site/imgs/carrossel/img2.jfif",
+      "titulo": "Titulo2",
+      "valor": 9.70,
+      "ingredientes": [
+        "farinha de beterraba",
+        "farinha de uva",
+        "maca peruana",
+        "gengibre em po"
+      ]
+    },
+    {
+      "id": 3,
+      "img": "/site/imgs/carrossel/img3.jfif",
+      "titulo": "Titulo3",
+      "valor": 9.60,
+      "ingredientes": [
+        "farinha de beterraba",
+        "farinha de uva",
+        "maca peruana"
+      ]
+    }
+  ]
+}

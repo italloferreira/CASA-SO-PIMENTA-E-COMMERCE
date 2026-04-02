@@ -1,0 +1,23 @@
+{
+    "slides": [
+        {
+            "id": 1,
+            "img": "/site/imgs/carrossel/img1.jfif"
+        },
+
+        {
+            "id": 2,
+            "img": "/site/imgs/carrossel/img2.jfif"
+        },
+
+        {
+            "id": 3,
+            "img": "/site/imgs/carrossel/img3.jfif"
+        },
+
+        {
+            "id": 4,
+            "img": "/site/imgs/carrossel/img1.jfif"
+        }
+    ]
+}
