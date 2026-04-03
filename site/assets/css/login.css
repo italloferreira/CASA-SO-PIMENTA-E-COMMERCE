@@ -156,12 +156,20 @@ header{
     transition: 0.5s;
 }
 
+.carrinho-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* MAIN */
 main {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    width: 100%;
 }
 
 /* CONTAINER */
@@ -272,7 +280,7 @@ footer{
 }
 
 .redes-section{
-    width: 25%;
+    width: 30%;
     height: 10vh;
     display: flex;
     justify-content: space-evenly;
@@ -280,12 +288,11 @@ footer{
 }
 
 .redes-section img{
-    width: 1vw;
-    height: 2vh;
+    width: 1.5vw;
 }
 
 .navegacao-section, .navegacao-section a {
-   width: 50%;
+    width: 80%;
     height: 10vh;
     display: flex;
     justify-content: space-evenly;
@@ -294,6 +301,7 @@ footer{
     list-style-type: none;
     color: black;
     text-decoration: none;
+
 }
 
 .pagamentos-section{
@@ -305,10 +313,14 @@ footer{
 }
 
 .pagamentos-section div{
-    width: 5%;
-    height: 25%;
+    width: 7%;
+    height: 50%;
 
     border: 2px solid white;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .pagamentos-section div img{

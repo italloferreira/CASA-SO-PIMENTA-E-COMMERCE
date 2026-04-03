@@ -224,11 +224,16 @@ function atualizarBadgeCarrinho() {
 
     let totalItens = 0;
 
-    carrinho.forEach(item => {
+    if(carrinho.length == 0){
+        badge.style.display="none";
+    }else{
+        badge.style.display = "flex";
+        carrinho.forEach(item => {
         totalItens += item.quantidade;
     });
 
     badge.textContent = totalItens;
+    }
 }
 
 document.addEventListener("DOMContentLoaded", function() {
