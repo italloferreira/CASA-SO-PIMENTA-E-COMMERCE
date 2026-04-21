@@ -208,3 +208,5 @@ document.addEventListener('DOMContentLoaded', function () {
     alert('Pedido finalizado!');
   });
 });
+
+export { salvarCarrinho, renderizarCarrinho, atualizarBadgeCarrinho };

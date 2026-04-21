@@ -1,4 +1,4 @@
-/* produto.js — página de detalhe do produto */
+/* detalhe.js — página de detalhe do produto */
 
 import { renderizarCarrinho, atualizarBadgeCarrinho, salvarCarrinho } from './carrinho.js';
 
