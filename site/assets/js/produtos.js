@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <button onclick='addCarrinho(${JSON.stringify(produto)})'>
               <img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho">
             </button>
-            <button>Ver produto</button>
+            <button onclick="window.location.href='/site/pages/produtos/detalhe/index.html?id=${produto.id}&categoria=${categoria}'">Ver produto</button>
           </div>
         </div>
       `;
