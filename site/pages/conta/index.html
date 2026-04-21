@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/site/assets/css/detalhe.css">
-  <title>Casa Só Pimenta / Produto</title>
+  <title>Casa Só Pimenta / Minha Conta</title>
+  <link rel="stylesheet" href="/site/assets/css/conta.css">
 </head>
 
 <body>
@@ -16,7 +16,6 @@
       <ul class="menu-principal">
         <li><a href="/site/pages/index.html">Home</a></li>
         <li><a href="/site/pages/produtos/pimentas/index.html">Pimentas</a></li>
-
         <li class="dropdown">
           <button class="dropdown-btn">
             Produtos naturais
@@ -27,7 +26,6 @@
             <li><a href="/site/pages/produtos/produtosNaturais/castanhas/index.html">Castanhas</a></li>
           </ul>
         </li>
-
         <li><a href="/site/pages/produtos/temperos/index.html">Temperos</a></li>
         <li><a href="/site/pages/produtos/outro/index.html">Outros</a></li>
         <li><a href="/site/pages/sobre/index.html">Sobre</a></li>
@@ -41,15 +39,65 @@
       </div>
     </a>
 
-    <a href="/site/pages/login/index.html" class="usuario-section">
+    <a href="/site/pages/conta/index.html" class="usuario-section">
       <img src="/site/imgs/icones/usuario.svg" alt="">
-      <p>Login/Cadastrar</p>
+      <p>Minha conta</p>
     </a>
   </header>
 
   <main>
-    <div id="produto-detalhe">
-      <p class="carregando-produto">Carregando produto...</p>
+    <div class="conta-container">
+
+      <!-- Cabeçalho com avatar e nome -->
+      <div class="conta-header">
+        <div class="conta-avatar" id="contaAvatar">?</div>
+        <div class="conta-header-info">
+          <h1 id="nomeUsuario">Carregando...</h1>
+          <p id="emailUsuario"></p>
+        </div>
+      </div>
+
+      <!-- Card: informações da conta -->
+      <div class="conta-card">
+        <h2>Informações da conta</h2>
+
+        <div class="campo-conta">
+          <label for="inputNome">Nome</label>
+          <input type="text" id="inputNome" placeholder="Seu nome">
+        </div>
+
+        <div class="campo-conta">
+          <label for="email">Email</label>
+          <input type="email" id="email" readonly>
+        </div>
+
+        <div class="campo-conta">
+          <label for="telefone">Telefone</label>
+          <input type="tel" id="telefone" placeholder="(00) 00000-0000">
+        </div>
+
+        <div class="campo-conta">
+          <label for="cep">CEP</label>
+          <input type="text" id="cep" placeholder="00000-000">
+          <span class="info-cep" id="infoCep"></span>
+        </div>
+
+        <button class="btn-salvar" id="btnSalvar">Salvar alterações</button>
+        <p class="msg-salvar" id="msgSalvar"></p>
+      </div>
+
+      <!-- Card: ações da conta -->
+      <div class="conta-acoes">
+        <button class="btn-acao" id="btnTrocarConta">
+          <span class="icone">🔄</span>
+          Trocar conta
+        </button>
+        <button class="btn-acao sair" id="btnSair">
+          <span class="icone">↩</span>
+          Sair da conta
+        </button>
+      </div>
+
     </div>
   </main>
 
@@ -82,7 +130,6 @@
     <p>© Copyright Casa Só Pimenta BH - 2026 - Todos os direitos reservados</p>
   </footer>
 
-  <!-- Carrinho lateral -->
   <div class="carrinho-overlay" id="carrinhoOverlay"></div>
 
   <aside class="carrinho-drawer" id="campoCarrinho">
@@ -94,23 +141,19 @@
         <h1>Seu carrinho</h1>
       </div>
     </div>
-
     <div id="produtoCarrinho" class="produto-carrinho"></div>
-
     <div class="carrinho-rodape" id="carrinhoRodape">
       <div class="total-carrinho">
         <span>Total:</span>
         <strong id="totalCarrinho">R$ 0,00</strong>
       </div>
-      <button class="btn-finalizar-pedido" id="btnFinalizarPedido">
-        Finalizar pedido
-      </button>
+      <button class="btn-finalizar-pedido" id="btnFinalizarPedido">Finalizar pedido</button>
     </div>
   </aside>
 
+  <script src="/site/assets/js/carrinho.js"></script>
   <script src="/site/assets/js/header.js"></script>
-  <<script type="module" src="/site/assets/js/carrinho.js"></script>
-  <script src="/site/assets/js/detalhe.js"></script>
+  <script type="module" src="/site/assets/js/conta.js"></script>
   <script type="module" src="/site/assets/js/auth.js"></script>
 </body>
 

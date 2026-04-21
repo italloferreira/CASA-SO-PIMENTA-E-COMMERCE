@@ -3,8 +3,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import {
   getAuth,
-  onAuthStateChanged,
-  signOut
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -25,34 +24,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   onAuthStateChanged(auth, user => {
     if (user) {
-      /* logado — mostra nome e botão de sair */
       const primeiroNome = (user.displayName || user.email).split(" ")[0];
-      usuarioSection.innerHTML = `
-        <img src="/site/imgs/icones/usuario.svg" alt="">
-        <p>${primeiroNome}</p>
-        <button id="btnLogout" style="
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          font-family: inherit;
-          font-size: 13px;
-          color: #c53b22;
-          padding: 0;
-          margin-left: 4px;
-        ">(Sair)</button>
-      `;
-      usuarioSection.removeAttribute("href");
-      usuarioSection.style.cursor = "default";
-
-      document.getElementById("btnLogout").addEventListener("click", function (e) {
-        e.preventDefault();
-        signOut(auth).then(() => {
-          window.location.reload();
-        });
-      });
-
+      usuarioSection.innerHTML = `<p>${primeiroNome}</p>`;
+      usuarioSection.setAttribute("href", "/site/pages/conta/index.html");
     } else {
-      /* deslogado — volta ao padrão */
       usuarioSection.innerHTML = `
         <img src="/site/imgs/icones/usuario.svg" alt="">
         <p>Login/Cadastrar</p>

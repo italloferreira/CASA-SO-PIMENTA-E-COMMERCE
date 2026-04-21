@@ -6,7 +6,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signInWithPopup,
+  GoogleAuthProvider
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -20,6 +22,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 /* ── Alterna entre login e cadastro ── */
 window.toggleForm = function () {
@@ -28,7 +31,7 @@ window.toggleForm = function () {
   limparErros();
 };
 
-/* ── Mostra mensagem de erro na tela ── */
+/* ── Mensagens de erro ── */
 function mostrarErro(secaoId, mensagem) {
   const secao = document.getElementById(secaoId);
   let erroEl = secao.querySelector(".erro-msg");
@@ -44,7 +47,6 @@ function limparErros() {
   document.querySelectorAll(".erro-msg").forEach(el => el.textContent = "");
 }
 
-/* ── Traduz erros do Firebase para português ── */
 function traduzirErro(code) {
   const erros = {
     "auth/invalid-email": "Email inválido.",
@@ -54,15 +56,18 @@ function traduzirErro(code) {
     "auth/weak-password": "A senha precisa ter pelo menos 6 caracteres.",
     "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde.",
     "auth/invalid-credential": "Email ou senha incorretos.",
+    "auth/popup-closed-by-user": "Login cancelado.",
+    "auth/cancelled-popup-request": "Login cancelado.",
   };
   return erros[code] || "Ocorreu um erro. Tente novamente.";
 }
 
-/* ── LOGIN ── */
 document.addEventListener("DOMContentLoaded", function () {
-  const btnLogin = document.querySelector("#login .btn");
+  const btnLogin    = document.querySelector("#login .btn");
   const btnCadastro = document.querySelector("#cadastro .btn");
+  const btnGoogle   = document.querySelectorAll(".btn-google");
 
+  /* ── LOGIN EMAIL/SENHA ── */
   btnLogin.addEventListener("click", function (e) {
     e.preventDefault();
     limparErros();
@@ -79,9 +84,7 @@ document.addEventListener("DOMContentLoaded", function () {
     btnLogin.disabled = true;
 
     signInWithEmailAndPassword(auth, email, senha)
-      .then(() => {
-        window.location.href = "/site/pages/index.html";
-      })
+      .then(() => { window.location.href = "/site/pages/index.html"; })
       .catch(err => {
         mostrarErro("login", traduzirErro(err.code));
         btnLogin.textContent = "Entrar";
@@ -89,14 +92,14 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   });
 
-  /* ── CADASTRO ── */
+  /* ── CADASTRO EMAIL/SENHA ── */
   btnCadastro.addEventListener("click", function (e) {
     e.preventDefault();
     limparErros();
 
-    const nome = document.getElementById("nome").value.trim();
-    const email = document.getElementById("cadEmail").value.trim();
-    const senha = document.getElementById("cadSenha").value;
+    const nome      = document.getElementById("nome").value.trim();
+    const email     = document.getElementById("cadEmail").value.trim();
+    const senha     = document.getElementById("cadSenha").value;
     const confirmar = document.getElementById("confirmarSenha").value;
 
     if (!nome || !email || !senha || !confirmar) {
@@ -113,17 +116,28 @@ document.addEventListener("DOMContentLoaded", function () {
     btnCadastro.disabled = true;
 
     createUserWithEmailAndPassword(auth, email, senha)
-      .then(credencial => {
-        return updateProfile(credencial.user, { displayName: nome });
-      })
-      .then(() => {
-        window.location.href = "/site/pages/index.html";
-      })
+      .then(credencial => updateProfile(credencial.user, { displayName: nome }))
+      .then(() => { window.location.href = "/site/pages/index.html"; })
       .catch(err => {
         mostrarErro("cadastro", traduzirErro(err.code));
         btnCadastro.textContent = "Cadastrar";
         btnCadastro.disabled = false;
       });
+  });
+
+  /* ── LOGIN COM GOOGLE ── */
+  btnGoogle.forEach(btn => {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      limparErros();
+
+      signInWithPopup(auth, googleProvider)
+        .then(() => { window.location.href = "/site/pages/index.html"; })
+        .catch(err => {
+          const secaoAtiva = document.querySelector(".campos.ativo").id;
+          mostrarErro(secaoAtiva, traduzirErro(err.code));
+        });
+    });
   });
 
   /* ── Se já estiver logado, redireciona ── */

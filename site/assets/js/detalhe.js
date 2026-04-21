@@ -1,5 +1,7 @@
 /* produto.js — página de detalhe do produto */
 
+import { renderizarCarrinho, atualizarBadgeCarrinho, salvarCarrinho } from './carrinho.js';
+
 document.addEventListener('DOMContentLoaded', function () {
   const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxfFXuucaeoyeuldS2XKsfoZYtcmLmRyctnDbKhDWNr1sDA-spHwo59hvKlDKw96xvp/exec';
 
@@ -62,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
     `;
 
-    /* guarda produto no escopo global para usar nos botões */
     window._produtoAtual = produto;
   }
 
@@ -75,7 +76,6 @@ document.addEventListener('DOMContentLoaded', function () {
     renderizarProduto(produto);
   }
 
-  /* tenta cache primeiro */
   const chaveCache = `produtos_${categoria}`;
   const chaveTempo = `produtos_${categoria}_tempo`;
   const tempoAgora = Date.now();
@@ -85,8 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const tempoSalvo = localStorage.getItem(chaveTempo);
 
   if (cacheSalvo && tempoSalvo && (tempoAgora - Number(tempoSalvo) < tempoValidade)) {
-    const dados = JSON.parse(cacheSalvo);
-    carregarProduto(dados.produtos);
+    carregarProduto(JSON.parse(cacheSalvo).produtos);
     return;
   }
 
@@ -138,11 +137,10 @@ window.adicionarAoCarrinhoDetalhe = function () {
     });
   }
 
-  localStorage.setItem('carrinho', JSON.stringify(carrinho));
+  salvarCarrinho(carrinho);
   renderizarCarrinho();
   atualizarBadgeCarrinho();
 
-  /* feedback visual */
   const btn = document.querySelector('.btn-add-carrinho');
   const textoOriginal = btn.innerHTML;
   btn.innerHTML = '✓ Adicionado!';
