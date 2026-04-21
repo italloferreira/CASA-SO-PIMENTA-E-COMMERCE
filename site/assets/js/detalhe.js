@@ -139,6 +139,7 @@ window.adicionarAoCarrinhoDetalhe = function () {
   }
 
   localStorage.setItem('carrinho', JSON.stringify(carrinho));
+  renderizarCarrinho();
   atualizarBadgeCarrinho();
 
   /* feedback visual */
