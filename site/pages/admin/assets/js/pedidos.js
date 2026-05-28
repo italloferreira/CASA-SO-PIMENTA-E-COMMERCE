@@ -1,5 +1,5 @@
-import { protectRoute, showToast } from '../assets/js/admin-auth.js';
-import { API_BASE, apiRequest } from '../../assets/js/api.js';
+import { protectRoute, showToast } from './admin-auth.js';
+import { API_BASE, apiRequest } from '../../../../assets/js/api.js';
 
 protectRoute();
 
