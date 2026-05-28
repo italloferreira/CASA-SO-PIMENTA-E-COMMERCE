@@ -15,6 +15,11 @@ import { seedDatabase } from './database/seed.js';
 
 dotenv.config();
 
+if (!process.env.JWT_SECRET) {
+  console.error('ERRO: JWT_SECRET não definida no .env. O servidor não pode iniciar com chave vazia.');
+  process.exit(1);
+}
+
 createTables();
 seedDatabase();
 
@@ -23,7 +28,8 @@ const app = express();
 const PORT = process.env.PORT || 3333;
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*'
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true
 }));
 
 app.use(express.json());

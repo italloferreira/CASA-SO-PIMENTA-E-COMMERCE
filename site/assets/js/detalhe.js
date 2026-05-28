@@ -3,45 +3,51 @@
 import { renderizarCarrinho, atualizarBadgeCarrinho, salvarCarrinho } from './carrinho.js';
 
 document.addEventListener('DOMContentLoaded', function () {
-  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxfFXuucaeoyeuldS2XKsfoZYtcmLmRyctnDbKhDWNr1sDA-spHwo59hvKlDKw96xvp/exec';
-
   const params = new URLSearchParams(window.location.search);
   const produtoId = params.get('id');
   const categoria = params.get('categoria');
 
   const container = document.getElementById('produto-detalhe');
 
-  if (!produtoId || !categoria) {
+  if (!produtoId) {
     container.innerHTML = '<p class="erro-produto">Produto não encontrado.</p>';
     return;
   }
 
   function renderizarProduto(produto) {
-    const valorFormatado = Number(produto.valor).toFixed(2).replace('.', ',');
-    document.title = `Casa Só Pimenta / ${produto.nome}`;
+    const valorFormatado = Number(produto.price).toFixed(2).replace('.', ',');
+    document.title = 'Casa Só Pimenta / ' + produto.name;
+
+    const imgSrc = produto.image_url
+      ? 'http://localhost:3333' + produto.image_url
+      : '/site/imgs/logo.jpeg';
+
+    const ingredientes = produto.ingredients
+      ? produto.ingredients.split(',').map(function (i) { return i.trim(); })
+      : [];
 
     container.innerHTML = `
       <div class="produto-detalhe-card">
         <div class="produto-detalhe-img">
-          <img src="${produto.img}" alt="${produto.nome}">
+          <img src="${imgSrc}" alt="${produto.name}">
         </div>
 
         <div class="produto-detalhe-info">
-          <span class="produto-categoria">${categoria}</span>
-          <h1>${produto.nome}</h1>
+          <span class="produto-categoria">${produto.category_name || categoria}</span>
+          <h1>${produto.name}</h1>
 
           <p class="produto-preco">R$ ${valorFormatado}</p>
 
           <div class="produto-descricao">
             <h3>Descrição</h3>
-            <p>${produto.descricao || 'Produto natural de alta qualidade, selecionado com cuidado pela Casa Só Pimenta.'}</p>
+            <p>${produto.description || 'Produto natural de alta qualidade, selecionado com cuidado pela Casa Só Pimenta.'}</p>
           </div>
 
-          ${produto.ingredientes && produto.ingredientes.length > 0 ? `
+          ${ingredientes.length > 0 ? `
           <div class="produto-ingredientes">
             <h3>Ingredientes</h3>
             <ul>
-              ${produto.ingredientes.map(ing => `<li>${ing}</li>`).join('')}
+              ${ingredientes.map(function (ing) { return '<li>' + ing + '</li>'; }).join('')}
             </ul>
           </div>
           ` : ''}
@@ -64,20 +70,16 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
     `;
 
-    window._produtoAtual = produto;
+    window._produtoAtual = {
+      id: produto.id,
+      nome: produto.name,
+      valor: produto.price,
+      img: imgSrc
+    };
   }
 
-  function carregarProduto(lista) {
-    const produto = lista.find(p => String(p.id) === String(produtoId));
-    if (!produto) {
-      container.innerHTML = '<p class="erro-produto">Produto não encontrado.</p>';
-      return;
-    }
-    renderizarProduto(produto);
-  }
-
-  const chaveCache = `produtos_${categoria}`;
-  const chaveTempo = `produtos_${categoria}_tempo`;
+  const chaveCache = 'produto_' + produtoId + '_cache';
+  const chaveTempo = 'produto_' + produtoId + '_timestamp';
   const tempoAgora = Date.now();
   const tempoValidade = 5 * 60 * 1000;
 
@@ -85,21 +87,20 @@ document.addEventListener('DOMContentLoaded', function () {
   const tempoSalvo = localStorage.getItem(chaveTempo);
 
   if (cacheSalvo && tempoSalvo && (tempoAgora - Number(tempoSalvo) < tempoValidade)) {
-    carregarProduto(JSON.parse(cacheSalvo).produtos);
+    renderizarProduto(JSON.parse(cacheSalvo));
     return;
   }
 
   container.innerHTML = '<p class="carregando-produto">Carregando produto...</p>';
 
-  fetch(`${WEB_APP_URL}?categoria=${encodeURIComponent(categoria)}`)
-    .then(r => r.json())
-    .then(dados => {
-      localStorage.setItem(chaveCache, JSON.stringify(dados));
+  fetch('http://localhost:3333/api/products/' + produtoId)
+    .then(function (r) { return r.json(); })
+    .then(function (produto) {
+      localStorage.setItem(chaveCache, JSON.stringify(produto));
       localStorage.setItem(chaveTempo, String(tempoAgora));
-      carregarProduto(dados.produtos);
+      renderizarProduto(produto);
     })
-    .catch(err => {
-      console.error('Erro ao carregar produto:', err);
+    .catch(function () {
       container.innerHTML = '<p class="erro-produto">Não foi possível carregar o produto.</p>';
     });
 });
@@ -131,7 +132,7 @@ window.adicionarAoCarrinhoDetalhe = function () {
     carrinho.push({
       id: produto.id,
       nome: produto.nome,
-      valor: Number(produto.valor),
+      valor: produto.valor,
       img: produto.img,
       quantidade: qtd
     });
@@ -146,7 +147,7 @@ window.adicionarAoCarrinhoDetalhe = function () {
   btn.innerHTML = '✓ Adicionado!';
   btn.style.background = '#2e7d32';
   btn.style.color = 'white';
-  setTimeout(() => {
+  setTimeout(function () {
     btn.innerHTML = textoOriginal;
     btn.style.background = '';
     btn.style.color = '';

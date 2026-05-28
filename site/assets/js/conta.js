@@ -30,6 +30,27 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
+export async function getUserProfile(uid) {
+  try {
+    const snap = await getDoc(doc(db, 'usuarios', uid));
+    if (snap.exists()) {
+      return snap.data();
+    }
+  } catch {
+    /* falha silenciosa */
+  }
+  return {
+    nome: '',
+    telefone: '',
+    cep: '',
+    endereco: '',
+    cidade: '',
+    estado: '',
+    bairro: '',
+    email: ''
+  };
+}
+
 /* ── Formata CEP enquanto digita ── */
 function formatarCEP(valor) {
   return valor.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
@@ -60,8 +81,18 @@ async function buscarCEP(cep) {
       infoEl.textContent = 'CEP não encontrado.';
       infoEl.style.color = '#c53b22';
     } else {
-      infoEl.textContent = `${data.logradouro ? data.logradouro + ', ' : ''}${data.bairro ? data.bairro + ' — ' : ''}${data.localidade}/${data.uf}`;
+      const endereco = data.logradouro || '';
+      const bairro = data.bairro || '';
+      const cidade = data.localidade || '';
+      const estado = data.uf || '';
+
+      infoEl.textContent = `${endereco ? endereco + ', ' : ''}${bairro ? bairro + ' — ' : ''}${cidade}/${estado}`;
       infoEl.style.color = '#555';
+
+      if (document.getElementById('endereco')) document.getElementById('endereco').value = endereco;
+      if (document.getElementById('bairro')) document.getElementById('bairro').value = bairro;
+      if (document.getElementById('cidade')) document.getElementById('cidade').value = cidade;
+      if (document.getElementById('estado')) document.getElementById('estado').value = estado;
     }
   } catch {
     infoEl.textContent = '';
@@ -100,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('inputNome').value = user.displayName || '';
     document.getElementById('email').value = user.email;
 
-    /* Remove avatar */
     const avatar = document.getElementById('contaAvatar');
     if (avatar) avatar.remove();
 
@@ -114,16 +144,24 @@ document.addEventListener('DOMContentLoaded', function () {
           inputCep.value = dados.cep;
           buscarCEP(dados.cep);
         }
+        if (dados.endereco && document.getElementById('endereco')) document.getElementById('endereco').value = dados.endereco;
+        if (dados.bairro && document.getElementById('bairro')) document.getElementById('bairro').value = dados.bairro;
+        if (dados.cidade && document.getElementById('cidade')) document.getElementById('cidade').value = dados.cidade;
+        if (dados.estado && document.getElementById('estado')) document.getElementById('estado').value = dados.estado;
       }
-    } catch (err) {
-      console.error('Erro ao buscar dados:', err);
-    }
+      } catch {
+        /* falha silenciosa */
+      }
 
     /* ── Salvar alterações ── */
     document.getElementById('btnSalvar').addEventListener('click', async function () {
       const novoNome = document.getElementById('inputNome').value.trim();
       const telefone = inputTel.value.trim();
       const cep      = inputCep.value.trim();
+      const endereco = document.getElementById('endereco') ? document.getElementById('endereco').value.trim() : '';
+      const bairro   = document.getElementById('bairro') ? document.getElementById('bairro').value.trim() : '';
+      const cidade   = document.getElementById('cidade') ? document.getElementById('cidade').value.trim() : '';
+      const estado   = document.getElementById('estado') ? document.getElementById('estado').value.trim() : '';
       const msgEl    = document.getElementById('msgSalvar');
 
       if (!novoNome) {
@@ -136,22 +174,23 @@ document.addEventListener('DOMContentLoaded', function () {
       this.disabled = true;
 
       try {
-        /* Atualiza nome no Auth */
         await updateProfile(user, { displayName: novoNome });
 
-        /* Salva telefone e CEP no Firestore */
         await setDoc(doc(db, 'usuarios', user.uid), {
           nome: novoNome,
           telefone,
           cep,
+          endereco,
+          bairro,
+          cidade,
+          estado,
           email: user.email
         }, { merge: true });
 
         document.getElementById('nomeUsuario').textContent = novoNome;
         msgEl.textContent = '✓ Dados salvos com sucesso!';
         msgEl.style.color = '#2e7d32';
-      } catch (err) {
-        console.error(err);
+      } catch {
         msgEl.textContent = 'Erro ao salvar. Tente novamente.';
         msgEl.style.color = '#c53b22';
       }
@@ -159,21 +198,21 @@ document.addEventListener('DOMContentLoaded', function () {
       this.textContent = 'Salvar alterações';
       this.disabled = false;
 
-      setTimeout(() => { msgEl.textContent = ''; }, 3000);
+      setTimeout(function () { msgEl.textContent = ''; }, 3000);
     });
 
     /* ── Trocar conta (Google) ── */
     document.getElementById('btnTrocarConta').addEventListener('click', function () {
-      signOut(auth).then(() => {
+      signOut(auth).then(function () {
         signInWithPopup(auth, googleProvider)
-          .then(() => { window.location.href = '/site/pages/conta/index.html'; })
-          .catch(() => { window.location.href = '/site/pages/login/index.html'; });
+          .then(function () { window.location.href = '/site/pages/conta/index.html'; })
+          .catch(function () { window.location.href = '/site/pages/login/index.html'; });
       });
     });
 
     /* ── Sair da conta ── */
     document.getElementById('btnSair').addEventListener('click', function () {
-      signOut(auth).then(() => {
+      signOut(auth).then(function () {
         window.location.href = '/site/pages/index.html';
       });
     });
