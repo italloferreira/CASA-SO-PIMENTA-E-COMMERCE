@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes — Admin Casa Só Pimenta</title>
+  <link rel="stylesheet" href="../assets/css/admin-global.css">
+  <link rel="stylesheet" href="../assets/css/sidebar.css">
+  <link rel="stylesheet" href="../assets/css/header.css">
+  <link rel="stylesheet" href="../assets/css/forms.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-logo">🌶</span>
+      <span class="sidebar-name">Casa Só Pimenta</span>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Recolher menu">←</button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/site/pages/admin/index.html" class="nav-item" data-page="dashboard"><span class="nav-icon">⊞</span><span class="nav-label">Dashboard</span></a>
+      <a href="/site/pages/admin/produtos/index.html" class="nav-item" data-page="produtos"><span class="nav-icon">▦</span><span class="nav-label">Produtos</span></a>
+      <a href="/site/pages/admin/banners/index.html" class="nav-item" data-page="banners"><span class="nav-icon">◫</span><span class="nav-label">Banners</span></a>
+      <a href="/site/pages/admin/kits/index.html" class="nav-item" data-page="kits"><span class="nav-icon">❏</span><span class="nav-label">Kits</span></a>
+      <a href="/site/pages/admin/pedidos/index.html" class="nav-item" data-page="pedidos"><span class="nav-icon">≡</span><span class="nav-label">Pedidos</span></a>
+      <a href="/site/pages/admin/clientes/index.html" class="nav-item active" data-page="clientes"><span class="nav-icon">◎</span><span class="nav-label">Clientes</span></a>
+      <a href="/site/pages/admin/cupons/index.html" class="nav-item" data-page="cupons"><span class="nav-icon">◈</span><span class="nav-label">Cupons</span></a>
+      <a href="/site/pages/admin/categorias/index.html" class="nav-item" data-page="categorias"><span class="nav-icon">◉</span><span class="nav-label">Categorias</span></a>
+      <a href="/site/pages/admin/configuracoes/index.html" class="nav-item" data-page="configuracoes"><span class="nav-icon">⚙</span><span class="nav-label">Configurações</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+        <div class="sidebar-user-info">
+          <span class="sidebar-user-name" id="sidebarUserName">Admin</span>
+          <span class="sidebar-user-role">Administrador</span>
+        </div>
+      </div>
+      <button class="btn-logout" id="btnLogout">↩ Sair</button>
+    </div>
+  </aside>
+
+  <div class="admin-layout">
+    <header class="admin-header">
+      <div class="header-left">
+        <button class="header-menu-toggle" id="headerMenuToggle" aria-label="Menu">≡</button>
+        <h1 class="header-title">Clientes</h1>
+      </div>
+      <div class="header-right">
+        <div class="header-search">
+          <span>🔍</span>
+          <input type="text" placeholder="Buscar..." id="globalSearch">
+        </div>
+        <div class="header-user">
+          <span class="header-user-name" id="headerUserName">Admin</span>
+          <div class="header-avatar" id="headerAvatar">A</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main" id="adminMain">
+      <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--border-radius-md);padding:32px;text-align:center;max-width:600px;margin:40px auto;">
+        <div style="font-size:48px;margin-bottom:16px;">◎</div>
+        <h2 style="margin-bottom:8px;">Clientes via Firebase Authentication</h2>
+        <p style="color:var(--color-text-muted);margin-bottom:24px;">
+          Os clientes são gerenciados diretamente pelo Firebase Authentication. Não há um endpoint para listar ou editar clientes no backend.
+          Para gerenciar usuários cadastrados, acesse o console do Firebase.
+        </p>
+        <a href="https://console.firebase.google.com" target="_blank" class="btn btn-primary" style="text-decoration:none;">
+          🔗 Ir para Firebase Console
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="../assets/js/admin-auth.js"></script>
+  <script type="module" src="../assets/js/sidebar.js"></script>
+</body>
+</html>

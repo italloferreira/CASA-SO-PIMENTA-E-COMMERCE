@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banners — Admin Casa Só Pimenta</title>
+  <link rel="stylesheet" href="../assets/css/admin-global.css">
+  <link rel="stylesheet" href="../assets/css/sidebar.css">
+  <link rel="stylesheet" href="../assets/css/header.css">
+  <link rel="stylesheet" href="../assets/css/modal.css">
+  <link rel="stylesheet" href="../assets/css/forms.css">
+  <style>
+    .banner-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .banner-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+      cursor: grab;
+      position: relative;
+    }
+    .banner-card:active { cursor: grabbing; }
+    .banner-card.drag-over { border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-primary-light); }
+    .banner-card.dragging { opacity: 0.4; }
+    .banner-image {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+      background: var(--color-bg);
+    }
+    .banner-info {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .banner-info-left { flex: 1; }
+    .banner-title {
+      font-weight: 600;
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+    }
+    .banner-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+    }
+    .banner-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .banner-order {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 16px;
+      border-top: 1px solid var(--color-border);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+    }
+    .banner-handle {
+      cursor: grab;
+      font-size: 18px;
+      opacity: 0.5;
+      margin-right: 8px;
+    }
+    .banner-card.drag-over .banner-handle { opacity: 1; }
+    .banner-empty {
+      grid-column: 1 / -1;
+    }
+    .banner-link-toggle { margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-logo">🌶</span>
+      <span class="sidebar-name">Casa Só Pimenta</span>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Recolher menu">←</button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/site/pages/admin/index.html" class="nav-item" data-page="dashboard"><span class="nav-icon">⊞</span><span class="nav-label">Dashboard</span></a>
+      <a href="/site/pages/admin/produtos/index.html" class="nav-item" data-page="produtos"><span class="nav-icon">▦</span><span class="nav-label">Produtos</span></a>
+      <a href="/site/pages/admin/banners/index.html" class="nav-item active" data-page="banners"><span class="nav-icon">◫</span><span class="nav-label">Banners</span></a>
+      <a href="/site/pages/admin/kits/index.html" class="nav-item" data-page="kits"><span class="nav-icon">❏</span><span class="nav-label">Kits</span></a>
+      <a href="/site/pages/admin/pedidos/index.html" class="nav-item" data-page="pedidos"><span class="nav-icon">≡</span><span class="nav-label">Pedidos</span></a>
+      <a href="/site/pages/admin/clientes/index.html" class="nav-item" data-page="clientes"><span class="nav-icon">◎</span><span class="nav-label">Clientes</span></a>
+      <a href="/site/pages/admin/cupons/index.html" class="nav-item" data-page="cupons"><span class="nav-icon">◈</span><span class="nav-label">Cupons</span></a>
+      <a href="/site/pages/admin/categorias/index.html" class="nav-item" data-page="categorias"><span class="nav-icon">◉</span><span class="nav-label">Categorias</span></a>
+      <a href="/site/pages/admin/configuracoes/index.html" class="nav-item" data-page="configuracoes"><span class="nav-icon">⚙</span><span class="nav-label">Configurações</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+        <div class="sidebar-user-info">
+          <span class="sidebar-user-name" id="sidebarUserName">Admin</span>
+          <span class="sidebar-user-role">Administrador</span>
+        </div>
+      </div>
+      <button class="btn-logout" id="btnLogout">↩ Sair</button>
+    </div>
+  </aside>
+
+  <div class="admin-layout">
+    <header class="admin-header">
+      <div class="header-left">
+        <button class="header-menu-toggle" id="headerMenuToggle" aria-label="Menu">≡</button>
+        <h1 class="header-title">Banners</h1>
+      </div>
+      <div class="header-right">
+        <div class="header-search">
+          <span>🔍</span>
+          <input type="text" placeholder="Buscar..." id="globalSearch">
+        </div>
+        <div class="header-user">
+          <span class="header-user-name" id="headerUserName">Admin</span>
+          <div class="header-avatar" id="headerAvatar">A</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main" id="adminMain">
+      <div class="table-toolbar">
+        <div class="toolbar-left"></div>
+        <button class="btn btn-primary" id="btnNovoBanner">+ Novo Banner</button>
+      </div>
+      <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:16px;">Arraste os banners para reordenar. A posição é salva automaticamente.</p>
+      <div class="banner-grid" id="bannerGrid"></div>
+    </main>
+  </div>
+
+  <!-- DRAWER -->
+  <div class="modal-overlay" id="drawerOverlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <h2 id="drawerTitle">Novo Banner</h2>
+      <button class="drawer-close" id="drawerClose">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <form id="bannerForm">
+        <input type="hidden" id="bannerId">
+
+        <div class="form-group">
+          <label class="form-label" for="bannerTitle">Título *</label>
+          <input type="text" class="form-input" id="bannerTitle" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="bannerSubtitle">Subtítulo</label>
+          <input type="text" class="form-input" id="bannerSubtitle">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="bannerLink">Link (URL)</label>
+          <input type="text" class="form-input" id="bannerLink" placeholder="/site/pages/produto.html?slug=...">
+          <small style="display:block;margin-top:4px;color:var(--color-text-muted);font-size:var(--font-size-xs);">Link interno ou URL externa. Deixe vazio para nenhum.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="bannerLinkText">Texto do botão</label>
+          <input type="text" class="form-input" id="bannerLinkText" placeholder="Ex: Ver oferta">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Imagem do banner *</label>
+          <div class="form-file-upload">
+            <input type="file" accept="image/*" id="bannerImageInput" required>
+            <span>Clique para selecionar ou arraste a imagem aqui</span>
+          </div>
+          <img id="bannerImagePreview" class="form-image-preview" style="display:none;">
+          <input type="hidden" id="bannerImageUrl">
+          <small style="display:block;margin-top:4px;color:var(--color-text-muted);font-size:var(--font-size-xs);">Dimensão recomendada: 1920 x 600 px</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-inline">
+            <input type="checkbox" id="bannerActive" checked>
+            Ativo
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="drawerCancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveBanner">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL -->
+  <div class="modal-overlay" id="confirmOverlay"></div>
+  <div class="modal confirm-modal" id="confirmModal">
+    <div class="modal-header"><h3>Confirmar exclusão</h3></div>
+    <div class="modal-body"><p id="confirmMessage">Tem certeza que deseja excluir este banner?</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="confirmCancel">Cancelar</button>
+      <button class="btn btn-danger" id="confirmDelete">Excluir</button>
+    </div>
+  </div>
+
+  <script type="module" src="../assets/js/admin-auth.js"></script>
+  <script type="module" src="../assets/js/sidebar.js"></script>
+  <script type="module" src="../assets/js/banners.js"></script>
+</body>
+</html>
