@@ -1,4 +1,4 @@
-import { protectRoute, showToast } from '../assets/js/admin-auth.js';
+import { protectRoute, showToast } from './admin-auth.js';
 
 protectRoute();
 
