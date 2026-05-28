@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casa Só Pimenta / Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+    body { background: #1a1a1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .admin-login { background: #2a2a2a; padding: 2.5rem; border-radius: 8px; width: 100%; max-width: 400px; }
+    .admin-login h1 { color: #d4a853; text-align: center; margin-bottom: 0.5rem; font-size: 1.5rem; }
+    .admin-login p { color: #ccc; text-align: center; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    .campo { margin-bottom: 1rem; }
+    .campo label { display: block; color: #ddd; margin-bottom: 0.3rem; font-size: 0.85rem; }
+    .campo input { width: 100%; padding: 0.7rem; border: 1px solid #444; border-radius: 4px; background: #1a1a1a; color: #fff; font-size: 0.95rem; }
+    .campo input:focus { outline: none; border-color: #d4a853; }
+    .btn { width: 100%; padding: 0.75rem; background: #d4a853; border: none; border-radius: 4px; color: #1a1a1a; font-weight: bold; font-size: 1rem; cursor: pointer; }
+    .btn:hover { background: #c49a3f; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .erro { color: #e74c3c; text-align: center; margin-top: 1rem; font-size: 0.85rem; display: none; }
+    .logo { text-align: center; margin-bottom: 1rem; }
+    .logo img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+  </style>
+</head>
+<body>
+  <div class="admin-login">
+    <div class="logo"><img src="/site/imgs/logo.jpeg" alt="Casa Só Pimenta"></div>
+    <h1>Administrador</h1>
+    <p>Acesso restrito</p>
+
+    <form id="adminLoginForm">
+      <div class="campo">
+        <label for="adminEmail">Email</label>
+        <input type="email" id="adminEmail" placeholder="admin@casasopimenta.com" required>
+      </div>
+      <div class="campo">
+        <label for="adminSenha">Senha</label>
+        <input type="password" id="adminSenha" placeholder="••••••" required>
+      </div>
+      <button type="submit" class="btn" id="btnAdminLogin">Entrar</button>
+      <p class="erro" id="adminErro">Email ou senha incorretos.</p>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminSenha').value;
+      const btn = document.getElementById('btnAdminLogin');
+      const erro = document.getElementById('adminErro');
+
+      erro.style.display = 'none';
+      btn.textContent = 'Entrando...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('http://localhost:3333/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error('Email ou senha incorretos.');
+        }
+
+        localStorage.setItem('csp_admin_token', data.token);
+        window.location.href = '/site/pages/admin/painel/index.html';
+      } catch (err) {
+        erro.textContent = err.message;
+        erro.style.display = 'block';
+      }
+
+      btn.textContent = 'Entrar';
+      btn.disabled = false;
+    });
+  </script>
+</body>
+</html>

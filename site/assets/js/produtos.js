@@ -1,30 +1,41 @@
-/*produtos*/
-
 document.addEventListener('DOMContentLoaded', function () {
   const produtosSection = document.querySelector('.produtos-section');
   if (!produtosSection) return;
 
   const categoria = produtosSection.dataset.categoria;
-  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxfFXuucaeoyeuldS2XKsfoZYtcmLmRyctnDbKhDWNr1sDA-spHwo59hvKlDKw96xvp/exec';
+  const API_URL = 'http://localhost:3333/api/products?category=' + encodeURIComponent(categoria);
 
-  const chaveCache = `produtos_${categoria}`;
-  const chaveTempo = `produtos_${categoria}_tempo`;
+  const chaveCache = 'produtos_' + categoria + '_cache';
+  const chaveTempo = 'produtos_' + categoria + '_timestamp';
   const tempoAgora = Date.now();
   const tempoValidade = 5 * 60 * 1000;
 
   function renderizarProdutos(produtos) {
     produtosSection.innerHTML = '';
 
+    if (produtos.length === 0) {
+      produtosSection.innerHTML = '<p>Nenhum produto encontrado nesta categoria.</p>';
+      return;
+    }
+
     produtos.forEach(function (produto) {
-      const valorFormatado = Number(produto.valor).toFixed(2).replace('.', ',');
+      const valorFormatado = Number(produto.price).toFixed(2).replace('.', ',');
+      const imgSrc = produto.image_url
+        ? 'http://localhost:3333' + produto.image_url
+        : '/site/imgs/logo.jpeg';
 
       produtosSection.innerHTML += `
         <div class="cartao">
-          <img src="${produto.img}" alt="${produto.nome}" loading="lazy">
-          <h3>${produto.nome}</h3>
+          <img src="${imgSrc}" alt="${produto.name}" loading="lazy">
+          <h3>${produto.name}</h3>
           <p>R$ ${valorFormatado}</p>
           <div>
-            <button onclick='addCarrinho(${JSON.stringify(produto)})'>
+            <button onclick='addCarrinho(${JSON.stringify({
+              id: produto.id,
+              nome: produto.name,
+              valor: produto.price,
+              img: imgSrc
+            })})'>
               <img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho">
             </button>
             <button onclick="window.location.href='/site/pages/produtos/detalhe/index.html?id=${produto.id}&categoria=${categoria}'">Ver produto</button>
@@ -39,23 +50,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (cacheSalvo && tempoSalvo && (tempoAgora - Number(tempoSalvo) < tempoValidade)) {
     const dados = JSON.parse(cacheSalvo);
-    renderizarProdutos(dados.produtos);
+    renderizarProdutos(dados);
     return;
   }
 
   produtosSection.innerHTML = '<p>Carregando produtos...</p>';
 
-  fetch(`${WEB_APP_URL}?categoria=${encodeURIComponent(categoria)}`)
+  fetch(API_URL)
     .then(function (resposta) {
       return resposta.json();
     })
-    .then(function (dados) {
-      localStorage.setItem(chaveCache, JSON.stringify(dados));
+    .then(function (produtos) {
+      localStorage.setItem(chaveCache, JSON.stringify(produtos));
       localStorage.setItem(chaveTempo, String(tempoAgora));
-      renderizarProdutos(dados.produtos);
+      renderizarProdutos(produtos);
     })
-    .catch(function (erro) {
-      console.error('Erro ao carregar produtos:', erro);
+    .catch(function () {
       produtosSection.innerHTML = '<p>Não foi possível carregar os produtos.</p>';
     });
 });

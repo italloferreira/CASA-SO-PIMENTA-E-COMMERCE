@@ -1,8 +1,9 @@
-/* carrinho.js — com sincronização no Firestore */
+/* carrinho.js — com sincronização no Firestore e checkout */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getUserProfile } from './conta.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAyj29lNCOxeXt0RFhFfDfJIy8AY9_-Wu4",
@@ -24,8 +25,8 @@ async function salvarCarrinhoNuvem(carrinho) {
   if (!usuarioAtual) return;
   try {
     await setDoc(doc(db, 'usuarios', usuarioAtual.uid), { carrinho }, { merge: true });
-  } catch (err) {
-    console.error('Erro ao salvar carrinho:', err);
+  } catch {
+    /* falha silenciosa */
   }
 }
 
@@ -39,8 +40,8 @@ async function carregarCarrinhoNuvem() {
       renderizarCarrinho();
       atualizarBadgeCarrinho();
     }
-  } catch (err) {
-    console.error('Erro ao carregar carrinho:', err);
+  } catch {
+    /* falha silenciosa */
   }
 }
 
@@ -64,24 +65,108 @@ const fecharCarrinho  = document.getElementById('fecharCarrinho');
 const campoCarrinho   = document.getElementById('campoCarrinho');
 const carrinhoOverlay = document.getElementById('carrinhoOverlay');
 
-abrirCarrinho.addEventListener('click', function (e) {
-  e.preventDefault();
-  campoCarrinho.classList.add('ativo');
-  carrinhoOverlay.classList.add('ativo');
-  document.body.style.overflow = 'hidden';
-});
+if (abrirCarrinho) {
+  abrirCarrinho.addEventListener('click', function (e) {
+    e.preventDefault();
+    campoCarrinho.classList.add('ativo');
+    carrinhoOverlay.classList.add('ativo');
+    document.body.style.overflow = 'hidden';
+  });
+}
 
-fecharCarrinho.addEventListener('click', function () {
-  campoCarrinho.classList.remove('ativo');
-  carrinhoOverlay.classList.remove('ativo');
-  document.body.style.overflow = 'auto';
-});
+if (fecharCarrinho) {
+  fecharCarrinho.addEventListener('click', function () {
+    campoCarrinho.classList.remove('ativo');
+    carrinhoOverlay.classList.remove('ativo');
+    document.body.style.overflow = 'auto';
+  });
+}
 
-carrinhoOverlay.addEventListener('click', function () {
-  campoCarrinho.classList.remove('ativo');
-  carrinhoOverlay.classList.remove('ativo');
-  document.body.style.overflow = 'auto';
-});
+if (carrinhoOverlay) {
+  carrinhoOverlay.addEventListener('click', function () {
+    campoCarrinho.classList.remove('ativo');
+    carrinhoOverlay.classList.remove('ativo');
+    document.body.style.overflow = 'auto';
+  });
+}
+
+/* ── Finalizar pedido ── */
+async function finalizarPedido() {
+  const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+
+  if (carrinho.length === 0) {
+    alert('Seu carrinho está vazio.');
+    return;
+  }
+
+  if (!usuarioAtual) {
+    window.location.href = '/site/pages/login/index.html?redirect=checkout';
+    return;
+  }
+
+  const perfil = await getUserProfile(usuarioAtual.uid);
+
+  if (!perfil.cep || !perfil.endereco) {
+    window.location.href = '/site/pages/conta/index.html?redirect=checkout';
+    return;
+  }
+
+  const items = carrinho.map(function (item) {
+    return {
+      product_id: Number(item.id),
+      quantity: item.quantidade
+    };
+  });
+
+  const payload = {
+    customer_name: usuarioAtual.displayName || perfil.nome || 'Cliente',
+    customer_email: usuarioAtual.email || perfil.email || '',
+    customer_phone: perfil.telefone || '',
+    cep: perfil.cep || '',
+    address: perfil.endereco || '',
+    city: perfil.cidade || '',
+    state: perfil.estado || '',
+    items: items,
+    delivery_fee: 0
+  };
+
+  const btn = document.getElementById('btnFinalizarPedido');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Enviando...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('http://localhost:3333/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Erro ao criar pedido.');
+    }
+
+    localStorage.removeItem('carrinho');
+    if (usuarioAtual) {
+      await setDoc(doc(db, 'usuarios', usuarioAtual.uid), { carrinho: [] }, { merge: true });
+    }
+    renderizarCarrinho();
+    atualizarBadgeCarrinho();
+
+    alert('Pedido #' + data.id + ' realizado com sucesso! Total: R$ ' + Number(data.total).toFixed(2).replace('.', ','));
+
+    campoCarrinho.classList.remove('ativo');
+    carrinhoOverlay.classList.remove('ativo');
+    document.body.style.overflow = 'auto';
+  } catch (err) {
+    alert(err.message || 'Erro ao processar pedido. Tente novamente.');
+  }
+
+  btn.textContent = textoOriginal;
+  btn.disabled = false;
+}
 
 /* ── Funções do carrinho ── */
 window.addCarrinho = function (produto) {
@@ -135,6 +220,9 @@ window.removerDoCarrinho = function (id) {
 window.renderizarCarrinho = function () {
   const produtoCarrinho = document.getElementById('produtoCarrinho');
   const totalCarrinho   = document.getElementById('totalCarrinho');
+
+  if (!produtoCarrinho || !totalCarrinho) return;
+
   const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
 
   produtoCarrinho.innerHTML = '';
@@ -177,11 +265,12 @@ window.renderizarCarrinho = function () {
     `;
   });
 
-  totalCarrinho.textContent = `R$ ${totalGeral.toFixed(2).replace('.', ',')}`;
+  totalCarrinho.textContent = 'R$ ' + totalGeral.toFixed(2).replace('.', ',');
 };
 
 window.atualizarBadgeCarrinho = function () {
   const badge = document.getElementById('badgeCarrinho');
+  if (!badge) return;
   const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
   let totalItens = 0;
 
@@ -199,14 +288,10 @@ document.addEventListener('DOMContentLoaded', function () {
   renderizarCarrinho();
   atualizarBadgeCarrinho();
 
-  document.getElementById('btnFinalizarPedido').addEventListener('click', function () {
-    const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
-    if (carrinho.length === 0) {
-      alert('Seu carrinho está vazio.');
-      return;
-    }
-    alert('Pedido finalizado!');
-  });
+  const btnFinalizar = document.getElementById('btnFinalizarPedido');
+  if (btnFinalizar) {
+    btnFinalizar.addEventListener('click', finalizarPedido);
+  }
 });
 
 export { salvarCarrinho, renderizarCarrinho, atualizarBadgeCarrinho };
