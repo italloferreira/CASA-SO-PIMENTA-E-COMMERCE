@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Admin Casa Só Pimenta</title>
+  <link rel="stylesheet" href="../assets/css/admin-global.css">
+  <style>
+    .login-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--color-bg);
+      padding: 24px;
+    }
+    .login-card {
+      background: var(--color-surface);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-logo {
+      font-size: 48px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .login-title {
+      font-size: var(--font-size-xl);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 4px;
+    }
+    .login-subtitle {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+      margin-bottom: 28px;
+    }
+    .login-form {
+      text-align: left;
+    }
+    .login-form .form-group {
+      margin-bottom: 20px;
+    }
+    .password-wrapper {
+      position: relative;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--color-text-muted);
+      padding: 4px;
+    }
+    .btn-login {
+      width: 100%;
+      margin-top: 8px;
+    }
+    .login-error {
+      font-size: var(--font-size-sm);
+      color: var(--color-danger);
+      margin-top: 12px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <span class="login-logo">🌶</span>
+      <h1 class="login-title">Casa Só Pimenta</h1>
+      <p class="login-subtitle">Painel Administrativo</p>
+
+      <form class="login-form" id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">E-mail</label>
+          <input type="email" id="loginEmail" class="form-input" placeholder="admin@casasopimenta.com" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="loginSenha">Senha</label>
+          <div class="password-wrapper">
+            <input type="password" id="loginSenha" class="form-input" placeholder="••••••" required autocomplete="current-password">
+            <button type="button" class="password-toggle" id="pwToggle" aria-label="Mostrar senha">👁</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-login" id="btnLogin">Entrar</button>
+        <p class="login-error" id="loginError"></p>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      if (localStorage.getItem('csp_admin_token')) {
+        window.location.href = '/site/pages/admin/index.html';
+        return;
+      }
+
+      var pwToggle = document.getElementById('pwToggle');
+      var senhaInput = document.getElementById('loginSenha');
+      pwToggle.addEventListener('click', function () {
+        var type = senhaInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        senhaInput.setAttribute('type', type);
+        pwToggle.textContent = type === 'password' ? '👁' : '🙈';
+      });
+
+      var form = document.getElementById('loginForm');
+      var btn = document.getElementById('btnLogin');
+      var errorEl = document.getElementById('loginError');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = document.getElementById('loginEmail').value.trim();
+        var password = document.getElementById('loginSenha').value;
+
+        errorEl.style.display = 'none';
+        btn.textContent = 'Entrando...';
+        btn.disabled = true;
+
+        fetch('http://localhost:3333/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: password })
+        })
+        .then(function (res) {
+          if (!res.ok) {
+            if (res.status === 401) throw new Error('E-mail ou senha incorretos.');
+            throw new Error('Servidor indisponível. Verifique se o backend está rodando.');
+          }
+          return res.json();
+        })
+        .then(function (data) {
+          localStorage.setItem('csp_admin_token', data.token);
+          localStorage.setItem('csp_admin_user', JSON.stringify(data.user));
+          window.location.href = '/site/pages/admin/index.html';
+        })
+        .catch(function (err) {
+          errorEl.textContent = err.message;
+          errorEl.style.display = 'block';
+        })
+        .finally(function () {
+          btn.textContent = 'Entrar';
+          btn.disabled = false;
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

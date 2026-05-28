@@ -3,80 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Casa Só Pimenta / Admin</title>
+  <title>Dashboard — Admin Casa Só Pimenta</title>
+  <link rel="stylesheet" href="assets/css/admin-global.css">
+  <link rel="stylesheet" href="assets/css/sidebar.css">
+  <link rel="stylesheet" href="assets/css/header.css">
+  <link rel="stylesheet" href="assets/css/table.css">
+  <link rel="stylesheet" href="assets/css/forms.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-    body { background: #1a1a1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .admin-login { background: #2a2a2a; padding: 2.5rem; border-radius: 8px; width: 100%; max-width: 400px; }
-    .admin-login h1 { color: #d4a853; text-align: center; margin-bottom: 0.5rem; font-size: 1.5rem; }
-    .admin-login p { color: #ccc; text-align: center; margin-bottom: 1.5rem; font-size: 0.85rem; }
-    .campo { margin-bottom: 1rem; }
-    .campo label { display: block; color: #ddd; margin-bottom: 0.3rem; font-size: 0.85rem; }
-    .campo input { width: 100%; padding: 0.7rem; border: 1px solid #444; border-radius: 4px; background: #1a1a1a; color: #fff; font-size: 0.95rem; }
-    .campo input:focus { outline: none; border-color: #d4a853; }
-    .btn { width: 100%; padding: 0.75rem; background: #d4a853; border: none; border-radius: 4px; color: #1a1a1a; font-weight: bold; font-size: 1rem; cursor: pointer; }
-    .btn:hover { background: #c49a3f; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .erro { color: #e74c3c; text-align: center; margin-top: 1rem; font-size: 0.85rem; display: none; }
-    .logo { text-align: center; margin-bottom: 1rem; }
-    .logo img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .metric-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .metric-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .metric-card .metric-border {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+    }
+    .metric-card .metric-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .metric-card .metric-value {
+      font-size: var(--font-size-2xl);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      line-height: 1.2;
+    }
+    .metric-card .metric-label {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+    .metric-card .metric-link {
+      margin-top: 8px;
+      display: inline-block;
+      font-size: var(--font-size-xs);
+      color: var(--color-primary);
+    }
+    .dashboard-section-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--color-text-primary);
+    }
+    .dashboard-tables {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 1024px) {
+      .dashboard-tables { grid-template-columns: 1fr; }
+    }
+    .loading-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .skeleton-card {
+      height: 120px;
+      border-radius: var(--border-radius-md);
+    }
   </style>
 </head>
 <body>
-  <div class="admin-login">
-    <div class="logo"><img src="/site/imgs/logo.jpeg" alt="Casa Só Pimenta"></div>
-    <h1>Administrador</h1>
-    <p>Acesso restrito</p>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-logo">🌶</span>
+      <span class="sidebar-name">Casa Só Pimenta</span>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Recolher menu">←</button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/site/pages/admin/index.html" class="nav-item active" data-page="dashboard"><span class="nav-icon">⊞</span><span class="nav-label">Dashboard</span></a>
+      <a href="/site/pages/admin/produtos/index.html" class="nav-item" data-page="produtos"><span class="nav-icon">▦</span><span class="nav-label">Produtos</span></a>
+      <a href="/site/pages/admin/banners/index.html" class="nav-item" data-page="banners"><span class="nav-icon">◫</span><span class="nav-label">Banners</span></a>
+      <a href="/site/pages/admin/kits/index.html" class="nav-item" data-page="kits"><span class="nav-icon">❏</span><span class="nav-label">Kits</span></a>
+      <a href="/site/pages/admin/pedidos/index.html" class="nav-item" data-page="pedidos"><span class="nav-icon">≡</span><span class="nav-label">Pedidos</span></a>
+      <a href="/site/pages/admin/clientes/index.html" class="nav-item" data-page="clientes"><span class="nav-icon">◎</span><span class="nav-label">Clientes</span></a>
+      <a href="/site/pages/admin/cupons/index.html" class="nav-item" data-page="cupons"><span class="nav-icon">◈</span><span class="nav-label">Cupons</span></a>
+      <a href="/site/pages/admin/categorias/index.html" class="nav-item" data-page="categorias"><span class="nav-icon">◉</span><span class="nav-label">Categorias</span></a>
+      <a href="/site/pages/admin/configuracoes/index.html" class="nav-item" data-page="configuracoes"><span class="nav-icon">⚙</span><span class="nav-label">Configurações</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+        <div class="sidebar-user-info">
+          <span class="sidebar-user-name" id="sidebarUserName">Admin</span>
+          <span class="sidebar-user-role">Administrador</span>
+        </div>
+      </div>
+      <button class="btn-logout" id="btnLogout">↩ Sair</button>
+    </div>
+  </aside>
 
-    <form id="adminLoginForm">
-      <div class="campo">
-        <label for="adminEmail">Email</label>
-        <input type="email" id="adminEmail" placeholder="admin@casasopimenta.com" required>
+  <div class="admin-layout">
+    <header class="admin-header">
+      <div class="header-left">
+        <button class="header-menu-toggle" id="headerMenuToggle" aria-label="Menu">≡</button>
+        <h1 class="header-title">Dashboard</h1>
       </div>
-      <div class="campo">
-        <label for="adminSenha">Senha</label>
-        <input type="password" id="adminSenha" placeholder="••••••" required>
+      <div class="header-right">
+        <div class="header-search">
+          <span>🔍</span>
+          <input type="text" placeholder="Buscar..." id="globalSearch">
+        </div>
+        <div class="header-user">
+          <span class="header-user-name" id="headerUserName">Admin</span>
+          <div class="header-avatar" id="headerAvatar">A</div>
+        </div>
       </div>
-      <button type="submit" class="btn" id="btnAdminLogin">Entrar</button>
-      <p class="erro" id="adminErro">Email ou senha incorretos.</p>
-    </form>
+    </header>
+
+    <main class="admin-main" id="adminMain">
+      <div class="dashboard-grid" id="metricCards"></div>
+
+      <h3 class="dashboard-section-title">Últimos pedidos</h3>
+      <div class="table-container" id="recentOrders"></div>
+
+      <h3 class="dashboard-section-title" style="margin-top:24px;">Estoque crítico</h3>
+      <div class="table-container" id="lowStockTable"></div>
+    </main>
   </div>
 
-  <script>
-    document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const email = document.getElementById('adminEmail').value.trim();
-      const password = document.getElementById('adminSenha').value;
-      const btn = document.getElementById('btnAdminLogin');
-      const erro = document.getElementById('adminErro');
-
-      erro.style.display = 'none';
-      btn.textContent = 'Entrando...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch('http://localhost:3333/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error('Email ou senha incorretos.');
-        }
-
-        localStorage.setItem('csp_admin_token', data.token);
-        window.location.href = '/site/pages/admin/painel/index.html';
-      } catch (err) {
-        erro.textContent = err.message;
-        erro.style.display = 'block';
-      }
-
-      btn.textContent = 'Entrar';
-      btn.disabled = false;
-    });
-  </script>
+  <script type="module" src="assets/js/admin-auth.js"></script>
+  <script type="module" src="assets/js/sidebar.js"></script>
+  <script type="module" src="assets/js/dashboard.js"></script>
 </body>
 </html>

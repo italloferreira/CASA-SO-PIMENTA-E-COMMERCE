@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações — Admin Casa Só Pimenta</title>
+  <link rel="stylesheet" href="../assets/css/admin-global.css">
+  <link rel="stylesheet" href="../assets/css/sidebar.css">
+  <link rel="stylesheet" href="../assets/css/header.css">
+  <link rel="stylesheet" href="../assets/css/forms.css">
+  <style>
+    .settings-section {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .settings-section-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--color-border);
+      font-weight: 600;
+      font-size: var(--font-size-md);
+      background: var(--color-bg);
+    }
+    .settings-section-body {
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+    }
+    .settings-section-body .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .settings-section-body .form-row { grid-template-columns: 1fr; }
+    }
+    .settings-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-logo">🌶</span>
+      <span class="sidebar-name">Casa Só Pimenta</span>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Recolher menu">←</button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/site/pages/admin/index.html" class="nav-item" data-page="dashboard"><span class="nav-icon">⊞</span><span class="nav-label">Dashboard</span></a>
+      <a href="/site/pages/admin/produtos/index.html" class="nav-item" data-page="produtos"><span class="nav-icon">▦</span><span class="nav-label">Produtos</span></a>
+      <a href="/site/pages/admin/banners/index.html" class="nav-item" data-page="banners"><span class="nav-icon">◫</span><span class="nav-label">Banners</span></a>
+      <a href="/site/pages/admin/kits/index.html" class="nav-item" data-page="kits"><span class="nav-icon">❏</span><span class="nav-label">Kits</span></a>
+      <a href="/site/pages/admin/pedidos/index.html" class="nav-item" data-page="pedidos"><span class="nav-icon">≡</span><span class="nav-label">Pedidos</span></a>
+      <a href="/site/pages/admin/clientes/index.html" class="nav-item" data-page="clientes"><span class="nav-icon">◎</span><span class="nav-label">Clientes</span></a>
+      <a href="/site/pages/admin/cupons/index.html" class="nav-item" data-page="cupons"><span class="nav-icon">◈</span><span class="nav-label">Cupons</span></a>
+      <a href="/site/pages/admin/categorias/index.html" class="nav-item" data-page="categorias"><span class="nav-icon">◉</span><span class="nav-label">Categorias</span></a>
+      <a href="/site/pages/admin/configuracoes/index.html" class="nav-item active" data-page="configuracoes"><span class="nav-icon">⚙</span><span class="nav-label">Configurações</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+        <div class="sidebar-user-info">
+          <span class="sidebar-user-name" id="sidebarUserName">Admin</span>
+          <span class="sidebar-user-role">Administrador</span>
+        </div>
+      </div>
+      <button class="btn-logout" id="btnLogout">↩ Sair</button>
+    </div>
+  </aside>
+
+  <div class="admin-layout">
+    <header class="admin-header">
+      <div class="header-left">
+        <button class="header-menu-toggle" id="headerMenuToggle" aria-label="Menu">≡</button>
+        <h1 class="header-title">Configurações</h1>
+      </div>
+      <div class="header-right">
+        <div class="header-search">
+          <span>🔍</span>
+          <input type="text" placeholder="Buscar..." id="globalSearch">
+        </div>
+        <div class="header-user">
+          <span class="header-user-name" id="headerUserName">Admin</span>
+          <div class="header-avatar" id="headerAvatar">A</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main" id="adminMain">
+      <div class="warning-banner" style="margin-bottom:24px;">
+        ⚠ As configurações estão sendo salvas apenas no navegador (localStorage). Crie um endpoint <code>/api/settings</code> no backend para persistência real.
+      </div>
+
+      <form id="settingsForm">
+
+        <!-- LOJA -->
+        <div class="settings-section">
+          <div class="settings-section-header">Informações da loja</div>
+          <div class="settings-section-body">
+            <div class="form-group">
+              <label class="form-label" for="storeName">Nome da loja</label>
+              <input type="text" class="form-input" id="storeName">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="storeDescription">Descrição</label>
+              <textarea class="form-input form-textarea" id="storeDescription" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="storeLogo">URL da logo</label>
+              <input type="text" class="form-input" id="storeLogo" placeholder="/uploads/logo.png">
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTATOS -->
+        <div class="settings-section">
+          <div class="settings-section-header">Contatos</div>
+          <div class="settings-section-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="contactEmail">E-mail de contato</label>
+                <input type="email" class="form-input" id="contactEmail">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="contactPhone">Telefone / WhatsApp</label>
+                <input type="text" class="form-input" id="contactPhone" placeholder="(31) 99999-9999">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="contactAddress">Endereço</label>
+              <input type="text" class="form-input" id="contactAddress">
+            </div>
+          </div>
+        </div>
+
+        <!-- REDES SOCIAIS -->
+        <div class="settings-section">
+          <div class="settings-section-header">Redes sociais</div>
+          <div class="settings-section-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="socialInstagram">Instagram</label>
+                <input type="text" class="form-input" id="socialInstagram" placeholder="@casasopimenta">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="socialFacebook">Facebook</label>
+                <input type="text" class="form-input" id="socialFacebook" placeholder="/casasopimenta">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAGAMENTO -->
+        <div class="settings-section">
+          <div class="settings-section-header">Formas de pagamento</div>
+          <div class="settings-section-body">
+            <div class="form-group">
+              <label class="form-label">Métodos aceitos (separados por vírgula)</label>
+              <input type="text" class="form-input" id="paymentMethods" placeholder="Pix, Cartão de crédito, Boleto">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="paymentChavePix">Chave Pix</label>
+              <input type="text" class="form-input" id="paymentChavePix" placeholder="CPF, CNPJ, e-mail ou telefone">
+            </div>
+          </div>
+        </div>
+
+        <!-- FRETE -->
+        <div class="settings-section">
+          <div class="settings-section-header">Frete</div>
+          <div class="settings-section-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="shippingMinFree">Frete grátis a partir de (R$)</label>
+                <input type="number" step="0.01" min="0" class="form-input" id="shippingMinFree">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="shippingDefaultPrice">Valor padrão do frete (R$)</label>
+                <input type="number" step="0.01" min="0" class="form-input" id="shippingDefaultPrice">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button type="submit" class="btn btn-primary" id="btnSaveSettings">Salvar configurações</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <script type="module" src="../assets/js/admin-auth.js"></script>
+  <script type="module" src="../assets/js/sidebar.js"></script>
+  <script type="module" src="../assets/js/configuracoes.js"></script>
+</body>
+</html>

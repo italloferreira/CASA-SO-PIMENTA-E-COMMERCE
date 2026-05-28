@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kits — Admin Casa Só Pimenta</title>
+  <link rel="stylesheet" href="../assets/css/admin-global.css">
+  <link rel="stylesheet" href="../assets/css/sidebar.css">
+  <link rel="stylesheet" href="../assets/css/header.css">
+  <link rel="stylesheet" href="../assets/css/table.css">
+  <link rel="stylesheet" href="../assets/css/modal.css">
+  <link rel="stylesheet" href="../assets/css/forms.css">
+  <style>
+    .kit-item-list { margin-top: 12px; }
+    .kit-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--color-bg);
+      border-radius: var(--border-radius-sm);
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      font-size: var(--font-size-sm);
+    }
+    .kit-item-row .item-name { flex: 1; }
+    .kit-item-row .btn-remove-item {
+      background: none;
+      border: none;
+      color: var(--color-danger);
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .product-autocomplete {
+      position: relative;
+    }
+    .product-autocomplete .ac-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+    }
+    .product-autocomplete .ac-results .ac-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: var(--font-size-sm);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .product-autocomplete .ac-results .ac-item:hover { background: var(--color-bg); }
+  </style>
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-logo">🌶</span>
+      <span class="sidebar-name">Casa Só Pimenta</span>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Recolher menu">←</button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/site/pages/admin/index.html" class="nav-item" data-page="dashboard"><span class="nav-icon">⊞</span><span class="nav-label">Dashboard</span></a>
+      <a href="/site/pages/admin/produtos/index.html" class="nav-item" data-page="produtos"><span class="nav-icon">▦</span><span class="nav-label">Produtos</span></a>
+      <a href="/site/pages/admin/banners/index.html" class="nav-item" data-page="banners"><span class="nav-icon">◫</span><span class="nav-label">Banners</span></a>
+      <a href="/site/pages/admin/kits/index.html" class="nav-item active" data-page="kits"><span class="nav-icon">❏</span><span class="nav-label">Kits</span></a>
+      <a href="/site/pages/admin/pedidos/index.html" class="nav-item" data-page="pedidos"><span class="nav-icon">≡</span><span class="nav-label">Pedidos</span></a>
+      <a href="/site/pages/admin/clientes/index.html" class="nav-item" data-page="clientes"><span class="nav-icon">◎</span><span class="nav-label">Clientes</span></a>
+      <a href="/site/pages/admin/cupons/index.html" class="nav-item" data-page="cupons"><span class="nav-icon">◈</span><span class="nav-label">Cupons</span></a>
+      <a href="/site/pages/admin/categorias/index.html" class="nav-item" data-page="categorias"><span class="nav-icon">◉</span><span class="nav-label">Categorias</span></a>
+      <a href="/site/pages/admin/configuracoes/index.html" class="nav-item" data-page="configuracoes"><span class="nav-icon">⚙</span><span class="nav-label">Configurações</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+        <div class="sidebar-user-info">
+          <span class="sidebar-user-name" id="sidebarUserName">Admin</span>
+          <span class="sidebar-user-role">Administrador</span>
+        </div>
+      </div>
+      <button class="btn-logout" id="btnLogout">↩ Sair</button>
+    </div>
+  </aside>
+
+  <div class="admin-layout">
+    <header class="admin-header">
+      <div class="header-left">
+        <button class="header-menu-toggle" id="headerMenuToggle" aria-label="Menu">≡</button>
+        <h1 class="header-title">Kits</h1>
+      </div>
+      <div class="header-right">
+        <div class="header-search">
+          <span>🔍</span>
+          <input type="text" placeholder="Buscar..." id="globalSearch">
+        </div>
+        <div class="header-user">
+          <span class="header-user-name" id="headerUserName">Admin</span>
+          <div class="header-avatar" id="headerAvatar">A</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-main" id="adminMain">
+      <div class="table-toolbar">
+        <div class="toolbar-left">
+          <input type="text" class="form-input toolbar-search" placeholder="Buscar kits..." id="searchInput">
+        </div>
+        <button class="btn btn-primary" id="btnNovoKit">+ Novo Kit</button>
+      </div>
+      <div class="table-container" id="tableContainer"><div class="skeleton skeleton-table"></div></div>
+    </main>
+  </div>
+
+  <!-- DRAWER -->
+  <div class="modal-overlay" id="drawerOverlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <h2 id="drawerTitle">Novo Kit</h2>
+      <button class="drawer-close" id="drawerClose">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <form id="kitForm">
+        <input type="hidden" id="kitId">
+
+        <div class="form-group">
+          <label class="form-label" for="kitName">Nome do kit *</label>
+          <input type="text" class="form-input" id="kitName" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="kitPrice">Preço do kit (R$) *</label>
+            <input type="number" step="0.01" min="0" class="form-input" id="kitPrice" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="kitStock">Estoque *</label>
+            <input type="number" min="0" class="form-input" id="kitStock" value="0" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="kitDescription">Descrição</label>
+          <textarea class="form-input form-textarea" id="kitDescription" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Imagem do kit</label>
+          <div class="form-file-upload">
+            <input type="file" accept="image/*" id="kitImageInput">
+            <span>Clique para selecionar</span>
+          </div>
+          <img id="kitImagePreview" class="form-image-preview" style="display:none;">
+          <input type="hidden" id="kitImageUrl">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Produtos do kit</label>
+          <div class="product-autocomplete">
+            <input type="text" class="form-input" id="kitProductSearch" placeholder="Digite o nome do produto...">
+            <div class="ac-results" id="acResults"></div>
+          </div>
+          <div class="kit-item-list" id="kitItemList"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-inline">
+            <input type="checkbox" id="kitActive" checked>
+            Ativo
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="drawerCancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveKit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONFIRM -->
+  <div class="modal-overlay" id="confirmOverlay"></div>
+  <div class="modal confirm-modal" id="confirmModal">
+    <div class="modal-header"><h3>Confirmar exclusão</h3></div>
+    <div class="modal-body"><p id="confirmMessage">Tem certeza?</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="confirmCancel">Cancelar</button>
+      <button class="btn btn-danger" id="confirmDelete">Excluir</button>
+    </div>
+  </div>
+
+  <script type="module" src="../assets/js/admin-auth.js"></script>
+  <script type="module" src="../assets/js/sidebar.js"></script>
+  <script type="module" src="../assets/js/kits.js"></script>
+</body>
+</html>
