@@ -2,23 +2,24 @@
 
 const API_BASE = 'http://localhost:3333';
 
-function apiRequest(method, path, body) {
+function apiRequest(method, path, body, isFormData) {
   const url = API_BASE + path;
   const token = localStorage.getItem('csp_admin_token');
 
-  const options = {
-    method,
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  };
+  const options = { method };
 
   if (token) {
-    options.headers['Authorization'] = 'Bearer ' + token;
+    options.headers = { 'Authorization': 'Bearer ' + token };
   }
 
   if (body) {
-    options.body = JSON.stringify(body);
+    if (isFormData) {
+      options.body = body;
+    } else {
+      options.headers = options.headers || {};
+      options.headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(body);
+    }
   }
 
   return fetch(url, options).then(function (res) {

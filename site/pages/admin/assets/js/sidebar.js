@@ -45,7 +45,7 @@ function initSidebar() {
     btnLogout.addEventListener('click', function () {
       localStorage.removeItem('csp_admin_token');
       localStorage.removeItem('csp_admin_user');
-      window.location.href = '/site/pages/admin/login/index.html';
+      window.location.href = '/site/pages/login/index.html';
     });
   }
 

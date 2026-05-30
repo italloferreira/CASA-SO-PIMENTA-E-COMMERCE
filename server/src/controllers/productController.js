@@ -65,6 +65,7 @@ export function createProduct(req, res) {
     price,
     stock,
     image_url,
+    is_active,
     is_featured
   } = req.body;
 
@@ -84,9 +85,10 @@ export function createProduct(req, res) {
       price,
       stock,
       image_url,
+      is_active,
       is_featured
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = insert.run(
@@ -98,6 +100,7 @@ export function createProduct(req, res) {
     Number(price),
     Number(stock || 0),
     image_url || null,
+    is_active !== false ? 1 : 0,
     is_featured ? 1 : 0
   );
 
