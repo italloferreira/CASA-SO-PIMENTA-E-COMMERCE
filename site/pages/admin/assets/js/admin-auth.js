@@ -1,7 +1,7 @@
 export function protectRoute() {
   const token = localStorage.getItem('csp_admin_token');
   if (!token) {
-    window.location.href = '/site/pages/admin/login/index.html';
+    window.location.href = '/site/pages/login/index.html';
     return null;
   }
   const user = JSON.parse(localStorage.getItem('csp_admin_user') || '{}');

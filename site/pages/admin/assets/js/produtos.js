@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
       preview.src = API_BASE + result.image_url;
       preview.style.display = 'block';
     } catch (err) {
-      showToast('Erro ao fazer upload da imagem.', 'error');
+      showToast(err.message || 'Erro ao fazer upload da imagem.', 'error');
     }
   });
 });
@@ -201,8 +201,8 @@ document.addEventListener('DOMContentLoaded', function () {
       description: document.getElementById('prodDescription').value.trim(),
       ingredients: document.getElementById('prodIngredients').value.trim(),
       image_url: document.getElementById('prodImageUrl').value || null,
-      active: document.getElementById('prodActive').checked,
-      featured: document.getElementById('prodFeatured').checked
+      is_active: document.getElementById('prodActive').checked,
+      is_featured: document.getElementById('prodFeatured').checked
     };
 
     if (!payload.name || !payload.category_id || !payload.price) {
@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
       closeDrawer();
       await loadProducts();
     } catch (err) {
-      showToast('Erro ao salvar produto.', 'error');
+      showToast(err.message || 'Erro ao salvar produto.', 'error');
     } finally {
       btn.textContent = 'Salvar';
       btn.disabled = false;
