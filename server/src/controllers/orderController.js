@@ -1,6 +1,6 @@
-import { db } from '../database/connection.js';
+import { pool } from '../database/connection.js';
 
-export function createOrder(req, res) {
+export async function createOrder(req, res) {
   const {
     customer_name,
     customer_email,
@@ -28,11 +28,12 @@ export function createOrder(req, res) {
     let kit = null;
 
     if (item.product_id) {
-      product = db.prepare(`
-        SELECT *
-        FROM products
-        WHERE id = ? AND is_active = 1
-      `).get(item.product_id);
+      const productResult = await pool.query(`
+        SELECT * FROM products
+        WHERE id = $1 AND is_active = 1
+      `, [item.product_id]);
+
+      product = productResult.rows[0];
 
       if (!product) {
         return res.status(400).json({
@@ -40,25 +41,26 @@ export function createOrder(req, res) {
         });
       }
 
-      const total = product.price * item.quantity;
+      const total = Number(product.price) * item.quantity;
       subtotal += total;
 
       orderItems.push({
         product_id: product.id,
         kit_id: null,
         item_name: product.name,
-        unit_price: product.price,
+        unit_price: Number(product.price),
         quantity: item.quantity,
         total
       });
     }
 
     if (item.kit_id) {
-      kit = db.prepare(`
-        SELECT *
-        FROM kits
-        WHERE id = ? AND is_active = 1
-      `).get(item.kit_id);
+      const kitResult = await pool.query(`
+        SELECT * FROM kits
+        WHERE id = $1 AND is_active = 1
+      `, [item.kit_id]);
+
+      kit = kitResult.rows[0];
 
       if (!kit) {
         return res.status(400).json({
@@ -66,14 +68,14 @@ export function createOrder(req, res) {
         });
       }
 
-      const total = kit.price * item.quantity;
+      const total = Number(kit.price) * item.quantity;
       subtotal += total;
 
       orderItems.push({
         product_id: null,
         kit_id: kit.id,
         item_name: kit.name,
-        unit_price: kit.price,
+        unit_price: Number(kit.price),
         quantity: item.quantity,
         total
       });
@@ -83,24 +85,20 @@ export function createOrder(req, res) {
   const deliveryFeeValue = Number(delivery_fee || 0);
   const total = subtotal + deliveryFeeValue;
 
-  const transaction = db.transaction(() => {
-    const orderResult = db.prepare(`
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const orderResult = await client.query(`
       INSERT INTO orders (
-        user_id,
-        customer_name,
-        customer_email,
-        customer_phone,
-        cep,
-        address,
-        city,
-        state,
-        subtotal,
-        delivery_fee,
-        total,
-        notes
+        user_id, customer_name, customer_email, customer_phone,
+        cep, address, city, state,
+        subtotal, delivery_fee, total, notes
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING id
+    `, [
       req.user?.id || null,
       customer_name,
       customer_email || null,
@@ -113,25 +111,15 @@ export function createOrder(req, res) {
       deliveryFeeValue,
       total,
       notes || null
-    );
+    ]);
 
-    const orderId = orderResult.lastInsertRowid;
-
-    const insertItem = db.prepare(`
-      INSERT INTO order_items (
-        order_id,
-        product_id,
-        kit_id,
-        item_name,
-        unit_price,
-        quantity,
-        total
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+    const orderId = orderResult.rows[0].id;
 
     for (const orderItem of orderItems) {
-      insertItem.run(
+      await client.query(`
+        INSERT INTO order_items (order_id, product_id, kit_id, item_name, unit_price, quantity, total)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [
         orderId,
         orderItem.product_id,
         orderItem.kit_id,
@@ -139,41 +127,46 @@ export function createOrder(req, res) {
         orderItem.unit_price,
         orderItem.quantity,
         orderItem.total
-      );
+      ]);
     }
 
-    return orderId;
-  });
+    await client.query('COMMIT');
 
-  const orderId = transaction();
-
-  res.status(201).json({
-    id: orderId,
-    message: 'Pedido criado com sucesso.',
-    subtotal,
-    delivery_fee: deliveryFeeValue,
-    total
-  });
+    res.status(201).json({
+      id: orderId,
+      message: 'Pedido criado com sucesso.',
+      subtotal,
+      delivery_fee: deliveryFeeValue,
+      total
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao criar pedido:', err);
+    res.status(500).json({
+      message: 'Erro ao criar pedido.'
+    });
+  } finally {
+    client.release();
+  }
 }
 
-export function listOrders(req, res) {
-  const orders = db.prepare(`
-    SELECT *
-    FROM orders
+export async function listOrders(req, res) {
+  const result = await pool.query(`
+    SELECT * FROM orders
     ORDER BY created_at DESC
-  `).all();
+  `);
 
-  res.json(orders);
+  res.json(result.rows);
 }
 
-export function getOrderById(req, res) {
+export async function getOrderById(req, res) {
   const { id } = req.params;
 
-  const order = db.prepare(`
-    SELECT *
-    FROM orders
-    WHERE id = ?
-  `).get(id);
+  const orderResult = await pool.query(`
+    SELECT * FROM orders WHERE id = $1
+  `, [id]);
+
+  const order = orderResult.rows[0];
 
   if (!order) {
     return res.status(404).json({
@@ -181,31 +174,27 @@ export function getOrderById(req, res) {
     });
   }
 
-  const items = db.prepare(`
-    SELECT *
-    FROM order_items
-    WHERE order_id = ?
-  `).all(id);
+  const itemsResult = await pool.query(`
+    SELECT * FROM order_items WHERE order_id = $1
+  `, [id]);
 
   res.json({
     ...order,
-    items
+    items: itemsResult.rows
   });
 }
 
-export function updateOrderStatus(req, res) {
+export async function updateOrderStatus(req, res) {
   const { id } = req.params;
   const { status } = req.body;
 
-  const update = db.prepare(`
+  const result = await pool.query(`
     UPDATE orders
-    SET status = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
+    SET status = $1, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2
+  `, [status, id]);
 
-  const result = update.run(status, id);
-
-  if (result.changes === 0) {
+  if (result.rowCount === 0) {
     return res.status(404).json({
       message: 'Pedido não encontrado.'
     });

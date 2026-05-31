@@ -49,7 +49,7 @@ function renderKits() {
   var rows = pageItems.map(function (k) {
     var price = Number(k.price).toFixed(2).replace('.', ',');
     var img = k.image_url ? '<img src="' + API_BASE + k.image_url + '" class="table-thumb" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">' : '<span style="font-size:24px;opacity:0.3;">❏</span>';
-    var badge = k.active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
+    var badge = k.is_active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
     return '<tr>' +
       '<td data-label="Imagem">' + img + '</td>' +
       '<td data-label="Nome"><strong>' + k.name + '</strong></td>' +
@@ -90,7 +90,7 @@ function openDrawer(kit) {
     document.getElementById('kitPrice').value = kit.price || '';
     document.getElementById('kitStock').value = kit.stock || 0;
     document.getElementById('kitDescription').value = kit.description || '';
-    document.getElementById('kitActive').checked = kit.active !== false;
+    document.getElementById('kitActive').checked = kit.is_active !== false;
     if (kit.image_url) {
       document.getElementById('kitImageUrl').value = kit.image_url;
       var preview = document.getElementById('kitImagePreview');

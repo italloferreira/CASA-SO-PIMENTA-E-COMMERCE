@@ -36,7 +36,7 @@ function renderCoupons() {
     var discount = Number(c.discount).toFixed(2).replace('.', ',');
     var expires = c.expires ? new Date(c.expires + 'T23:59:59').toLocaleDateString('pt-BR') : '—';
     var expired = c.expires && new Date(c.expires + 'T23:59:59') < new Date();
-    var activeBadge = c.active && !expired ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">' + (expired ? 'Expirado' : 'Inativo') + '</span>';
+    var activeBadge = c.is_active && !expired ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">' + (expired ? 'Expirado' : 'Inativo') + '</span>';
     return '<tr>' +
       '<td data-label="Código"><strong>' + c.code + '</strong></td>' +
       '<td data-label="Desconto">R$ ' + discount + '</td>' +
@@ -68,7 +68,7 @@ function openModal(index) {
     document.getElementById('cupomDiscount').value = c.discount;
     document.getElementById('cupomMinOrder').value = c.min_order || '';
     document.getElementById('cupomExpires').value = c.expires || '';
-    document.getElementById('cupomActive').checked = c.active !== false;
+    document.getElementById('cupomActive').checked = c.is_active !== false;
   } else {
     document.getElementById('modalTitle').textContent = 'Novo Cupom';
     document.getElementById('cupomForm').reset();

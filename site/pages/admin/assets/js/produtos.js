@@ -52,8 +52,8 @@ function renderTable(products) {
     var price = Number(p.price).toFixed(2).replace('.', ',');
     var compare = p.compare_price ? '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:12px;">R$ ' + Number(p.compare_price).toFixed(2).replace('.', ',') + '</span><br>' : '';
     var img = p.image_url ? '<img src="' + API_BASE + p.image_url + '" class="table-thumb" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">' : '<span style="font-size:24px;opacity:0.3;">▦</span>';
-    var activeBadge = p.active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
-    var featuredBadge = p.featured ? '<span class="badge badge-info">Destaque</span>' : '';
+    var activeBadge = p.is_active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
+    var featuredBadge = p.is_featured ? '<span class="badge badge-info">Destaque</span>' : '';
     return '<tr>' +
       '<td data-label="Imagem">' + img + '</td>' +
       '<td data-label="Nome"><strong>' + p.name + '</strong>' + (p.category_name ? '<br><small>' + p.category_name + '</small>' : '') + '</td>' +
@@ -91,8 +91,8 @@ function applyFilters() {
   var filtered = allProducts.filter(function (p) {
     if (search && !p.name.toLowerCase().includes(search) && (!p.category_name || !p.category_name.toLowerCase().includes(search))) return false;
     if (catId && String(p.category_id) !== catId) return false;
-    if (active === 'active' && !p.active) return false;
-    if (active === 'inactive' && p.active) return false;
+    if (active === 'active' && !p.is_active) return false;
+    if (active === 'inactive' && p.is_active) return false;
     return true;
   });
 
@@ -127,8 +127,8 @@ function openDrawer(product) {
     document.getElementById('prodStock').value = product.stock || 0;
     document.getElementById('prodDescription').value = product.description || '';
     document.getElementById('prodIngredients').value = product.ingredients || '';
-    document.getElementById('prodActive').checked = product.active !== false;
-    document.getElementById('prodFeatured').checked = product.featured === true;
+    document.getElementById('prodActive').checked = product.is_active !== false;
+    document.getElementById('prodFeatured').checked = product.is_featured === true;
     if (product.image_url) {
       document.getElementById('prodImageUrl').value = product.image_url;
       var preview = document.getElementById('prodImagePreview');
@@ -150,6 +150,7 @@ function openDrawer(product) {
 }
 
 function closeDrawer() {
+  console.log('closeDrawer chamado por:', new Error().stack.split('\n')[2]?.trim());
   document.getElementById('drawerOverlay').classList.remove('active');
   document.getElementById('drawer').classList.remove('active');
 }
@@ -172,15 +173,20 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('prodImageInput').addEventListener('change', async function (e) {
     var file = e.target.files[0];
     if (!file) return;
+    console.log('Upload iniciado:', file.name, file.size);
     var formData = new FormData();
     formData.append('image', file);
     try {
+      console.log('Enviando upload...');
       var result = await apiRequest('POST', '/api/uploads', formData, true);
+      console.log('Upload resposta:', result);
       document.getElementById('prodImageUrl').value = result.image_url;
       var preview = document.getElementById('prodImagePreview');
       preview.src = API_BASE + result.image_url;
       preview.style.display = 'block';
+      console.log('Preview atualizado');
     } catch (err) {
+      console.error('Upload erro:', err);
       showToast(err.message || 'Erro ao fazer upload da imagem.', 'error');
     }
   });

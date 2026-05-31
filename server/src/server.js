@@ -15,14 +15,6 @@ import { seedDatabase } from './database/seed.js';
 
 dotenv.config();
 
-if (!process.env.JWT_SECRET) {
-  console.error('ERRO: JWT_SECRET não definida no .env. O servidor não pode iniciar com chave vazia.');
-  process.exit(1);
-}
-
-createTables();
-seedDatabase();
-
 const app = express();
 
 const PORT = process.env.PORT || 3333;
@@ -53,6 +45,34 @@ app.get('/', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+app.use((err, req, res, next) => {
+  console.error('Erro:', err.message);
+  res.status(err.status || 500).json({
+    message: err.message || 'Erro interno do servidor.'
+  });
 });
+
+async function start() {
+  if (!process.env.JWT_SECRET) {
+    console.error('ERRO: JWT_SECRET não definida no .env. O servidor não pode iniciar com chave vazia.');
+    process.exit(1);
+  }
+
+  if (!process.env.SUPABASE_DB_URL) {
+    console.error('ERRO: SUPABASE_DB_URL não definida no .env.');
+    process.exit(1);
+  }
+
+  try {
+    await createTables();
+    await seedDatabase();
+    app.listen(PORT, () => {
+      console.log(`Servidor rodando em http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Erro ao inicializar o banco de dados:', err);
+    process.exit(1);
+  }
+}
+
+start();

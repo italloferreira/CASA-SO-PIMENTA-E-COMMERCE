@@ -1,25 +1,25 @@
-import { db } from '../database/connection.js';
+import { pool } from '../database/connection.js';
 
-export function listProducts(req, res) {
+export async function listProducts(req, res) {
   const { category } = req.query;
 
-  let products;
+  let result;
 
   if (category) {
-    products = db.prepare(`
-      SELECT 
+    result = await pool.query(`
+      SELECT
         products.*,
         categories.name AS category_name,
         categories.slug AS category_slug
       FROM products
       LEFT JOIN categories ON categories.id = products.category_id
       WHERE products.is_active = 1
-      AND categories.slug = ?
+      AND categories.slug = $1
       ORDER BY products.created_at DESC
-    `).all(category);
+    `, [category]);
   } else {
-    products = db.prepare(`
-      SELECT 
+    result = await pool.query(`
+      SELECT
         products.*,
         categories.name AS category_name,
         categories.slug AS category_slug
@@ -27,24 +27,26 @@ export function listProducts(req, res) {
       LEFT JOIN categories ON categories.id = products.category_id
       WHERE products.is_active = 1
       ORDER BY products.created_at DESC
-    `).all();
+    `);
   }
 
-  res.json(products);
+  res.json(result.rows);
 }
 
-export function getProductById(req, res) {
+export async function getProductById(req, res) {
   const { id } = req.params;
 
-  const product = db.prepare(`
-    SELECT 
+  const result = await pool.query(`
+    SELECT
       products.*,
       categories.name AS category_name,
       categories.slug AS category_slug
     FROM products
     LEFT JOIN categories ON categories.id = products.category_id
-    WHERE products.id = ?
-  `).get(id);
+    WHERE products.id = $1
+  `, [id]);
+
+  const product = result.rows[0];
 
   if (!product) {
     return res.status(404).json({
@@ -55,7 +57,7 @@ export function getProductById(req, res) {
   res.json(product);
 }
 
-export function createProduct(req, res) {
+export async function createProduct(req, res) {
   const {
     category_id,
     name,
@@ -75,23 +77,14 @@ export function createProduct(req, res) {
     });
   }
 
-  const insert = db.prepare(`
+  const result = await pool.query(`
     INSERT INTO products (
-      category_id,
-      name,
-      slug,
-      description,
-      ingredients,
-      price,
-      stock,
-      image_url,
-      is_active,
-      is_featured
+      category_id, name, slug, description, ingredients,
+      price, stock, image_url, is_active, is_featured
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  const result = insert.run(
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    RETURNING id
+  `, [
     category_id || null,
     name,
     slug,
@@ -102,15 +95,15 @@ export function createProduct(req, res) {
     image_url || null,
     is_active !== false ? 1 : 0,
     is_featured ? 1 : 0
-  );
+  ]);
 
   res.status(201).json({
-    id: result.lastInsertRowid,
+    id: result.rows[0].id,
     message: 'Produto criado com sucesso.'
   });
 }
 
-export function updateProduct(req, res) {
+export async function updateProduct(req, res) {
   const { id } = req.params;
 
   const {
@@ -126,24 +119,22 @@ export function updateProduct(req, res) {
     is_featured
   } = req.body;
 
-  const update = db.prepare(`
+  const result = await pool.query(`
     UPDATE products
     SET
-      category_id = ?,
-      name = ?,
-      slug = ?,
-      description = ?,
-      ingredients = ?,
-      price = ?,
-      stock = ?,
-      image_url = ?,
-      is_active = ?,
-      is_featured = ?,
+      category_id = $1,
+      name = $2,
+      slug = $3,
+      description = $4,
+      ingredients = $5,
+      price = $6,
+      stock = $7,
+      image_url = $8,
+      is_active = $9,
+      is_featured = $10,
       updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
-
-  const result = update.run(
+    WHERE id = $11
+  `, [
     category_id || null,
     name,
     slug,
@@ -155,9 +146,9 @@ export function updateProduct(req, res) {
     is_active ? 1 : 0,
     is_featured ? 1 : 0,
     id
-  );
+  ]);
 
-  if (result.changes === 0) {
+  if (result.rowCount === 0) {
     return res.status(404).json({
       message: 'Produto não encontrado.'
     });
@@ -168,18 +159,16 @@ export function updateProduct(req, res) {
   });
 }
 
-export function deleteProduct(req, res) {
+export async function deleteProduct(req, res) {
   const { id } = req.params;
 
-  const update = db.prepare(`
+  const result = await pool.query(`
     UPDATE products
     SET is_active = 0, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
+    WHERE id = $1
+  `, [id]);
 
-  const result = update.run(id);
-
-  if (result.changes === 0) {
+  if (result.rowCount === 0) {
     return res.status(404).json({
       message: 'Produto não encontrado.'
     });

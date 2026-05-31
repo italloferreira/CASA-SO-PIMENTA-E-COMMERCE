@@ -39,7 +39,7 @@ function renderBanners() {
   grid.innerHTML = '';
 
   sorted.forEach(function (banner, index) {
-    var activeBadge = banner.active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
+    var activeBadge = banner.is_active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
     var img = banner.image_url ? '<img class="banner-image" src="' + API_BASE + banner.image_url + '" alt="' + banner.title + '">' : '<div class="banner-image" style="display:flex;align-items:center;justify-content:center;color:var(--color-text-muted);font-size:32px;">◫</div>';
 
     var card = document.createElement('div');
@@ -133,7 +133,7 @@ function openDrawer(banner) {
     document.getElementById('bannerSubtitle').value = banner.subtitle || '';
     document.getElementById('bannerLink').value = banner.link || '';
     document.getElementById('bannerLinkText').value = banner.link_text || '';
-    document.getElementById('bannerActive').checked = banner.active !== false;
+    document.getElementById('bannerActive').checked = banner.is_active !== false;
     document.getElementById('bannerImageInput').required = false;
     if (banner.image_url) {
       document.getElementById('bannerImageUrl').value = banner.image_url;

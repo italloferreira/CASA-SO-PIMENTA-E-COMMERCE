@@ -1,17 +1,16 @@
-import { db } from '../database/connection.js';
+import { pool } from '../database/connection.js';
 
-export function listBanners(req, res) {
-  const banners = db.prepare(`
-    SELECT *
-    FROM banners
+export async function listBanners(req, res) {
+  const result = await pool.query(`
+    SELECT * FROM banners
     WHERE is_active = 1
     ORDER BY position ASC
-  `).all();
+  `);
 
-  res.json(banners);
+  res.json(result.rows);
 }
 
-export function createBanner(req, res) {
+export async function createBanner(req, res) {
   const { title, subtitle, image_url, link_url, position } = req.body;
 
   if (!title || !image_url) {
@@ -20,43 +19,40 @@ export function createBanner(req, res) {
     });
   }
 
-  const insert = db.prepare(`
+  const result = await pool.query(`
     INSERT INTO banners (title, subtitle, image_url, link_url, position)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-
-  const result = insert.run(
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING id
+  `, [
     title,
     subtitle || null,
     image_url,
     link_url || null,
     position || 0
-  );
+  ]);
 
   res.status(201).json({
-    id: result.lastInsertRowid,
+    id: result.rows[0].id,
     message: 'Banner criado com sucesso.'
   });
 }
 
-export function updateBanner(req, res) {
+export async function updateBanner(req, res) {
   const { id } = req.params;
   const { title, subtitle, image_url, link_url, position, is_active } = req.body;
 
-  const update = db.prepare(`
+  const result = await pool.query(`
     UPDATE banners
     SET
-      title = ?,
-      subtitle = ?,
-      image_url = ?,
-      link_url = ?,
-      position = ?,
-      is_active = ?,
+      title = $1,
+      subtitle = $2,
+      image_url = $3,
+      link_url = $4,
+      position = $5,
+      is_active = $6,
       updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
-
-  const result = update.run(
+    WHERE id = $7
+  `, [
     title,
     subtitle || null,
     image_url,
@@ -64,9 +60,9 @@ export function updateBanner(req, res) {
     position || 0,
     is_active ? 1 : 0,
     id
-  );
+  ]);
 
-  if (result.changes === 0) {
+  if (result.rowCount === 0) {
     return res.status(404).json({
       message: 'Banner não encontrado.'
     });
@@ -77,18 +73,16 @@ export function updateBanner(req, res) {
   });
 }
 
-export function deleteBanner(req, res) {
+export async function deleteBanner(req, res) {
   const { id } = req.params;
 
-  const update = db.prepare(`
+  const result = await pool.query(`
     UPDATE banners
     SET is_active = 0, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
+    WHERE id = $1
+  `, [id]);
 
-  const result = update.run(id);
-
-  if (result.changes === 0) {
+  if (result.rowCount === 0) {
     return res.status(404).json({
       message: 'Banner não encontrado.'
     });

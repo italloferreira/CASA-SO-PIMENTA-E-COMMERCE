@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { db } from '../database/connection.js';
+import { pool } from '../database/connection.js';
 
-export function register(req, res) {
+export async function register(req, res) {
   const { name, email, password, phone } = req.body;
 
   if (!name || !email || !password) {
@@ -11,46 +11,43 @@ export function register(req, res) {
     });
   }
 
-  const userExists = db.prepare(`
-    SELECT id
-    FROM users
-    WHERE email = ?
-  `).get(email);
+  const userExists = await pool.query(`
+    SELECT id FROM users WHERE email = $1
+  `, [email]);
 
-  if (userExists) {
+  if (userExists.rows.length > 0) {
     return res.status(400).json({
       message: 'Este email já está cadastrado.'
     });
   }
 
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  const insert = db.prepare(`
+  const result = await pool.query(`
     INSERT INTO users (name, email, password, phone)
-    VALUES (?, ?, ?, ?)
-  `);
-
-  const result = insert.run(
+    VALUES ($1, $2, $3, $4)
+    RETURNING id
+  `, [
     name,
     email,
     hashedPassword,
     phone || null
-  );
+  ]);
 
   res.status(201).json({
-    id: result.lastInsertRowid,
+    id: result.rows[0].id,
     message: 'Usuário cadastrado com sucesso.'
   });
 }
 
-export function login(req, res) {
+export async function login(req, res) {
   const { email, password } = req.body;
 
-  const user = db.prepare(`
-    SELECT *
-    FROM users
-    WHERE email = ?
-  `).get(email);
+  const result = await pool.query(`
+    SELECT * FROM users WHERE email = $1
+  `, [email]);
+
+  const user = result.rows[0];
 
   if (!user) {
     return res.status(401).json({
@@ -58,7 +55,7 @@ export function login(req, res) {
     });
   }
 
-  const passwordIsValid = bcrypt.compareSync(password, user.password);
+  const passwordIsValid = await bcrypt.compare(password, user.password);
 
   if (!passwordIsValid) {
     return res.status(401).json({

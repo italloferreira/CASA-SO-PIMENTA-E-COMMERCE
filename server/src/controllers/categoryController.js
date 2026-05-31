@@ -1,17 +1,16 @@
-import { db } from '../database/connection.js';
+import { pool } from '../database/connection.js';
 
-export function listCategories(req, res) {
-  const categories = db.prepare(`
-    SELECT *
-    FROM categories
+export async function listCategories(req, res) {
+  const result = await pool.query(`
+    SELECT * FROM categories
     WHERE is_active = 1
     ORDER BY name ASC
-  `).all();
+  `);
 
-  res.json(categories);
+  res.json(result.rows);
 }
 
-export function createCategory(req, res) {
+export async function createCategory(req, res) {
   const { name, slug } = req.body;
 
   if (!name || !slug) {
@@ -20,33 +19,30 @@ export function createCategory(req, res) {
     });
   }
 
-  const insert = db.prepare(`
+  const result = await pool.query(`
     INSERT INTO categories (name, slug)
-    VALUES (?, ?)
-  `);
-
-  const result = insert.run(name, slug);
+    VALUES ($1, $2)
+    RETURNING id
+  `, [name, slug]);
 
   res.status(201).json({
-    id: result.lastInsertRowid,
+    id: result.rows[0].id,
     name,
     slug
   });
 }
 
-export function updateCategory(req, res) {
+export async function updateCategory(req, res) {
   const { id } = req.params;
   const { name, slug, is_active } = req.body;
 
-  const update = db.prepare(`
+  const result = await pool.query(`
     UPDATE categories
-    SET name = ?, slug = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
+    SET name = $1, slug = $2, is_active = $3, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $4
+  `, [name, slug, is_active ? 1 : 0, id]);
 
-  const result = update.run(name, slug, is_active ? 1 : 0, id);
-
-  if (result.changes === 0) {
+  if (result.rowCount === 0) {
     return res.status(404).json({
       message: 'Categoria não encontrada.'
     });
@@ -57,18 +53,16 @@ export function updateCategory(req, res) {
   });
 }
 
-export function deleteCategory(req, res) {
+export async function deleteCategory(req, res) {
   const { id } = req.params;
 
-  const update = db.prepare(`
+  const result = await pool.query(`
     UPDATE categories
     SET is_active = 0, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
+    WHERE id = $1
+  `, [id]);
 
-  const result = update.run(id);
-
-  if (result.changes === 0) {
+  if (result.rowCount === 0) {
     return res.status(404).json({
       message: 'Categoria não encontrada.'
     });

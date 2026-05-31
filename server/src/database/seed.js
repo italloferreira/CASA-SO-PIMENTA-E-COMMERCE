@@ -1,7 +1,7 @@
-import { db } from './connection.js';
+import { pool } from './connection.js';
 import bcrypt from 'bcryptjs';
 
-export function seedDatabase() {
+export async function seedDatabase() {
   const categories = [
     ['Pimentas', 'pimentas'],
     ['Temperos', 'temperos'],
@@ -11,32 +11,29 @@ export function seedDatabase() {
     ['Kits', 'kits']
   ];
 
-  const adminExists = db.prepare(`
-  SELECT id
-  FROM users
-  WHERE email = ?
-`).get('admin@casasopimenta.com');
+  const adminExists = await pool.query(`
+    SELECT id FROM users WHERE email = $1
+  `, ['admin@casasopimenta.com']);
 
-if (!adminExists) {
-  const hashedPassword = bcrypt.hashSync('admin123', 10);
+  if (adminExists.rows.length === 0) {
+    const hashedPassword = await bcrypt.hash('admin123', 10);
 
-  db.prepare(`
-    INSERT INTO users (name, email, password, role)
-    VALUES (?, ?, ?, ?)
-  `).run(
-    'Administrador',
-    'admin@casasopimenta.com',
-    hashedPassword,
-    'admin'
-  );
-}
-
-  const insertCategory = db.prepare(`
-    INSERT OR IGNORE INTO categories (name, slug)
-    VALUES (?, ?)
-  `);
+    await pool.query(`
+      INSERT INTO users (name, email, password, role)
+      VALUES ($1, $2, $3, $4)
+    `, [
+      'Administrador',
+      'admin@casasopimenta.com',
+      hashedPassword,
+      'admin'
+    ]);
+  }
 
   for (const category of categories) {
-    insertCategory.run(category);
+    await pool.query(`
+      INSERT INTO categories (name, slug)
+      VALUES ($1, $2)
+      ON CONFLICT (slug) DO NOTHING
+    `, category);
   }
 }
