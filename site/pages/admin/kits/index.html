@@ -30,29 +30,12 @@
       cursor: pointer;
       font-size: 16px;
     }
-    .product-autocomplete {
-      position: relative;
+    .kit-item-add {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
     }
-    .product-autocomplete .ac-results {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 10;
-      display: none;
-    }
-    .product-autocomplete .ac-results .ac-item {
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: var(--font-size-sm);
-      border-bottom: 1px solid var(--color-border);
-    }
-    .product-autocomplete .ac-results .ac-item:hover { background: var(--color-bg); }
+    .kit-item-add .form-input { flex: 1; }
   </style>
 </head>
 <body>
@@ -158,9 +141,9 @@
 
         <div class="form-group">
           <label class="form-label">Produtos do kit</label>
-          <div class="product-autocomplete">
-            <input type="text" class="form-input" id="kitProductSearch" placeholder="Digite o nome do produto...">
-            <div class="ac-results" id="acResults"></div>
+          <div class="kit-item-add">
+            <input type="text" class="form-input" id="kitProductName" placeholder="Digite o nome do produto...">
+            <button type="button" class="btn btn-primary" id="btnAddKitItem">+</button>
           </div>
           <div class="kit-item-list" id="kitItemList"></div>
         </div>

@@ -72,11 +72,20 @@ document.addEventListener('DOMContentLoaded', function () {
             ? 'http://localhost:3333' + kit.image_url
             : '/site/imgs/logo.jpeg';
 
+          var produtosHtml = '';
+          if (kit.items && kit.items.length > 0) {
+            produtosHtml = '<div class="cartao-produtos"><h1>Produtos</h1><ul>' +
+              kit.items.map(function (item) { return '<li>' + (item.custom_name || 'Item') + '</li>'; }).join('') +
+              '</ul></div>';
+          }
+
           cartoesSection.innerHTML += '<div class="cartao">' +
             '<img class="cartao-img" src="' + imgSrc + '" alt="' + kit.name + '">' +
             '<h1 class="cartao-h1">' + kit.name + '</h1>' +
             '<div class="cartao-valor"><p>R$</p><h3>' + valorFormatado + '</h3></div>' +
             '<div class="cartao-ingredientes"><h1>Descrição</h1><p>' + (kit.description || '') + '</p></div>' +
+            produtosHtml +
+            '<div class = "conteiner-botao-add-carrinho"><button class="add-carrinho-botao" onclick=\'addCarrinho(' + JSON.stringify({ id: kit.id, nome: kit.name, valor: kit.price, img: imgSrc }) + ')\'><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button></div>' +
             '</div>';
         });
       })

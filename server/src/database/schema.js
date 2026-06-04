@@ -46,6 +46,7 @@ export async function createTables() {
       slug TEXT NOT NULL UNIQUE,
       description TEXT,
       price NUMERIC(10,2) NOT NULL,
+      stock INTEGER NOT NULL DEFAULT 0,
       image_url TEXT,
       is_active SMALLINT NOT NULL DEFAULT 1,
       is_featured SMALLINT NOT NULL DEFAULT 0,
@@ -137,5 +138,9 @@ export async function createTables() {
       FOREIGN KEY (product_id) REFERENCES products(id),
       FOREIGN KEY (kit_id) REFERENCES kits(id)
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE kits ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 0;
   `);
 }

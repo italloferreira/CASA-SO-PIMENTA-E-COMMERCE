@@ -3,14 +3,31 @@ import { pool } from '../database/connection.js';
 export async function listKits(req, res) {
   const { active } = req.query;
 
-  let sql = 'SELECT * FROM kits';
+  let sql = `
+    SELECT k.*,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', ki.id,
+            'product_id', ki.product_id,
+            'custom_name', ki.custom_name,
+            'quantity', ki.quantity,
+            'unit', ki.unit,
+            'position', ki.position
+          ) ORDER BY ki.position
+        ) FILTER (WHERE ki.id IS NOT NULL),
+        '[]'::json
+      ) AS items
+    FROM kits k
+    LEFT JOIN kit_items ki ON ki.kit_id = k.id
+  `;
   const params = [];
 
   if (active === 'true') {
-    sql += ' WHERE is_active = 1';
+    sql += ' WHERE k.is_active = 1';
   }
 
-  sql += ' ORDER BY created_at DESC';
+  sql += ' GROUP BY k.id ORDER BY k.created_at DESC';
 
   const result = await pool.query(sql, params);
   res.json(result.rows);
@@ -71,14 +88,15 @@ export async function createKit(req, res) {
   const finalActive = active !== undefined ? active : (is_active !== undefined ? is_active : true);
 
   const result = await pool.query(`
-    INSERT INTO kits (name, slug, description, price, image_url, is_active, is_featured)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO kits (name, slug, description, price, stock, image_url, is_active, is_featured)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING id
   `, [
     name,
     finalSlug,
     description || null,
     Number(price),
+    stock !== undefined ? Number(stock) : 0,
     image_url || null,
     finalActive ? 1 : 0,
     is_featured ? 1 : 0
@@ -98,6 +116,7 @@ export async function updateKit(req, res) {
     slug,
     description,
     price,
+    stock,
     image_url,
     active,
     is_active,
@@ -117,16 +136,18 @@ export async function updateKit(req, res) {
       slug = COALESCE(NULLIF($2, ''), slug),
       description = $3,
       price = $4,
-      image_url = $5,
-      is_active = $6,
-      is_featured = $7,
+      stock = $5,
+      image_url = $6,
+      is_active = $7,
+      is_featured = $8,
       updated_at = CURRENT_TIMESTAMP
-    WHERE id = $8
+    WHERE id = $9
   `, [
     name,
     slug || '',
     description || null,
     Number(price),
+    stock !== undefined ? Number(stock) : 0,
     image_url || null,
     finalActive ? 1 : 0,
     is_featured ? 1 : 0,
@@ -171,6 +192,18 @@ export async function addKitItem(req, res) {
   res.status(201).json({
     id: result.rows[0].id,
     message: 'Item adicionado ao kit.'
+  });
+}
+
+export async function deleteKitItems(req, res) {
+  const { id } = req.params;
+
+  await pool.query(`
+    DELETE FROM kit_items WHERE kit_id = $1
+  `, [id]);
+
+  res.json({
+    message: 'Itens do kit removidos com sucesso.'
   });
 }
 

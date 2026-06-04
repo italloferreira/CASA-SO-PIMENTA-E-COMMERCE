@@ -4,7 +4,6 @@ import { API_BASE, apiRequest } from '../../../../assets/js/api.js';
 protectRoute();
 
 let allKits = [];
-let allProducts = [];
 let kitItems = [];
 let deleteTargetId = null;
 let currentPage = 1;
@@ -15,12 +14,7 @@ async function loadKits() {
   var container = document.getElementById('tableContainer');
   container.innerHTML = '<div class="skeleton skeleton-table"></div>';
   try {
-    const [kits, products] = await Promise.all([
-      apiRequest('GET', '/api/kits'),
-      apiRequest('GET', '/api/products')
-    ]);
-    allKits = kits;
-    allProducts = products;
+    allKits = await apiRequest('GET', '/api/kits');
     renderKits();
   } catch (e) {
     container.innerHTML = '<div class="error-banner">Erro ao carregar kits.</div>';
@@ -101,7 +95,7 @@ function openDrawer(kit) {
       document.getElementById('kitImagePreview').style.display = 'none';
     }
     if (kit.items) {
-      kitItems = kit.items.map(function (i) { return { id: i.product_id, name: i.product_name || 'Produto #' + i.product_id }; });
+      kitItems = kit.items.map(function (i) { return { name: i.custom_name || 'Item #' + i.id }; });
     }
     renderKitItems();
   } else {
@@ -113,7 +107,6 @@ function openDrawer(kit) {
     document.getElementById('kitStock').value = 0;
     kitItems = [];
     renderKitItems();
-    document.getElementById('acResults').style.display = 'none';
   }
 }
 
@@ -145,45 +138,26 @@ function renderKitItems() {
   });
 }
 
-/* --- Autocomplete --- */
+/* --- Adicionar item personalizado --- */
 document.addEventListener('DOMContentLoaded', function () {
-  var searchInput = document.getElementById('kitProductSearch');
-  var acResults = document.getElementById('acResults');
+  var input = document.getElementById('kitProductName');
+  var btnAdd = document.getElementById('btnAddKitItem');
 
-  searchInput.addEventListener('input', function () {
-    clearTimeout(this._timer);
-    this._timer = setTimeout(function () {
-      var q = searchInput.value.toLowerCase().trim();
-      if (!q) { acResults.style.display = 'none'; return; }
-      var matches = allProducts.filter(function (p) {
-        return p.name.toLowerCase().includes(q) && !kitItems.some(function (ki) { return ki.id === p.id; });
-      }).slice(0, 10);
+  function addItem() {
+    var name = input.value.trim();
+    if (!name) return;
+    kitItems.push({ name: name });
+    renderKitItems();
+    input.value = '';
+    input.focus();
+  }
 
-      if (matches.length === 0) { acResults.style.display = 'none'; return; }
+  btnAdd.addEventListener('click', addItem);
 
-      acResults.innerHTML = matches.map(function (p) {
-        return '<div class="ac-item" data-id="' + p.id + '" data-name="' + p.name + '">' + p.name + '</div>';
-      }).join('');
-      acResults.style.display = 'block';
-
-      acResults.querySelectorAll('.ac-item').forEach(function (item) {
-        item.addEventListener('click', function () {
-          var id = Number(this.dataset.id);
-          var name = this.dataset.name;
-          if (!kitItems.some(function (ki) { return ki.id === id; })) {
-            kitItems.push({ id: id, name: name });
-            renderKitItems();
-          }
-          searchInput.value = '';
-          acResults.style.display = 'none';
-        });
-      });
-    }, 300);
-  });
-
-  document.addEventListener('click', function (e) {
-    if (!e.target.closest('.product-autocomplete')) {
-      acResults.style.display = 'none';
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addItem();
     }
   });
 });
@@ -241,9 +215,13 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast('Kit criado!');
       }
 
+      if (id) {
+        await apiRequest('DELETE', '/api/kits/' + id + '/items');
+      }
+
       if (kitItems.length > 0) {
         await Promise.all(kitItems.map(function (item) {
-          return apiRequest('POST', '/api/kits/' + id + '/items', { product_id: item.id });
+          return apiRequest('POST', '/api/kits/' + id + '/items', { custom_name: item.name });
         }));
       }
 
