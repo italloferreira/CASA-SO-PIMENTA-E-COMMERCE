@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
       preview.src = API_BASE + result.image_url;
       preview.style.display = 'block';
     } catch (err) {
-      showToast('Erro ao fazer upload.', 'error');
+      showToast(err.message || 'Erro ao fazer upload.', 'error');
     }
   });
 });

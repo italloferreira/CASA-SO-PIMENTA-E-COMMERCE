@@ -1,62 +1,17 @@
-/* carrinho.js — com sincronização no Firestore e checkout */
+/* carrinho.js — carrinho local + checkout via API */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { getUserProfile } from './conta.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAyj29lNCOxeXt0RFhFfDfJIy8AY9_-Wu4",
-  authDomain: "bdcasasopimenta.firebaseapp.com",
-  projectId: "bdcasasopimenta",
-  storageBucket: "bdcasasopimenta.firebasestorage.app",
-  messagingSenderId: "956041780013",
-  appId: "1:956041780013:web:0a2f9f138118b3639dd1a4"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-let usuarioAtual = null;
-
-/* ── Sincroniza carrinho com Firestore ── */
-async function salvarCarrinhoNuvem(carrinho) {
-  if (!usuarioAtual) return;
-  try {
-    await setDoc(doc(db, 'usuarios', usuarioAtual.uid), { carrinho }, { merge: true });
-  } catch {
-    /* falha silenciosa */
-  }
+function getDadosUsuario() {
+  var data = localStorage.getItem('csp_admin_user');
+  return data ? JSON.parse(data) : null;
 }
 
-async function carregarCarrinhoNuvem() {
-  if (!usuarioAtual) return;
-  try {
-    const snap = await getDoc(doc(db, 'usuarios', usuarioAtual.uid));
-    if (snap.exists() && snap.data().carrinho) {
-      const carrinhoNuvem = snap.data().carrinho;
-      localStorage.setItem('carrinho', JSON.stringify(carrinhoNuvem));
-      renderizarCarrinho();
-      atualizarBadgeCarrinho();
-    }
-  } catch {
-    /* falha silenciosa */
-  }
+function getToken() {
+  return localStorage.getItem('csp_admin_token');
 }
 
-/* Observa login/logout */
-onAuthStateChanged(auth, async function (user) {
-  usuarioAtual = user;
-  if (user) {
-    await carregarCarrinhoNuvem();
-  }
-});
-
-/* ── Helpers locais + nuvem ── */
+/* ── Helpers local ── */
 function salvarCarrinho(carrinho) {
   localStorage.setItem('carrinho', JSON.stringify(carrinho));
-  salvarCarrinhoNuvem(carrinho);
 }
 
 /* ── Drawer do carrinho ── */
@@ -71,6 +26,20 @@ if (abrirCarrinho) {
     campoCarrinho.classList.add('ativo');
     carrinhoOverlay.classList.add('ativo');
     document.body.style.overflow = 'hidden';
+
+    if (!getDadosUsuario() || !getToken()) {
+      var rodape = document.getElementById('carrinhoRodape');
+      if (rodape) rodape.style.display = 'none';
+      document.getElementById('produtoCarrinho').innerHTML =
+        '<div class="carrinho-login-aviso">' +
+          '<p>Faça login para acessar seu carrinho.</p>' +
+          '<a href="/site/pages/login/index.html" class="btn-carrinho-login">Entrar / Cadastrar</a>' +
+        '</div>';
+    } else {
+      var rodape = document.getElementById('carrinhoRodape');
+      if (rodape) rodape.style.display = '';
+      renderizarCarrinho();
+    }
   });
 }
 
@@ -99,14 +68,25 @@ async function finalizarPedido() {
     return;
   }
 
-  if (!usuarioAtual) {
+  const usuario = getDadosUsuario();
+
+  if (!usuario || !getToken()) {
     window.location.href = '/site/pages/login/index.html?redirect=checkout';
     return;
   }
 
-  const perfil = await getUserProfile(usuarioAtual.uid);
+  var perfil = usuario;
 
-  if (!perfil.cep || !perfil.endereco) {
+  try {
+    var resPerfil = await fetch('http://localhost:3333/api/auth/profile', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    if (resPerfil.ok) {
+      perfil = await resPerfil.json();
+    }
+  } catch {}
+
+  if (!perfil.cep || !perfil.address) {
     window.location.href = '/site/pages/conta/index.html?redirect=checkout';
     return;
   }
@@ -119,13 +99,13 @@ async function finalizarPedido() {
   });
 
   const payload = {
-    customer_name: usuarioAtual.displayName || perfil.nome || 'Cliente',
-    customer_email: usuarioAtual.email || perfil.email || '',
-    customer_phone: perfil.telefone || '',
+    customer_name: usuario.name || 'Cliente',
+    customer_email: usuario.email || '',
+    customer_phone: perfil.phone || '',
     cep: perfil.cep || '',
-    address: perfil.endereco || '',
-    city: perfil.cidade || '',
-    state: perfil.estado || '',
+    address: perfil.address || '',
+    city: perfil.city || '',
+    state: perfil.state || '',
     items: items,
     delivery_fee: 0
   };
@@ -149,9 +129,6 @@ async function finalizarPedido() {
     }
 
     localStorage.removeItem('carrinho');
-    if (usuarioAtual) {
-      await setDoc(doc(db, 'usuarios', usuarioAtual.uid), { carrinho: [] }, { merge: true });
-    }
     renderizarCarrinho();
     atualizarBadgeCarrinho();
 
@@ -294,4 +271,4 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
-export { salvarCarrinho, renderizarCarrinho, atualizarBadgeCarrinho };
+window.salvarCarrinho = salvarCarrinho;

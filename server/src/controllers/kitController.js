@@ -3,7 +3,6 @@ import { pool } from '../database/connection.js';
 export async function listKits(req, res) {
   const result = await pool.query(`
     SELECT * FROM kits
-    WHERE is_active = 1
     ORDER BY created_at DESC
   `);
 
@@ -43,26 +42,38 @@ export async function createKit(req, res) {
     slug,
     description,
     price,
+    stock,
     image_url,
+    active,
+    is_active,
     is_featured
   } = req.body;
 
-  if (!name || !slug || price === undefined) {
+  if (!name || price === undefined) {
     return res.status(400).json({
-      message: 'Nome, slug e preço são obrigatórios.'
+      message: 'Nome e preço são obrigatórios.'
     });
   }
 
+  const finalSlug = slug || name
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '') + '-' + Date.now();
+
+  const finalActive = active !== undefined ? active : (is_active !== undefined ? is_active : true);
+
   const result = await pool.query(`
-    INSERT INTO kits (name, slug, description, price, image_url, is_featured)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    INSERT INTO kits (name, slug, description, price, image_url, is_active, is_featured)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING id
   `, [
     name,
-    slug,
+    finalSlug,
     description || null,
     Number(price),
     image_url || null,
+    finalActive ? 1 : 0,
     is_featured ? 1 : 0
   ]);
 
@@ -81,15 +92,22 @@ export async function updateKit(req, res) {
     description,
     price,
     image_url,
+    active,
     is_active,
     is_featured
   } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ message: 'Nome é obrigatório.' });
+  }
+
+  const finalActive = active !== undefined ? active : (is_active !== undefined ? is_active : true);
 
   const result = await pool.query(`
     UPDATE kits
     SET
       name = $1,
-      slug = $2,
+      slug = COALESCE(NULLIF($2, ''), slug),
       description = $3,
       price = $4,
       image_url = $5,
@@ -99,11 +117,11 @@ export async function updateKit(req, res) {
     WHERE id = $8
   `, [
     name,
-    slug,
+    slug || '',
     description || null,
     Number(price),
     image_url || null,
-    is_active ? 1 : 0,
+    finalActive ? 1 : 0,
     is_featured ? 1 : 0,
     id
   ]);

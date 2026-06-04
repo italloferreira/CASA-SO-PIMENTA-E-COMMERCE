@@ -216,6 +216,28 @@ main {
   color: green;
 }
 
+.produto-estoque {
+  margin: 10px 0;
+}
+
+.produto-estoque h3 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.estoque-disponivel {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.estoque-indisponivel {
+  color: #c62828;
+  font-weight: 600;
+}
+
 .produto-descricao h3,
 .produto-ingredientes h3 {
   font-size: 14px;
@@ -528,6 +550,36 @@ footer p {
   font-size: 16px;
   text-align: center;
   margin-top: 30px;
+}
+
+.carrinho-login-aviso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  gap: 20px;
+  padding: 40px 20px;
+}
+.carrinho-login-aviso p {
+  font-size: 18px;
+  color: #333;
+  margin: 0;
+}
+.btn-carrinho-login {
+  display: inline-block;
+  padding: 12px 32px;
+  background: #000;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.btn-carrinho-login:hover {
+  background: #333;
 }
 
 .controle-qtd {

@@ -81,7 +81,70 @@ export async function login(req, res) {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      cep: user.cep,
+      address: user.address,
+      city: user.city,
+      state: user.state,
       role: user.role
     }
+  });
+}
+
+export async function getProfile(req, res) {
+  const { id } = req.user;
+
+  const result = await pool.query(`
+    SELECT id, name, email, phone, cep, address, city, state, role, created_at
+    FROM users WHERE id = $1
+  `, [id]);
+
+  const user = result.rows[0];
+
+  if (!user) {
+    return res.status(404).json({
+      message: 'Usuário não encontrado.'
+    });
+  }
+
+  res.json(user);
+}
+
+export async function updateProfile(req, res) {
+  const { id } = req.user;
+  const { name, phone, cep, address, city, state } = req.body;
+
+  if (!name) {
+    return res.status(400).json({
+      message: 'Nome é obrigatório.'
+    });
+  }
+
+  const result = await pool.query(`
+    UPDATE users
+    SET name = $1, phone = $2, cep = $3, address = $4, city = $5,
+        state = $6, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $7
+    RETURNING id, name, email, phone, cep, address, city, state, role
+  `, [
+    name,
+    phone || null,
+    cep || null,
+    address || null,
+    city || null,
+    state || null,
+    id
+  ]);
+
+  if (result.rowCount === 0) {
+    return res.status(404).json({
+      message: 'Usuário não encontrado.'
+    });
+  }
+
+  const updatedUser = result.rows[0];
+
+  res.json({
+    message: 'Perfil atualizado com sucesso.',
+    user: updatedUser
   });
 }

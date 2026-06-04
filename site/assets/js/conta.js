@@ -1,92 +1,64 @@
-/* conta.js — página de conta do usuário */
+var API_BASE = 'http://localhost:3333';
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut,
-  updateProfile,
-  signInWithPopup,
-  GoogleAuthProvider
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAyj29lNCOxeXt0RFhFfDfJIy8AY9_-Wu4",
-  authDomain: "bdcasasopimenta.firebaseapp.com",
-  projectId: "bdcasasopimenta",
-  storageBucket: "bdcasasopimenta.firebasestorage.app",
-  messagingSenderId: "956041780013",
-  appId: "1:956041780013:web:0a2f9f138118b3639dd1a4"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider();
-
-export async function getUserProfile(uid) {
-  try {
-    const snap = await getDoc(doc(db, 'usuarios', uid));
-    if (snap.exists()) {
-      return snap.data();
-    }
-  } catch {
-    /* falha silenciosa */
-  }
-  return {
-    nome: '',
-    telefone: '',
-    cep: '',
-    endereco: '',
-    cidade: '',
-    estado: '',
-    bairro: '',
-    email: ''
-  };
+function getToken() {
+  return localStorage.getItem('csp_admin_token');
 }
 
-/* ── Formata CEP enquanto digita ── */
+function getAuthHeaders() {
+  var token = getToken();
+  return token ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+}
+
+export async function getUserProfile() {
+  var token = getToken();
+  if (!token) return null;
+
+  try {
+    var res = await fetch(API_BASE + '/api/auth/profile', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    if (!res.ok) return null;
+
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 function formatarCEP(valor) {
   return valor.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
 }
 
-/* ── Formata telefone enquanto digita ── */
 function formatarTelefone(valor) {
-  const nums = valor.replace(/\D/g, '').slice(0, 11);
+  var nums = valor.replace(/\D/g, '').slice(0, 11);
   if (nums.length <= 10) {
     return nums.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').trim();
   }
   return nums.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').trim();
 }
 
-/* ── Busca endereço pelo CEP ── */
 async function buscarCEP(cep) {
-  const nums = cep.replace(/\D/g, '');
+  var nums = cep.replace(/\D/g, '');
   if (nums.length !== 8) return;
 
-  const infoEl = document.getElementById('infoCep');
+  var infoEl = document.getElementById('infoCep');
   infoEl.textContent = 'Buscando...';
 
   try {
-    const res = await fetch(`https://viacep.com.br/ws/${nums}/json/`);
-    const data = await res.json();
+    var res = await fetch('https://viacep.com.br/ws/' + nums + '/json/');
+    var data = await res.json();
 
     if (data.erro) {
       infoEl.textContent = 'CEP não encontrado.';
       infoEl.style.color = '#c53b22';
     } else {
-      const endereco = data.logradouro || '';
-      const bairro = data.bairro || '';
-      const cidade = data.localidade || '';
-      const estado = data.uf || '';
+      var endereco = data.logradouro || '';
+      var bairro = data.bairro || '';
+      var cidade = data.localidade || '';
+      var estado = data.uf || '';
 
-      infoEl.textContent = `${endereco ? endereco + ', ' : ''}${bairro ? bairro + ' — ' : ''}${cidade}/${estado}`;
+      infoEl.textContent = (endereco ? endereco + ', ' : '') + (bairro ? bairro + ' — ' : '') + cidade + '/' + estado;
       infoEl.style.color = '#555';
 
       if (document.getElementById('endereco')) document.getElementById('endereco').value = endereco;
@@ -100,10 +72,25 @@ async function buscarCEP(cep) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+  var userData = localStorage.getItem('csp_admin_user');
 
-  /* ── Máscaras nos inputs ── */
-  const inputTel = document.getElementById('telefone');
-  const inputCep = document.getElementById('cep');
+  if (!userData || !getToken()) {
+    window.location.href = '/site/pages/login/index.html';
+    return;
+  }
+
+  var currentUser = JSON.parse(userData);
+
+  document.getElementById('nomeUsuario').textContent = currentUser.name || 'Usuário';
+  document.getElementById('emailUsuario').textContent = currentUser.email;
+  document.getElementById('inputNome').value = currentUser.name || '';
+  document.getElementById('email').value = currentUser.email;
+
+  var avatar = document.getElementById('contaAvatar');
+  if (avatar) avatar.remove();
+
+  var inputTel = document.getElementById('telefone');
+  var inputCep = document.getElementById('cep');
 
   inputTel.addEventListener('input', function () {
     this.value = formatarTelefone(this.value);
@@ -118,103 +105,84 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  /* ── Observa estado de autenticação ── */
-  onAuthStateChanged(auth, async function (user) {
-    if (!user) {
-      window.location.href = '/site/pages/login/index.html';
+  /* Carrega perfil completo da API */
+  fetch(API_BASE + '/api/auth/profile', {
+    headers: { 'Authorization': 'Bearer ' + getToken() }
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (perfil) {
+      if (!perfil || perfil.message) return;
+
+      if (perfil.phone) inputTel.value = perfil.phone;
+      if (perfil.cep) {
+        inputCep.value = perfil.cep;
+        buscarCEP(perfil.cep);
+      }
+      if (perfil.address && document.getElementById('endereco')) document.getElementById('endereco').value = perfil.address;
+      if (perfil.city && document.getElementById('cidade')) document.getElementById('cidade').value = perfil.city;
+      if (perfil.state && document.getElementById('estado')) document.getElementById('estado').value = perfil.state;
+    })
+    .catch(function () {});
+
+  /* Salvar alterações */
+  var btnSalvar = document.getElementById('btnSalvar');
+
+  btnSalvar.addEventListener('click', function () {
+    var self = this;
+    var novoNome = document.getElementById('inputNome').value.trim();
+    var telefone = inputTel.value.trim();
+    var cep = inputCep.value.trim();
+    var endereco = document.getElementById('endereco') ? document.getElementById('endereco').value.trim() : '';
+    var cidade = document.getElementById('cidade') ? document.getElementById('cidade').value.trim() : '';
+    var estado = document.getElementById('estado') ? document.getElementById('estado').value.trim() : '';
+    var msgEl = document.getElementById('msgSalvar');
+
+    if (!novoNome) {
+      msgEl.textContent = 'O nome não pode ficar vazio.';
+      msgEl.style.color = '#c53b22';
       return;
     }
 
-    /* Preenche nome e email (vindo do Auth) */
-    document.getElementById('nomeUsuario').textContent = user.displayName || 'Usuário';
-    document.getElementById('emailUsuario').textContent = user.email;
-    document.getElementById('inputNome').value = user.displayName || '';
-    document.getElementById('email').value = user.email;
+    self.textContent = 'Salvando...';
+    self.disabled = true;
 
-    const avatar = document.getElementById('contaAvatar');
-    if (avatar) avatar.remove();
-
-    /* Busca dados extras no Firestore */
-    try {
-      const snap = await getDoc(doc(db, 'usuarios', user.uid));
-      if (snap.exists()) {
-        const dados = snap.data();
-        if (dados.telefone) inputTel.value = dados.telefone;
-        if (dados.cep) {
-          inputCep.value = dados.cep;
-          buscarCEP(dados.cep);
+    fetch(API_BASE + '/api/auth/profile', {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        name: novoNome,
+        phone: telefone,
+        cep: cep,
+        address: endereco,
+        city: cidade,
+        state: estado
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.message === 'Perfil atualizado com sucesso.') {
+          localStorage.setItem('csp_admin_user', JSON.stringify(data.user));
+          document.getElementById('nomeUsuario').textContent = novoNome;
+          msgEl.textContent = '✓ Dados salvos com sucesso!';
+          msgEl.style.color = '#2e7d32';
+        } else {
+          throw new Error(data.message || 'Erro ao salvar.');
         }
-        if (dados.endereco && document.getElementById('endereco')) document.getElementById('endereco').value = dados.endereco;
-        if (dados.bairro && document.getElementById('bairro')) document.getElementById('bairro').value = dados.bairro;
-        if (dados.cidade && document.getElementById('cidade')) document.getElementById('cidade').value = dados.cidade;
-        if (dados.estado && document.getElementById('estado')) document.getElementById('estado').value = dados.estado;
-      }
-      } catch {
-        /* falha silenciosa */
-      }
-
-    /* ── Salvar alterações ── */
-    document.getElementById('btnSalvar').addEventListener('click', async function () {
-      const novoNome = document.getElementById('inputNome').value.trim();
-      const telefone = inputTel.value.trim();
-      const cep      = inputCep.value.trim();
-      const endereco = document.getElementById('endereco') ? document.getElementById('endereco').value.trim() : '';
-      const bairro   = document.getElementById('bairro') ? document.getElementById('bairro').value.trim() : '';
-      const cidade   = document.getElementById('cidade') ? document.getElementById('cidade').value.trim() : '';
-      const estado   = document.getElementById('estado') ? document.getElementById('estado').value.trim() : '';
-      const msgEl    = document.getElementById('msgSalvar');
-
-      if (!novoNome) {
-        msgEl.textContent = 'O nome não pode ficar vazio.';
-        msgEl.style.color = '#c53b22';
-        return;
-      }
-
-      this.textContent = 'Salvando...';
-      this.disabled = true;
-
-      try {
-        await updateProfile(user, { displayName: novoNome });
-
-        await setDoc(doc(db, 'usuarios', user.uid), {
-          nome: novoNome,
-          telefone,
-          cep,
-          endereco,
-          bairro,
-          cidade,
-          estado,
-          email: user.email
-        }, { merge: true });
-
-        document.getElementById('nomeUsuario').textContent = novoNome;
-        msgEl.textContent = '✓ Dados salvos com sucesso!';
-        msgEl.style.color = '#2e7d32';
-      } catch {
+      })
+      .catch(function () {
         msgEl.textContent = 'Erro ao salvar. Tente novamente.';
         msgEl.style.color = '#c53b22';
-      }
-
-      this.textContent = 'Salvar alterações';
-      this.disabled = false;
-
-      setTimeout(function () { msgEl.textContent = ''; }, 3000);
-    });
-
-    /* ── Trocar conta (Google) ── */
-    document.getElementById('btnTrocarConta').addEventListener('click', function () {
-      signOut(auth).then(function () {
-        signInWithPopup(auth, googleProvider)
-          .then(function () { window.location.href = '/site/pages/conta/index.html'; })
-          .catch(function () { window.location.href = '/site/pages/login/index.html'; });
+      })
+      .finally(function () {
+        self.textContent = 'Salvar alterações';
+        self.disabled = false;
       });
-    });
+  });
 
-    /* ── Sair da conta ── */
-    document.getElementById('btnSair').addEventListener('click', function () {
-      signOut(auth).then(function () {
-        window.location.href = '/site/pages/index.html';
-      });
-    });
+  /* Sair da conta */
+  document.getElementById('btnSair').addEventListener('click', function () {
+    localStorage.removeItem('csp_admin_token');
+    localStorage.removeItem('csp_admin_user');
+    window.location.href = '/site/pages/index.html';
   });
 });

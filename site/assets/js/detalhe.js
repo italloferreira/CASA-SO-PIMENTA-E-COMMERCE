@@ -1,7 +1,5 @@
 /* detalhe.js — página de detalhe do produto */
 
-import { renderizarCarrinho, atualizarBadgeCarrinho, salvarCarrinho } from './carrinho.js';
-
 document.addEventListener('DOMContentLoaded', function () {
   const params = new URLSearchParams(window.location.search);
   const produtoId = params.get('id');
@@ -37,6 +35,13 @@ document.addEventListener('DOMContentLoaded', function () {
           <h1>${produto.name}</h1>
 
           <p class="produto-preco">R$ ${valorFormatado}</p>
+
+          ${produto.stock !== null && produto.stock !== undefined ? `
+          <div class="produto-estoque">
+            <h3>Estoque</h3>
+            <p class="${Number(produto.stock) > 0 ? 'estoque-disponivel' : 'estoque-indisponivel'}">${Number(produto.stock) > 0 ? 'Disponível' : 'Indisponível'}</p>
+          </div>
+          ` : ''}
 
           <div class="produto-descricao">
             <h3>Descrição</h3>
@@ -138,9 +143,9 @@ window.adicionarAoCarrinhoDetalhe = function () {
     });
   }
 
-  salvarCarrinho(carrinho);
-  renderizarCarrinho();
-  atualizarBadgeCarrinho();
+  window.salvarCarrinho(carrinho);
+  window.renderizarCarrinho();
+  window.atualizarBadgeCarrinho();
 
   const btn = document.querySelector('.btn-add-carrinho');
   const textoOriginal = btn.innerHTML;

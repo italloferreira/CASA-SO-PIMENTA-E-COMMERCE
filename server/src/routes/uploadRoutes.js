@@ -38,7 +38,20 @@ router.post(
   '/',
   authMiddleware,
   adminMiddleware,
-  upload.single('image'),
+  function (req, res, next) {
+    upload.single('image')(req, res, function (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ message: 'Arquivo muito grande. Máximo permitido: 2 MB.' });
+        }
+        return res.status(400).json({ message: err.message });
+      }
+      if (err) {
+        return res.status(400).json({ message: err.message });
+      }
+      next();
+    });
+  },
   (req, res) => {
     if (!req.file) {
       return res.status(400).json({
@@ -46,12 +59,13 @@ router.post(
       });
     }
 
-  const imageUrl = `/uploads/${req.file.filename}`;
+    const imageUrl = `/uploads/${req.file.filename}`;
 
-  res.status(201).json({
-    message: 'Imagem enviada com sucesso.',
-    image_url: imageUrl
-  });
-});
+    res.status(201).json({
+      message: 'Imagem enviada com sucesso.',
+      image_url: imageUrl
+    });
+  }
+);
 
 export default router;
