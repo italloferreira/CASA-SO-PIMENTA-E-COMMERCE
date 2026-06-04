@@ -1,11 +1,18 @@
 import { pool } from '../database/connection.js';
 
 export async function listKits(req, res) {
-  const result = await pool.query(`
-    SELECT * FROM kits
-    ORDER BY created_at DESC
-  `);
+  const { active } = req.query;
 
+  let sql = 'SELECT * FROM kits';
+  const params = [];
+
+  if (active === 'true') {
+    sql += ' WHERE is_active = 1';
+  }
+
+  sql += ' ORDER BY created_at DESC';
+
+  const result = await pool.query(sql, params);
   res.json(result.rows);
 }
 

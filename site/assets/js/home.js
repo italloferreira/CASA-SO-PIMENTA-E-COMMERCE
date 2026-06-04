@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const cartoesSection = document.getElementById('cartoes-section');
 
   if (cartoesSection) {
-    fetch('http://localhost:3333/api/kits')
+    fetch('http://localhost:3333/api/kits?active=true')
       .then(function (resposta) { return resposta.json(); })
       .then(function (kits) {
         if (kits.length === 0) {
