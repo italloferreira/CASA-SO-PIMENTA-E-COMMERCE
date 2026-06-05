@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casa Só Pimenta / Checkout</title>
+  <link rel="stylesheet" href="/site/assets/css/checkout.css">
+</head>
+
+<body>
+  <header>
+    <a href="/site/pages/index.html" class="logo-section"><img src="/site/imgs/logo.jpeg" alt="Logo"></a>
+
+    <section class="categoria-section">
+      <ul class="menu-principal">
+        <li><a href="/site/pages/index.html">Home</a></li>
+        <li><a href="/site/pages/produtos/pimentas/index.html">Pimentas</a></li>
+
+        <li class="dropdown">
+          <button class="dropdown-btn">
+            Produtos naturais
+            <img src="/site/imgs/icones/seta-baixo.png" alt="">
+          </button>
+          <ul class="submenu">
+            <li><a href="/site/pages/produtos/produtosNaturais/farinhas/index.html">Farinhas</a></li>
+            <li><a href="/site/pages/produtos/produtosNaturais/castanhas/index.html">Castanhas</a></li>
+          </ul>
+        </li>
+
+        <li><a href="/site/pages/produtos/temperos/index.html">Temperos</a></li>
+        <li><a href="/site/pages/produtos/outro/index.html">Outros</a></li>
+        <li><a href="/site/pages/sobre/index.html">Sobre</a></li>
+      </ul>
+    </section>
+
+    <a href="#" class="carrinho-section" id="abrirCarrinho">
+      <div class="carrinho-wrapper">
+        <img src="/site/imgs/icones/carrinho.png" alt="Carrinho">
+        <span class="badge-carrinho" id="badgeCarrinho">0</span>
+      </div>
+    </a>
+
+    <a href="/site/pages/login/index.html" class="usuario-section">
+      <img src="/site/imgs/icones/usuario.svg" alt="">
+      <p>Login/Cadastrar</p>
+    </a>
+  </header>
+
+  <main>
+    <div class="checkout-container" id="checkoutContainer">
+
+      <!-- TELA DE CONFIRMAÇÃO (oculta inicialmente) -->
+      <div class="checkout-confirmacao" id="checkoutConfirmacao" style="display:none;">
+        <div class="confirmacao-icon">&#10004;</div>
+        <h1>Pedido #<span id="confirmacaoPedidoId"></span> confirmado!</h1>
+        <p class="confirmacao-subtitle">Seu pedido foi recebido e está sendo processado.</p>
+
+        <div class="confirmacao-detalhes">
+          <div class="confirmacao-info">
+            <h3>Cliente</h3>
+            <p id="confirmacaoCliente"></p>
+          </div>
+          <div class="confirmacao-info">
+            <h3>Pagamento</h3>
+            <p id="confirmacaoPagamento"></p>
+          </div>
+          <div class="confirmacao-info">
+            <h3>Entrega</h3>
+            <p id="confirmacaoEntrega"></p>
+          </div>
+          <div class="confirmacao-info">
+            <h3>Total</h3>
+            <p class="confirmacao-total" id="confirmacaoTotal"></p>
+          </div>
+        </div>
+
+        <div class="confirmacao-pix" id="confirmacaoPix" style="display:none;">
+          <div class="pix-qr-placeholder">
+            <img src="/site/imgs/icones/pagamento/pix.png" alt="PIX">
+            <p>Escaneie o QR Code abaixo para pagar</p>
+          </div>
+          <div class="pix-copia-cola">
+            <span id="pixCodigo">00020126580014br.gov.bcb.pix0136a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8f9204081234565204000053039865406123.005802BR5913Casa So Pimenta6009SAOPAULO62070503***63041234</span>
+            <button class="btn-copiar" onclick="copiarChavePix()">Copiar código</button>
+          </div>
+        </div>
+
+        <div class="confirmacao-boleto" id="confirmacaoBoleto" style="display:none;">
+          <button class="btn-boleto" onclick="alert('Boleto gerado com sucesso! O link foi enviado para seu e-mail.')">&#128196; Baixar boleto</button>
+        </div>
+
+        <a href="/site/pages/index.html" class="btn-continuar">Continuar comprando</a>
+      </div>
+
+      <!-- FORMULÁRIO DE CHECKOUT -->
+      <div class="checkout-form" id="checkoutForm">
+        <h1 class="checkout-titulo">Finalizar pedido</h1>
+
+        <!-- INDICADOR DE PROGRESSO -->
+        <div class="checkout-steps">
+          <div class="step-item ativo" data-step="1">
+            <div class="step-circle">1</div>
+            <span class="step-label">Identificação</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item" data-step="2">
+            <div class="step-circle">2</div>
+            <span class="step-label">Entrega</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item" data-step="3">
+            <div class="step-circle">3</div>
+            <span class="step-label">Pagamento</span>
+          </div>
+        </div>
+
+        <!-- CONTEÚDO DO CHECKOUT (2 colunas) -->
+        <div class="checkout-layout">
+          <!-- COLUNA ESQUERDA: FORMULÁRIO -->
+          <div class="checkout-form-col">
+
+            <!-- ETAPA 1: Identificação -->
+            <div class="checkout-panel ativo" id="etapa1">
+              <div class="panel-header">
+                <h2>1. Identificação</h2>
+                <div class="panel-seguro">&#128274; Dados da sua conta</div>
+              </div>
+              <div class="panel-body">
+                <div class="checkout-bemvindo" id="bemVindoBanner">
+                  <span id="bemVindoTexto"></span>
+                  <button class="btn-sair-conta" onclick="sairDaConta()">Sair da conta</button>
+                </div>
+
+                <div class="campo-grupo">
+                  <label for="inputNome">Nome completo *</label>
+                  <input type="text" id="inputNome" readonly>
+                  <span class="campo-erro" id="erroNome"></span>
+                </div>
+
+                <div class="campo-grupo">
+                  <label for="inputEmail">E-mail *</label>
+                  <input type="email" id="inputEmail" readonly>
+                  <span class="campo-erro" id="erroEmail"></span>
+                </div>
+
+                <div class="campo-grupo">
+                  <label for="inputTelefone">Telefone *</label>
+                  <input type="text" id="inputTelefone" readonly maxlength="15">
+                  <span class="campo-erro" id="erroTelefone"></span>
+                </div>
+
+                <button class="btn-editar-dados" id="btnEditarDados" onclick="toggleEditarDados()">&#9998; Editar dados</button>
+                <button class="btn-salvar-dados" id="btnSalvarDados" onclick="salvarDadosPerfil()" style="display:none;">&#10003; Salvar dados</button>
+              </div>
+            </div>
+
+            <!-- ETAPA 2: Entrega -->
+            <div class="checkout-panel" id="etapa2">
+              <div class="panel-header">
+                <h2>2. Entrega</h2>
+              </div>
+              <div class="panel-body">
+                <div class="campo-grupo cep-grupo">
+                  <label for="inputCep">CEP *</label>
+                  <div class="cep-input-row">
+                    <input type="text" id="inputCep" maxlength="9" placeholder="00000-000">
+                    <button class="btn-buscar-cep" id="btnBuscarCep" onclick="buscarCEP()">Buscar</button>
+                  </div>
+                  <span class="campo-erro" id="erroCep"></span>
+                  <span class="info-cep" id="infoCep"></span>
+                </div>
+
+                <div class="campo-grupo">
+                  <label for="inputEndereco">Endereço *</label>
+                  <input type="text" id="inputEndereco" placeholder="Rua, Avenida..." readonly>
+                  <span class="campo-erro" id="erroEndereco"></span>
+                </div>
+
+                <div class="campo-row">
+                  <div class="campo-grupo campo-pequeno">
+                    <label for="inputNumero">Número *</label>
+                    <input type="text" id="inputNumero" placeholder="Nº">
+                    <span class="campo-erro" id="erroNumero"></span>
+                  </div>
+                  <div class="campo-grupo campo-pequeno">
+                    <label for="inputComplemento">Complemento</label>
+                    <input type="text" id="inputComplemento" placeholder="Apto, Bloco...">
+                  </div>
+                </div>
+
+                <div class="campo-grupo">
+                  <label for="inputBairro">Bairro</label>
+                  <input type="text" id="inputBairro" readonly>
+                </div>
+
+                <div class="campo-row">
+                  <div class="campo-grupo campo-medio">
+                    <label for="inputCidade">Cidade *</label>
+                    <input type="text" id="inputCidade" readonly>
+                    <span class="campo-erro" id="erroCidade"></span>
+                  </div>
+                  <div class="campo-grupo campo-pequeno">
+                    <label for="inputEstado">Estado *</label>
+                    <input type="text" id="inputEstado" readonly maxlength="2">
+                    <span class="campo-erro" id="erroEstado"></span>
+                  </div>
+                </div>
+
+                <div class="frete-opcoes" id="freteOpcoes">
+                  <h3>Opções de frete</h3>
+                  <div class="frete-card" data-valor="0" data-tipo="retirada" onclick="selecionarFrete(this)">
+                    <div class="frete-radio"></div>
+                    <div class="frete-info">
+                      <strong>Retirada no local</strong>
+                      <span>Gratuito</span>
+                    </div>
+                    <div class="frete-valor">R$ 0,00</div>
+                  </div>
+                  <div class="frete-card" data-valor="0" data-tipo="padrao" onclick="selecionarFrete(this)">
+                    <div class="frete-radio"></div>
+                    <div class="frete-info">
+                      <strong>Entrega padrão</strong>
+                      <span id="fretePrazo">Consulte o CEP</span>
+                    </div>
+                    <div class="frete-valor" id="freteValor">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ETAPA 3: Pagamento -->
+            <div class="checkout-panel" id="etapa3">
+              <div class="panel-header">
+                <h2>3. Pagamento</h2>
+              </div>
+              <div class="panel-body">
+                <div class="pagamento-opcoes">
+                  <div class="pagamento-card" data-metodo="pix" onclick="selecionarPagamento(this)">
+                    <div class="pagamento-radio"></div>
+                    <div class="pagamento-icon">
+                      <img src="/site/imgs/icones/pagamento/pix.png" alt="PIX">
+                    </div>
+                    <div class="pagamento-info">
+                      <strong>PIX</strong>
+                      <span>Aprovação imediata &middot; <span class="desconto-destaque">5% de desconto</span></span>
+                    </div>
+                  </div>
+
+                  <div class="pagamento-card" data-metodo="cartao" onclick="selecionarPagamento(this)">
+                    <div class="pagamento-radio"></div>
+                    <div class="pagamento-icon">
+                      <img src="/site/imgs/icones/pagamento/masterCard.jpg" alt="Cartão">
+                    </div>
+                    <div class="pagamento-info">
+                      <strong>Cartão de Crédito</strong>
+                      <span>Em até 3x sem juros</span>
+                    </div>
+                  </div>
+
+                  <div class="pagamento-card" data-metodo="boleto" onclick="selecionarPagamento(this)">
+                    <div class="pagamento-radio"></div>
+                    <div class="pagamento-icon">
+                      <img src="/site/imgs/icones/pagamento/elo.png" alt="Boleto">
+                    </div>
+                    <div class="pagamento-info">
+                      <strong>Boleto Bancário</strong>
+                      <span>Vencimento em 3 dias úteis</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- PIX detalhes -->
+                <div class="pagamento-detalhes" id="detalhesPix" style="display:none;">
+                  <div class="pix-qr-placeholder">
+                    <img src="/site/imgs/icones/pagamento/pix.png" alt="PIX QR Code">
+                    <p>Pague com PIX escaneando o QR Code</p>
+                  </div>
+                  <div class="pix-copia-cola">
+                    <span id="pixCodigoForm">00020126580014br.gov.bcb.pix0136a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8f9204081234565204000053039865406123.005802BR5913Casa So Pimenta6009SAOPAULO62070503***63041234</span>
+                    <button class="btn-copiar" onclick="copiarChavePixForm()">Copiar código</button>
+                  </div>
+                </div>
+
+                <!-- Cartão detalhes -->
+                <div class="pagamento-detalhes" id="detalhesCartao" style="display:none;">
+                  <div class="cartao-preview" id="cartaoPreview">
+                    <div class="cartao-preview-frente">
+                      <div class="cartao-chip"></div>
+                      <div class="cartao-numero" id="previewNumero">•••• •••• •••• ••••</div>
+                      <div class="cartao-validade" id="previewValidade">MM/AA</div>
+                      <div class="cartao-nome" id="previewNome">SEU NOME</div>
+                    </div>
+                    <div class="cartao-preview-verso">
+                      <div class="cartao-cvv" id="previewCvv">•••</div>
+                    </div>
+                  </div>
+
+                  <div class="campo-grupo">
+                    <label for="inputCartaoNumero">Número do cartão *</label>
+                    <input type="text" id="inputCartaoNumero" maxlength="19" placeholder="0000 0000 0000 0000">
+                    <span class="campo-erro" id="erroCartaoNumero"></span>
+                  </div>
+
+                  <div class="campo-grupo">
+                    <label for="inputCartaoNome">Nome no cartão *</label>
+                    <input type="text" id="inputCartaoNome" placeholder="Como está no cartão">
+                    <span class="campo-erro" id="erroCartaoNome"></span>
+                  </div>
+
+                  <div class="campo-row">
+                    <div class="campo-grupo campo-pequeno">
+                      <label for="inputCartaoValidade">Validade *</label>
+                      <input type="text" id="inputCartaoValidade" maxlength="5" placeholder="MM/AA">
+                      <span class="campo-erro" id="erroCartaoValidade"></span>
+                    </div>
+                    <div class="campo-grupo campo-pequeno">
+                      <label for="inputCartaoCvv">CVV *</label>
+                      <div class="cvv-input-row">
+                        <input type="password" id="inputCartaoCvv" maxlength="4" placeholder="•••">
+                        <button class="btn-toggle-cvv" onclick="toggleCvv()">&#128065;</button>
+                      </div>
+                      <span class="campo-erro" id="erroCartaoCvv"></span>
+                    </div>
+                  </div>
+
+                  <div class="campo-grupo">
+                    <label for="selectParcelas">Parcelas</label>
+                    <select id="selectParcelas" onchange="atualizarResumo()">
+                      <option value="1">1x de R$ 0,00</option>
+                      <option value="2">2x de R$ 0,00 sem juros</option>
+                      <option value="3">3x de R$ 0,00 sem juros</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Boleto detalhes -->
+                <div class="pagamento-detalhes" id="detalhesBoleto" style="display:none;">
+                  <div class="boleto-info">
+                    <p>O boleto terá vencimento em <strong>3 dias úteis</strong> e poderá ser pago em qualquer banco, casa lotérica ou aplicativo.</p>
+                    <p>Após a confirmação do pedido, você poderá baixar o boleto.</p>
+                    <div class="selos-seguranca">
+                      <span>&#128274; Compra 100% segura</span>
+                      <div class="bandeiras">
+                        <img src="/site/imgs/icones/pagamento/visa.webp" alt="Visa">
+                        <img src="/site/imgs/icones/pagamento/masterCard.jpg" alt="Mastercard">
+                        <img src="/site/imgs/icones/pagamento/elo.png" alt="Elo">
+                        <img src="/site/imgs/icones/pagamento/pix.png" alt="PIX">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- NAVEGAÇÃO ENTRE ETAPAS -->
+            <div class="checkout-navegacao">
+              <button class="btn-voltar-etapa" id="btnVoltarEtapa" onclick="etapaAnterior()" style="display:none;">&larr; Voltar</button>
+              <button class="btn-proxima-etapa" id="btnProximaEtapa" onclick="proximaEtapa()">Próxima etapa</button>
+            </div>
+
+          </div>
+
+          <!-- COLUNA DIREITA: RESUMO DO PEDIDO -->
+          <div class="checkout-resumo-col">
+            <div class="checkout-resumo" id="checkoutResumo">
+              <h3>Resumo do pedido</h3>
+              <div class="resumo-itens" id="resumoItens"></div>
+              <div class="resumo-linhas">
+                <div class="resumo-linha">
+                  <span>Subtotal</span>
+                  <span id="resumoSubtotal">R$ 0,00</span>
+                </div>
+                <div class="resumo-linha">
+                  <span>Frete</span>
+                  <span id="resumoFrete">— Selecione o CEP</span>
+                </div>
+                <div class="resumo-linha" id="resumoDescontoLinha" style="display:none;">
+                  <span>Desconto PIX (-5%)</span>
+                  <span id="resumoDesconto" style="color:#2d6a4f;">- R$ 0,00</span>
+                </div>
+                <div class="resumo-divisor"></div>
+                <div class="resumo-linha resumo-total">
+                  <span>TOTAL</span>
+                  <span id="resumoTotal">R$ 0,00</span>
+                </div>
+              </div>
+
+              <div class="selos-seguranca resumo-selos">
+                <span>&#128274; Compra 100% segura</span>
+                <div class="bandeiras">
+                  <img src="/site/imgs/icones/pagamento/visa.webp" alt="Visa">
+                  <img src="/site/imgs/icones/pagamento/masterCard.jpg" alt="Mastercard">
+                  <img src="/site/imgs/icones/pagamento/elo.png" alt="Elo">
+                  <img src="/site/imgs/icones/pagamento/pix.png" alt="PIX">
+                </div>
+              </div>
+
+              <button class="btn-confirmar-pedido" id="btnConfirmarPedido" onclick="confirmarPedido()">
+                <span class="btn-texto">Confirmar Pedido</span>
+                <span class="btn-spinner" id="btnSpinner" style="display:none;"></span>
+              </button>
+              <p class="termos-texto">Ao confirmar, você concorda com nossos Termos de Uso e Política de Privacidade.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <section class="redes-section">
+      <a href="https://web.facebook.com/casasopimenta?locale=pt_BR" target="_blank" rel="noopener noreferrer">
+        <img src="/site/imgs/icones/redesSociais/facebook.png" alt="facebook">
+      </a>
+      <a href="https://www.tiktok.com/@casa.so.pimenta" target="_blank" rel="noopener noreferrer">
+        <img src="/site/imgs/icones/redesSociais/tik-tok.png" alt="tiktok">
+      </a>
+      <a href="https://www.instagram.com/casasopimenta/" target="_blank" rel="noopener noreferrer">
+        <img src="/site/imgs/icones/redesSociais/instagram.png" alt="instagram">
+      </a>
+    </section>
+
+    <ul class="navegacao-section">
+      <a href=""><li>Onde estamos?</li></a>
+      <a href=""><li>Troca e Devoluções</li></a>
+      <a href=""><li>Políticas de privacidade</li></a>
+    </ul>
+
+    <section class="pagamentos-section">
+      <div><img src="/site/imgs/icones/pagamento/elo.png" alt="Elo"></div>
+      <div><img src="/site/imgs/icones/pagamento/masterCard.jpg" alt="MasterCard"></div>
+      <div><img src="/site/imgs/icones/pagamento/visa.webp" alt="Visa"></div>
+      <div><img src="/site/imgs/icones/pagamento/pix.png" alt="Pix"></div>
+    </section>
+
+    <p>&copy; Copyright Casa Só Pimenta BH - 2026 - Todos os direitos reservados</p>
+  </footer>
+
+  <!-- Carrinho lateral -->
+  <div class="carrinho-overlay" id="carrinhoOverlay"></div>
+
+  <aside class="carrinho-drawer" id="campoCarrinho">
+    <div class="carrinho-topo">
+      <button class="fechar-carrinho" id="fecharCarrinho">
+        <img src="/site/imgs/icones/x.png" alt="Fechar carrinho">
+      </button>
+      <div class="txtCarrinho">
+        <h1>Seu carrinho</h1>
+      </div>
+    </div>
+    <div id="produtoCarrinho" class="produto-carrinho"></div>
+    <div class="carrinho-rodape" id="carrinhoRodape">
+      <div class="total-carrinho">
+        <span>Total:</span>
+        <strong id="totalCarrinho">R$ 0,00</strong>
+      </div>
+      <button class="btn-finalizar-pedido" id="btnFinalizarPedido">Finalizar pedido</button>
+    </div>
+  </aside>
+
+  <script src="/site/assets/js/header.js"></script>
+  <script type="module" src="/site/assets/js/carrinho.js"></script>
+  <script type="module" src="/site/assets/js/auth.js"></script>
+  <script defer src="/site/assets/js/checkout.js"></script>
+</body>
+
+</html>

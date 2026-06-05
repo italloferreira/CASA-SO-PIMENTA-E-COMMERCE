@@ -60,7 +60,7 @@ if (carrinhoOverlay) {
 }
 
 /* ── Finalizar pedido ── */
-async function finalizarPedido() {
+function finalizarPedido() {
   const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
 
   if (carrinho.length === 0) {
@@ -75,74 +75,7 @@ async function finalizarPedido() {
     return;
   }
 
-  var perfil = usuario;
-
-  try {
-    var resPerfil = await fetch('http://localhost:3333/api/auth/profile', {
-      headers: { 'Authorization': 'Bearer ' + getToken() }
-    });
-    if (resPerfil.ok) {
-      perfil = await resPerfil.json();
-    }
-  } catch {}
-
-  if (!perfil.cep || !perfil.address) {
-    window.location.href = '/site/pages/conta/index.html?redirect=checkout';
-    return;
-  }
-
-  const items = carrinho.map(function (item) {
-    return {
-      product_id: Number(item.id),
-      quantity: item.quantidade
-    };
-  });
-
-  const payload = {
-    customer_name: usuario.name || 'Cliente',
-    customer_email: usuario.email || '',
-    customer_phone: perfil.phone || '',
-    cep: perfil.cep || '',
-    address: perfil.address || '',
-    city: perfil.city || '',
-    state: perfil.state || '',
-    items: items,
-    delivery_fee: 0
-  };
-
-  const btn = document.getElementById('btnFinalizarPedido');
-  const textoOriginal = btn.textContent;
-  btn.textContent = 'Enviando...';
-  btn.disabled = true;
-
-  try {
-    const res = await fetch('http://localhost:3333/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || 'Erro ao criar pedido.');
-    }
-
-    localStorage.removeItem('carrinho');
-    renderizarCarrinho();
-    atualizarBadgeCarrinho();
-
-    alert('Pedido #' + data.id + ' realizado com sucesso! Total: R$ ' + Number(data.total).toFixed(2).replace('.', ','));
-
-    campoCarrinho.classList.remove('ativo');
-    carrinhoOverlay.classList.remove('ativo');
-    document.body.style.overflow = 'auto';
-  } catch (err) {
-    alert(err.message || 'Erro ao processar pedido. Tente novamente.');
-  }
-
-  btn.textContent = textoOriginal;
-  btn.disabled = false;
+  window.location.href = '/site/pages/checkout/index.html';
 }
 
 /* ── Funções do carrinho ── */
@@ -158,7 +91,8 @@ window.addCarrinho = function (produto) {
       nome: produto.nome,
       valor: Number(produto.valor),
       img: produto.img,
-      quantidade: 1
+      quantidade: 1,
+      tipo: produto.tipo || 'produto'
     });
   }
 

@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
           var produtosHtml = '';
           if (kit.items && kit.items.length > 0) {
-            produtosHtml = '<div class="cartao-produtos"><h1>Produtos</h1><ul>' +
+            produtosHtml = '<div class="cartao-produtos"><h1>Ingredientes</h1><ul>' +
               kit.items.map(function (item) { return '<li>' + (item.custom_name || 'Item') + '</li>'; }).join('') +
               '</ul></div>';
           }
@@ -83,9 +83,11 @@ document.addEventListener('DOMContentLoaded', function () {
             '<img class="cartao-img" src="' + imgSrc + '" alt="' + kit.name + '">' +
             '<h1 class="cartao-h1">' + kit.name + '</h1>' +
             '<div class="cartao-valor"><p>R$</p><h3>' + valorFormatado + '</h3></div>' +
-            '<div class="cartao-ingredientes"><h1>Descrição</h1><p>' + (kit.description || '') + '</p></div>' +
             produtosHtml +
-            '<div class = "conteiner-botao-add-carrinho"><button class="add-carrinho-botao" onclick=\'addCarrinho(' + JSON.stringify({ id: kit.id, nome: kit.name, valor: kit.price, img: imgSrc }) + ')\'><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button></div>' +
+            '<div class = "conteiner-botões-kit">' +
+              '<button class="add-carrinho-botao" onclick=\'addCarrinho(' + JSON.stringify({ id: kit.id, nome: kit.name, valor: kit.price, img: imgSrc, tipo: "kit" }) + ')\'><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
+              '<button class="ver-mais-botao" onclick="window.location.href=\'/site/pages/kits/detalhe/index.html?id=' + kit.id + '\'">Ver mais</button>' +
+            '</div>' +
             '</div>';
         });
       })

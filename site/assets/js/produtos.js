@@ -34,7 +34,8 @@ document.addEventListener('DOMContentLoaded', function () {
               id: produto.id,
               nome: produto.name,
               valor: produto.price,
-              img: imgSrc
+              img: imgSrc,
+              tipo: "produto"
             })})'>
               <img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho">
             </button>

@@ -11,7 +11,8 @@ export async function createOrder(req, res) {
     state,
     items,
     delivery_fee,
-    notes
+    notes,
+    payment_method
   } = req.body;
 
   if (!customer_name || !customer_phone || !items || items.length === 0) {
@@ -94,10 +95,10 @@ export async function createOrder(req, res) {
       INSERT INTO orders (
         user_id, customer_name, customer_email, customer_phone,
         cep, address, city, state,
-        subtotal, delivery_fee, total, notes
+        subtotal, delivery_fee, total, notes, payment_method
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      RETURNING id
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      RETURNING id, total, subtotal, delivery_fee, status, payment_method, created_at
     `, [
       req.user?.id || null,
       customer_name,
@@ -110,7 +111,8 @@ export async function createOrder(req, res) {
       subtotal,
       deliveryFeeValue,
       total,
-      notes || null
+      notes || null,
+      payment_method || 'pix'
     ]);
 
     const orderId = orderResult.rows[0].id;
@@ -132,12 +134,26 @@ export async function createOrder(req, res) {
 
     await client.query('COMMIT');
 
+    const orderData = orderResult.rows[0];
+
     res.status(201).json({
-      id: orderId,
-      message: 'Pedido criado com sucesso.',
-      subtotal,
-      delivery_fee: deliveryFeeValue,
-      total
+      success: true,
+      order: {
+        id: orderData.id,
+        total: Number(orderData.total),
+        subtotal: Number(orderData.subtotal),
+        delivery_fee: Number(orderData.delivery_fee),
+        status: orderData.status,
+        payment_method: orderData.payment_method,
+        created_at: orderData.created_at,
+        customer_name,
+        customer_email,
+        customer_phone,
+        cep,
+        address,
+        city,
+        state
+      }
     });
   } catch (err) {
     await client.query('ROLLBACK');
