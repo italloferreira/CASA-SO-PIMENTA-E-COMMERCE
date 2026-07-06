@@ -1,21 +1,34 @@
 import { protectRoute, showToast } from './admin-auth.js';
+import { apiRequest } from '../../../../assets/js/api.js';
 
 protectRoute();
 
-var STORAGE_KEY = 'csp_admin_coupons';
 var coupons = [];
-var deleteTargetIndex = null;
+var deleteTargetId = null;
 
-function loadCoupons() {
-  try {
-    coupons = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch (e) { coupons = []; }
-  renderCoupons();
+function formatMoney(val) {
+  return 'R$ ' + Number(val).toFixed(2).replace('.', ',');
 }
 
-function saveCoupons() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(coupons));
-  renderCoupons();
+function formatDiscount(c) {
+  if (c.discount_type === 'percentage') {
+    return Number(c.discount_value).toFixed(2).replace('.', ',') + '%';
+  }
+  return formatMoney(c.discount_value);
+}
+
+function loadCoupons() {
+  document.getElementById('tableContainer').innerHTML = '<div class="empty-state"><span class="empty-icon">◈</span><p>Carregando...</p></div>';
+
+  apiRequest('GET', '/api/coupons')
+    .then(function (data) {
+      coupons = data.coupons;
+      renderCoupons();
+    })
+    .catch(function (err) {
+      document.getElementById('tableContainer').innerHTML = '<div class="empty-state"><span class="empty-icon">◈</span><p>Erro ao carregar cupons.</p></div>';
+      showToast(err.message, 'error');
+    });
 }
 
 function renderCoupons() {
@@ -31,43 +44,46 @@ function renderCoupons() {
     return;
   }
 
-  var rows = filtered.map(function (c, idx) {
-    var realIndex = coupons.indexOf(c);
-    var discount = Number(c.discount).toFixed(2).replace('.', ',');
-    var expires = c.expires ? new Date(c.expires + 'T23:59:59').toLocaleDateString('pt-BR') : '—';
-    var expired = c.expires && new Date(c.expires + 'T23:59:59') < new Date();
+  var rows = filtered.map(function (c) {
+    var expires = c.expires_at ? new Date(c.expires_at).toLocaleDateString('pt-BR') : '—';
+    var expired = c.expires_at && new Date(c.expires_at) < new Date();
     var activeBadge = c.is_active && !expired ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">' + (expired ? 'Expirado' : 'Inativo') + '</span>';
+    var usesInfo = c.max_uses ? (c.times_used + '/' + c.max_uses) : c.times_used;
     return '<tr>' +
       '<td data-label="Código"><strong>' + c.code + '</strong></td>' +
-      '<td data-label="Desconto">R$ ' + discount + '</td>' +
-      '<td data-label="Mínimo">' + (c.min_order ? 'R$ ' + Number(c.min_order).toFixed(2).replace('.', ',') : '—') + '</td>' +
+      '<td data-label="Desconto">' + formatDiscount(c) + '</td>' +
+      '<td data-label="Mínimo">' + (c.min_order_amount ? formatMoney(c.min_order_amount) : '—') + '</td>' +
+      '<td data-label="Usos">' + usesInfo + '</td>' +
       '<td data-label="Validade">' + expires + '</td>' +
       '<td data-label="Status">' + activeBadge + '</td>' +
       '<td data-label="Ações">' +
-        '<button class="btn btn-sm btn-secondary" onclick="window.editCupom(' + realIndex + ')">✎</button> ' +
-        '<button class="btn btn-sm btn-danger" onclick="window.confirmDelete(' + realIndex + ')">✕</button>' +
+        '<button class="btn btn-sm btn-secondary" onclick="window.editCupom(' + c.id + ')">✎</button> ' +
+        '<button class="btn btn-sm btn-danger" onclick="window.confirmDelete(' + c.id + ')">✕</button>' +
       '</td>' +
       '</tr>';
   }).join('');
 
   container.innerHTML =
     '<table class="admin-table"><thead><tr>' +
-    '<th>Código</th><th>Desconto</th><th>Mínimo</th><th>Validade</th><th>Status</th><th>Ações</th>' +
+    '<th>Código</th><th>Desconto</th><th>Mínimo</th><th>Usos</th><th>Validade</th><th>Status</th><th>Ações</th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
-function openModal(index) {
+function openModal(id) {
   document.getElementById('modalOverlay').classList.add('active');
   document.getElementById('modal').classList.add('active');
 
-  if (index !== undefined && index >= 0) {
-    var c = coupons[index];
+  if (id) {
+    var c = coupons.find(function (x) { return x.id === id; });
+    if (!c) return;
     document.getElementById('modalTitle').textContent = 'Editar Cupom';
-    document.getElementById('cupomIndex').value = index;
+    document.getElementById('cupomIndex').value = id;
     document.getElementById('cupomCode').value = c.code;
-    document.getElementById('cupomDiscount').value = c.discount;
-    document.getElementById('cupomMinOrder').value = c.min_order || '';
-    document.getElementById('cupomExpires').value = c.expires || '';
+    document.getElementById('cupomDiscountType').value = c.discount_type || 'fixed';
+    document.getElementById('cupomDiscount').value = c.discount_value;
+    document.getElementById('cupomMinOrder').value = c.min_order_amount || '';
+    document.getElementById('cupomMaxUses').value = c.max_uses || '';
+    document.getElementById('cupomExpires').value = c.expires_at ? c.expires_at.split('T')[0] : '';
     document.getElementById('cupomActive').checked = c.is_active !== false;
   } else {
     document.getElementById('modalTitle').textContent = 'Novo Cupom';
@@ -82,10 +98,10 @@ function closeModal() {
   document.getElementById('modal').classList.remove('active');
 }
 
-window.editCupom = function (index) { openModal(index); };
-window.confirmDelete = function (index) {
-  deleteTargetIndex = index;
-  var c = coupons[index];
+window.editCupom = function (id) { openModal(id); };
+window.confirmDelete = function (id) {
+  deleteTargetId = id;
+  var c = coupons.find(function (x) { return x.id === id; });
   document.getElementById('confirmMessage').textContent = 'Excluir cupom "' + (c ? c.code : '') + '"?';
   document.getElementById('confirmOverlay').classList.add('active');
   document.getElementById('confirmModal').classList.add('active');
@@ -97,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
     this._timer = setTimeout(renderCoupons, 300);
   });
 
-  document.getElementById('btnNovoCupom').addEventListener('click', function () { openModal(undefined); });
+  document.getElementById('btnNovoCupom').addEventListener('click', function () { openModal(null); });
 
   document.getElementById('modalClose').addEventListener('click', closeModal);
   document.getElementById('modalCancel').addEventListener('click', closeModal);
@@ -105,34 +121,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.getElementById('cupomForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    var index = document.getElementById('cupomIndex').value;
+    var id = document.getElementById('cupomIndex').value;
     var payload = {
       code: document.getElementById('cupomCode').value.trim().toUpperCase(),
-      discount: Number(document.getElementById('cupomDiscount').value),
-      min_order: document.getElementById('cupomMinOrder').value ? Number(document.getElementById('cupomMinOrder').value) : null,
-      expires: document.getElementById('cupomExpires').value || null,
-      active: document.getElementById('cupomActive').checked
+      discount_type: document.getElementById('cupomDiscountType').value,
+      discount_value: Number(document.getElementById('cupomDiscount').value),
+      min_order_amount: document.getElementById('cupomMinOrder').value ? Number(document.getElementById('cupomMinOrder').value) : null,
+      max_uses: document.getElementById('cupomMaxUses').value ? Number(document.getElementById('cupomMaxUses').value) : null,
+      expires_at: document.getElementById('cupomExpires').value || null,
+      is_active: document.getElementById('cupomActive').checked
     };
 
-    if (!payload.code || !payload.discount) {
-      showToast('Preencha código e desconto.', 'error');
+    if (!payload.code || !payload.discount_type || !payload.discount_value) {
+      showToast('Preencha código, tipo e valor do desconto.', 'error');
       return;
     }
 
-    if (index !== '' && index >= 0) {
-      coupons[index] = payload;
-      showToast('Cupom atualizado!');
-    } else {
-      if (coupons.some(function (c) { return c.code === payload.code; })) {
-        showToast('Já existe um cupom com este código.', 'error');
-        return;
-      }
-      coupons.push(payload);
-      showToast('Cupom criado!');
-    }
+    var request = id ? apiRequest('PUT', '/api/coupons/' + id, payload) : apiRequest('POST', '/api/coupons', payload);
 
-    saveCoupons();
-    closeModal();
+    request
+      .then(function (data) {
+        showToast(id ? 'Cupom atualizado!' : 'Cupom criado!');
+        closeModal();
+        loadCoupons();
+      })
+      .catch(function (err) {
+        showToast(err.message, 'error');
+      });
   });
 
   document.getElementById('confirmCancel').addEventListener('click', function () {
@@ -144,13 +159,18 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('confirmModal').classList.remove('active');
   });
   document.getElementById('confirmDelete').addEventListener('click', function () {
-    if (deleteTargetIndex !== null) {
-      coupons.splice(deleteTargetIndex, 1);
-      saveCoupons();
-      showToast('Cupom excluído!');
-      document.getElementById('confirmOverlay').classList.remove('active');
-      document.getElementById('confirmModal').classList.remove('active');
-      deleteTargetIndex = null;
+    if (deleteTargetId !== null) {
+      apiRequest('DELETE', '/api/coupons/' + deleteTargetId)
+        .then(function () {
+          showToast('Cupom excluído!');
+          document.getElementById('confirmOverlay').classList.remove('active');
+          document.getElementById('confirmModal').classList.remove('active');
+          deleteTargetId = null;
+          loadCoupons();
+        })
+        .catch(function (err) {
+          showToast(err.message, 'error');
+        });
     }
   });
 

@@ -1,6 +1,6 @@
 /* api.js — módulo central de chamadas à API Express */
 
-const API_BASE = 'http://localhost:3333';
+var API_BASE = window.API_BASE_URL || 'http://localhost:3333';
 
 function apiRequest(method, path, body, isFormData) {
   const url = API_BASE + path;

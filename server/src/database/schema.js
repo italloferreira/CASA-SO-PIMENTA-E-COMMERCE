@@ -6,6 +6,7 @@ export async function createTables() {
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       slug TEXT NOT NULL UNIQUE,
+      color TEXT,
       is_active SMALLINT NOT NULL DEFAULT 1,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -19,6 +20,7 @@ export async function createTables() {
       description TEXT,
       ingredients TEXT,
       price NUMERIC(10,2) NOT NULL,
+      compare_price NUMERIC(10,2),
       stock INTEGER NOT NULL DEFAULT 0,
       image_url TEXT,
       is_active SMALLINT NOT NULL DEFAULT 1,
@@ -146,5 +148,146 @@ export async function createTables() {
 
   await pool.query(`
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'pix';
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_external_id TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS cpf TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS compare_price NUMERIC(10,2);
+  `);
+
+  await pool.query(`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS weight NUMERIC(10,3) NOT NULL DEFAULT 0;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_type TEXT NOT NULL DEFAULT 'delivery';
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS number TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS neighborhood TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS complement TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS total_weight NUMERIC(10,3);
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS selected_box TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_service TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_amount NUMERIC(10,2);
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS box_amount NUMERIC(10,2);
+  `);
+
+  await pool.query(`
+    ALTER TABLE categories ADD COLUMN IF NOT EXISTS color TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_code TEXT UNIQUE;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_code_generated_at TIMESTAMP;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS withdrawn_at TIMESTAMP;
+  `);
+
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        used SMALLINT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `);
+  } catch (err) {
+    console.error('Aviso: tabela password_resets já existe ou não pôde ser criada:', err.message);
+  }
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    INSERT INTO settings (key, value) VALUES
+      ('store_name', 'Casa Só Pimenta'),
+      ('store_description', ''),
+      ('store_logo', '/site/imgs/logo.jpeg'),
+      ('contact_email', ''),
+      ('contact_phone', ''),
+      ('contact_address', 'Rua Exemplo, 123 - Centro'),
+      ('social_instagram', 'casasopimenta'),
+      ('social_facebook', 'casasopimenta'),
+      ('payment_methods', 'PIX,Cartão de Crédito'),
+      ('pix_key', ''),
+      ('pix_key_type', 'CPF'),
+      ('pix_recipient_name', ''),
+      ('free_shipping_from', ''),
+      ('store_hours', 'Seg a Sex: 08h-18h | Sáb: 08h-12h'),
+      ('pix_discount_percent', '5'),
+      ('social_tiktok', 'casa.so.pimenta')
+    ON CONFLICT (key) DO NOTHING;
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS coupons (
+      id SERIAL PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      discount_type TEXT NOT NULL DEFAULT 'fixed' CHECK (discount_type IN ('fixed', 'percentage')),
+      discount_value NUMERIC(10,2) NOT NULL,
+      min_order_amount NUMERIC(10,2),
+      max_uses INTEGER,
+      times_used INTEGER NOT NULL DEFAULT 0,
+      expires_at TIMESTAMP,
+      is_active SMALLINT NOT NULL DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_id INTEGER REFERENCES coupons(id);
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_discount NUMERIC(10,2) NOT NULL DEFAULT 0;
   `);
 }

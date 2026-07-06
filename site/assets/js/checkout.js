@@ -1,14 +1,18 @@
-/* checkout.js — fluxo completo de checkout */
-
-/* ========== CONSTANTES ========== */
-var API = 'http://localhost:3333';
+var API = window.API_BASE_URL || 'http://localhost:3333';
 var etapaAtual = 1;
 var dadosPerfil = null;
 var freteSelecionado = null;
 var metodoPagamento = null;
 var editandoDados = false;
+var pedidoCriado = null;
+var mp = null;
+var cardForm = null;
+var mpPublicKey = '';
+var pixPollingInterval = null;
+var deliveryType = 'delivery';
+var shippingData = null;
+var cupomAplicado = null;
 
-/* ========== HELPERS ========== */
 function getToken() {
   return localStorage.getItem('csp_admin_token');
 }
@@ -30,16 +34,9 @@ function formatarCEP(valor) {
   return valor.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
 }
 
-function formatarCartaoNumero(valor) {
-  return valor.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 ');
-}
-
-function formatarValidade(valor) {
-  var nums = valor.replace(/\D/g, '').slice(0, 4);
-  if (nums.length >= 3) {
-    return nums.slice(0, 2) + '/' + nums.slice(2);
-  }
-  return nums;
+function formatarCPF(valor) {
+  var nums = valor.replace(/\D/g, '').slice(0, 11);
+  return nums.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
 function formatarPreco(valor) {
@@ -62,7 +59,30 @@ function mostrarErro(idCampo, mensagem) {
   if (input) input.classList.add('erro');
 }
 
-/* ========== PROTEÇÃO DE ROTA ========== */
+function mostrarErroInline(mensagem) {
+  var existing = document.querySelector('.erro-inline-pagamento');
+  if (existing) existing.remove();
+  var div = document.createElement('div');
+  div.className = 'erro-inline-pagamento';
+  div.style.cssText = 'background:#fde8e8;color:#860000;padding:12px;border-radius:6px;margin-top:12px;font-size:14px;';
+  div.textContent = mensagem;
+  var target = document.getElementById('detalhesCartao') || document.querySelector('.pagamento-opcoes');
+  if (target) target.parentNode.insertBefore(div, target.nextSibling);
+}
+
+function mostrarLoading(show) {
+  var btn = document.getElementById('btnConfirmarPedido');
+  if (show) {
+    btn.disabled = true;
+    document.querySelector('.btn-texto').textContent = 'Processando...';
+    document.getElementById('btnSpinner').style.display = '';
+  } else {
+    btn.disabled = false;
+    document.querySelector('.btn-texto').textContent = 'Confirmar Pedido';
+    document.getElementById('btnSpinner').style.display = 'none';
+  }
+}
+
 (function () {
   if (!getToken() || !getUsuario()) {
     window.location.href = '/site/pages/login/index.html?redirect=checkout';
@@ -70,7 +90,6 @@ function mostrarErro(idCampo, mensagem) {
   }
 })();
 
-/* ========== CARREGAR PERFIL ========== */
 function carregarPerfil() {
   var banner = document.getElementById('bemVindoTexto');
   var usuario = getUsuario();
@@ -108,8 +127,6 @@ function preencherEntrega(perfil) {
   }
 }
 
-/* ========== ETAPA 1: IDENTIFICAÇÃO ========== */
-
 window.sairDaConta = function () {
   localStorage.removeItem('csp_admin_token');
   localStorage.removeItem('csp_admin_user');
@@ -142,22 +159,10 @@ window.salvarDadosPerfil = function () {
   limparErros();
   var valido = true;
 
-  if (!nome) {
-    mostrarErro('Nome', 'Informe seu nome completo.');
-    valido = false;
-  }
-
+  if (!nome) { mostrarErro('Nome', 'Informe seu nome completo.'); valido = false; }
   var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email || !emailRegex.test(email)) {
-    mostrarErro('Email', 'Informe um e-mail v\u00e1lido.');
-    valido = false;
-  }
-
-  if (!telefone || telefone.replace(/\D/g, '').length < 10) {
-    mostrarErro('Telefone', 'Informe um telefone com DDD.');
-    valido = false;
-  }
-
+  if (!email || !emailRegex.test(email)) { mostrarErro('Email', 'Informe um e-mail v\u00e1lido.'); valido = false; }
+  if (!telefone || telefone.replace(/\D/g, '').length < 10) { mostrarErro('Telefone', 'Informe um telefone com DDD.'); valido = false; }
   if (!valido) return;
 
   var btn = document.getElementById('btnSalvarDados');
@@ -166,10 +171,7 @@ window.salvarDadosPerfil = function () {
 
   fetch(API + '/api/auth/profile', {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + getToken()
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
     body: JSON.stringify({ name: nome, phone: telefone })
   })
     .then(function (r) { return r.json(); })
@@ -180,16 +182,10 @@ window.salvarDadosPerfil = function () {
       }
       window.toggleEditarDados();
     })
-    .catch(function () {
-      mostrarErro('Nome', 'Erro ao salvar. Tente novamente.');
-    })
-    .finally(function () {
-      btn.textContent = '\u2713 Salvar dados';
-      btn.disabled = false;
-    });
+    .catch(function () { mostrarErro('Nome', 'Erro ao salvar. Tente novamente.'); })
+    .finally(function () { btn.textContent = '\u2713 Salvar dados'; btn.disabled = false; });
 };
 
-/* ========== VALIDAÇÃO ETAPA 1 ========== */
 function validarEtapa1() {
   limparErros();
   var valido = true;
@@ -197,27 +193,39 @@ function validarEtapa1() {
   var nome = document.getElementById('inputNome').value.trim();
   var email = document.getElementById('inputEmail').value.trim();
   var telefone = document.getElementById('inputTelefone').value.trim();
+  var cpf = document.getElementById('inputCpf').value.replace(/\D/g, '');
 
-  if (!nome) {
-    mostrarErro('Nome', 'Nome completo é obrigatório.');
-    valido = false;
-  }
-
+  if (!nome) { mostrarErro('Nome', 'Nome completo \u00e9 obrigat\u00f3rio.'); valido = false; }
   var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email || !emailRegex.test(email)) {
-    mostrarErro('Email', 'Informe um e-mail v\u00e1lido.');
-    valido = false;
-  }
+  if (!email || !emailRegex.test(email)) { mostrarErro('Email', 'Informe um e-mail v\u00e1lido.'); valido = false; }
+  if (!telefone || telefone.replace(/\D/g, '').length < 10) { mostrarErro('Telefone', 'Informe um telefone com DDD.'); valido = false; }
 
-  if (!telefone || telefone.replace(/\D/g, '').length < 10) {
-    mostrarErro('Telefone', 'Informe um telefone com DDD.');
+  if (!validarCPF(cpf)) {
+    mostrarErro('Cpf', 'Informe um CPF v\u00e1lido.');
     valido = false;
   }
 
   return valido;
 }
 
-/* ========== ETAPA 2: CEP E FRETE ========== */
+function validarCPF(cpf) {
+  if (!cpf || cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  var soma = 0;
+  for (var i = 0; i < 9; i++) soma += parseInt(cpf.charAt(i)) * (10 - i);
+  var resto = (soma * 10) % 11;
+  if (resto === 10) resto = 0;
+  if (resto !== parseInt(cpf.charAt(9))) return false;
+
+  soma = 0;
+  for (var j = 0; j < 10; j++) soma += parseInt(cpf.charAt(j)) * (11 - j);
+  resto = (soma * 10) % 11;
+  if (resto === 10) resto = 0;
+  if (resto !== parseInt(cpf.charAt(10))) return false;
+
+  return true;
+}
 
 var buscandoCep = false;
 
@@ -227,10 +235,7 @@ window.buscarCEP = function (auto) {
   var erroEl = document.getElementById('erroCep');
   var infoEl = document.getElementById('infoCep');
 
-  if (cep.length !== 8) {
-    erroEl.textContent = 'CEP deve ter 8 d\u00edgitos.';
-    return;
-  }
+  if (cep.length !== 8) { erroEl.textContent = 'CEP deve ter 8 d\u00edgitos.'; return; }
 
   erroEl.textContent = '';
   infoEl.textContent = 'Buscando...';
@@ -240,62 +245,202 @@ window.buscarCEP = function (auto) {
   fetch('https://viacep.com.br/ws/' + cep + '/json/')
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      if (data.erro) {
-        infoEl.textContent = 'CEP n\u00e3o encontrado.';
-        infoEl.style.color = '#860000';
-        return;
-      }
+      if (data.erro) { infoEl.textContent = 'CEP n\u00e3o encontrado.'; infoEl.style.color = '#860000'; return; }
 
-      infoEl.textContent = (data.logradouro || '') + ', ' + (data.bairro || '') + ' — ' + (data.localidade || '') + '/' + (data.uf || '');
+      infoEl.textContent = (data.logradouro || '') + ', ' + (data.bairro || '') + ' \u2014 ' + (data.localidade || '') + '/' + (data.uf || '');
       infoEl.style.color = '#555';
 
       document.getElementById('inputEndereco').value = data.logradouro || '';
       document.getElementById('inputBairro').value = data.bairro || '';
       document.getElementById('inputCidade').value = data.localidade || '';
       document.getElementById('inputEstado').value = data.uf || '';
-
       document.getElementById('inputCep').value = formatarCEP(cep);
 
-      if (!auto) {
-        document.getElementById('inputNumero').focus();
+      if (!auto) { document.getElementById('inputNumero').focus(); }
+
+      if (deliveryType === 'delivery') {
+        calcularFreteDaAPI(cep);
+      }
+    })
+    .catch(function () { infoEl.textContent = 'Erro ao buscar CEP. Tente novamente.'; infoEl.style.color = '#860000'; })
+    .finally(function () { buscandoCep = false; document.getElementById('btnBuscarCep').disabled = false; });
+};
+
+window.selecionarTipoEntrega = function (tipo) {
+  deliveryType = tipo;
+  freteSelecionado = null;
+  shippingData = null;
+
+  document.querySelectorAll('.delivery-option').forEach(function (c) { c.classList.remove('selecionado'); });
+  document.querySelector('.delivery-option[data-delivery="' + tipo + '"]').classList.add('selecionado');
+
+  document.getElementById('deliveryRadioDelivery').textContent = tipo === 'delivery' ? '\u25C9' : '\u25CB';
+  document.getElementById('deliveryRadioPickup').textContent = tipo === 'pickup' ? '\u25C9' : '\u25CB';
+
+  document.getElementById('deliveryAddressFields').style.display = tipo === 'delivery' ? '' : 'none';
+  document.getElementById('pickupInfo').style.display = tipo === 'pickup' ? '' : 'none';
+
+  if (tipo === 'pickup') {
+    freteSelecionado = { tipo: 'retirada', valor: 0 };
+  } else {
+    var cep = document.getElementById('inputCep').value.replace(/\D/g, '');
+    if (cep.length === 8) {
+      calcularFreteDaAPI(cep);
+    }
+  }
+
+  atualizarResumo();
+};
+
+function calcularFreteDaAPI(cep) {
+  var carrinho = getCarrinho();
+  if (carrinho.length === 0) return;
+
+  var freteOpcoes = document.getElementById('freteOpcoes');
+  var freteLista = document.getElementById('freteLista');
+  var freteLoading = document.getElementById('freteLoading');
+  var freteErro = document.getElementById('freteErro');
+
+  freteLista.innerHTML = '';
+  freteErro.style.display = 'none';
+  freteLoading.style.display = '';
+  freteOpcoes.style.display = '';
+  freteSelecionado = null;
+
+  fetch(API + '/api/orders/calculate-shipping', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+    body: JSON.stringify({
+      cep: cep,
+      items: carrinho.map(function (i) { return { product_id: i.tipo === 'kit' ? null : Number(i.id), kit_id: i.tipo === 'kit' ? Number(i.id) : null, quantity: i.quantidade }; })
+    })
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      freteLoading.style.display = 'none';
+      if (!data.success || !data.services || data.services.length === 0) {
+        freteErro.textContent = data.message || 'Nenhuma op\u00e7\u00e3o de frete dispon\u00edvel para este CEP.';
+        freteErro.style.display = '';
+        return;
       }
 
-      calcularFrete(data.uf);
+      shippingData = {
+        selected_box: data.selected_box,
+        services: data.services
+      };
+
+      freteLista.innerHTML = '';
+      data.services.forEach(function (svc) {
+        var card = document.createElement('div');
+        card.className = 'frete-card';
+        card.setAttribute('data-name', svc.name);
+        card.setAttribute('data-service', svc.service);
+        card.setAttribute('data-price', svc.price);
+        card.setAttribute('data-delivery-time', svc.delivery_time);
+        card.setAttribute('data-box', data.selected_box ? data.selected_box.name : '');
+        card.setAttribute('data-box-price', data.selected_box ? data.selected_box.price : 0);
+        card.onclick = function () { selecionarFrete(this); };
+        card.innerHTML =
+          '<div class="frete-radio"></div>' +
+          '<div class="frete-info">' +
+            '<strong>' + svc.name + '</strong>' +
+            '<span>At\u00e9 ' + svc.delivery_time + ' dias \u00fateis</span>' +
+          '</div>' +
+          '<div class="frete-valor">' + formatarPreco(svc.price) + '</div>';
+        freteLista.appendChild(card);
+      });
+
+      if (data.services.length === 1) {
+        selecionarFrete(freteLista.querySelector('.frete-card'));
+      }
     })
     .catch(function () {
-      infoEl.textContent = 'Erro ao buscar CEP. Tente novamente.';
-      infoEl.style.color = '#860000';
+      freteLoading.style.display = 'none';
+      freteErro.textContent = 'Erro ao calcular frete. Tente novamente.';
+      freteErro.style.display = '';
+    });
+}
+
+window.aplicarCupom = function () {
+  var input = document.getElementById('inputCupom');
+  var statusEl = document.getElementById('cupomStatus');
+  var btn = document.getElementById('btnAplicarCupom');
+  var codigo = input.value.trim().toUpperCase();
+
+  if (!codigo) {
+    statusEl.className = 'cupom-status error';
+    statusEl.textContent = 'Digite um código de cupom.';
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.className = 'cupom-status loading';
+  statusEl.textContent = 'Validando...';
+
+  var subtotal = calcularSubtotal();
+
+  fetch(API + '/api/coupons/validate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+    body: JSON.stringify({ code: codigo, subtotal: subtotal })
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.success) throw new Error(data.message || 'Cupom inválido.');
+      cupomAplicado = data.coupon;
+      statusEl.className = 'cupom-status success';
+      statusEl.textContent = 'Cupom aplicado: ' + codigo + ' (' + (data.coupon.discount_type === 'percentage' ? data.coupon.discount_value + '%' : 'R$ ' + Number(data.coupon.discount_value).toFixed(2).replace('.', ',')) + ')';
+      input.readOnly = true;
+      btn.textContent = 'Remover';
+      btn.onclick = removerCupom;
+      atualizarResumo();
+    })
+    .catch(function (err) {
+      cupomAplicado = null;
+      statusEl.className = 'cupom-status error';
+      statusEl.textContent = err.message || 'Erro ao validar cupom.';
     })
     .finally(function () {
-      buscandoCep = false;
-      document.getElementById('btnBuscarCep').disabled = false;
+      btn.disabled = false;
     });
 };
 
-function calcularFrete(estado) {
-  var valorFrete = estado && estado.toUpperCase() === 'MG' ? 15 : 25;
-  var freteCard = document.querySelector('.frete-card[data-tipo="padrao"]');
-  freteCard.setAttribute('data-valor', valorFrete);
-  document.getElementById('freteValor').textContent = formatarPreco(valorFrete);
-  document.getElementById('fretePrazo').textContent = estado && estado.toUpperCase() === 'MG' ? 'Até 5 dias úteis' : 'Até 10 dias úteis';
+function removerCupom() {
+  cupomAplicado = null;
+  var input = document.getElementById('inputCupom');
+  var btn = document.getElementById('btnAplicarCupom');
+  var statusEl = document.getElementById('cupomStatus');
+  input.readOnly = false;
+  input.value = '';
+  statusEl.className = 'cupom-status';
+  statusEl.textContent = '';
+  btn.textContent = 'Aplicar';
+  btn.onclick = aplicarCupom;
+  atualizarResumo();
 }
 
 window.selecionarFrete = function (el) {
-  document.querySelectorAll('.frete-card').forEach(function (c) {
-    c.classList.remove('selecionado');
-  });
+  document.querySelectorAll('.frete-card').forEach(function (c) { c.classList.remove('selecionado'); });
   el.classList.add('selecionado');
   freteSelecionado = {
-    tipo: el.getAttribute('data-tipo'),
-    valor: Number(el.getAttribute('data-valor'))
+    tipo: 'entrega',
+    valor: Number(el.getAttribute('data-price')),
+    service: el.getAttribute('data-service'),
+    name: el.getAttribute('data-name'),
+    delivery_time: Number(el.getAttribute('data-delivery-time')),
+    box: el.getAttribute('data-box'),
+    boxPrice: Number(el.getAttribute('data-box-price'))
   };
   atualizarResumo();
 };
 
-/* ========== VALIDAÇÃO ETAPA 2 ========== */
 function validarEtapa2() {
   limparErros();
   var valido = true;
+
+  if (deliveryType === 'pickup') {
+    return true;
+  }
 
   var cep = document.getElementById('inputCep').value.replace(/\D/g, '');
   var endereco = document.getElementById('inputEndereco').value.trim();
@@ -303,36 +448,17 @@ function validarEtapa2() {
   var cidade = document.getElementById('inputCidade').value.trim();
   var estado = document.getElementById('inputEstado').value.trim();
 
-  if (cep.length !== 8) {
-    mostrarErro('Cep', 'Informe um CEP v\u00e1lido.');
-    valido = false;
-  }
-
-  if (!endereco) {
-    mostrarErro('Endereco', 'Endereço é obrigatório.');
-    valido = false;
-  }
-
-  if (!numero) {
-    mostrarErro('Numero', 'Número é obrigatório.');
-    valido = false;
-  }
-
-  if (!cidade) {
-    mostrarErro('Cidade', 'Cidade é obrigatória.');
-    valido = false;
-  }
-
-  if (!estado || estado.length !== 2) {
-    mostrarErro('Estado', 'Estado é obrigatório (ex: MG).');
-    valido = false;
-  }
+  if (cep.length !== 8) { mostrarErro('Cep', 'Informe um CEP v\u00e1lido.'); valido = false; }
+  if (!endereco) { mostrarErro('Endereco', 'Endere\u00e7o \u00e9 obrigat\u00f3rio.'); valido = false; }
+  if (!numero) { mostrarErro('Numero', 'N\u00famero \u00e9 obrigat\u00f3rio.'); valido = false; }
+  if (!cidade) { mostrarErro('Cidade', 'Cidade \u00e9 obrigat\u00f3ria.'); valido = false; }
+  if (!estado || estado.length !== 2) { mostrarErro('Estado', 'Estado \u00e9 obrigat\u00f3rio (ex: MG).'); valido = false; }
 
   if (!freteSelecionado) {
     var erroFrete = document.querySelector('.frete-opcoes');
     var msg = document.createElement('span');
     msg.className = 'campo-erro';
-    msg.textContent = 'Selecione uma opção de frete.';
+    msg.textContent = 'Selecione uma op\u00e7\u00e3o de frete.';
     msg.style.marginTop = '8px';
     msg.style.display = 'block';
     var existente = erroFrete.querySelector('.campo-erro');
@@ -343,109 +469,27 @@ function validarEtapa2() {
   return valido;
 }
 
-/* ========== ETAPA 3: PAGAMENTO ========== */
-
 window.selecionarPagamento = function (el) {
-  document.querySelectorAll('.pagamento-card').forEach(function (c) {
-    c.classList.remove('selecionado');
-  });
+  document.querySelectorAll('.pagamento-card').forEach(function (c) { c.classList.remove('selecionado'); });
   el.classList.add('selecionado');
   metodoPagamento = el.getAttribute('data-metodo');
 
   document.getElementById('detalhesPix').style.display = metodoPagamento === 'pix' ? '' : 'none';
   document.getElementById('detalhesCartao').style.display = metodoPagamento === 'cartao' ? '' : 'none';
-  document.getElementById('detalhesBoleto').style.display = metodoPagamento === 'boleto' ? '' : 'none';
+
+
+  if (metodoPagamento === 'cartao') {
+    if (!cardForm) {
+      iniciarCardForm();
+    } else {
+      cardForm.unmount();
+      cardForm.mount();
+    }
+  }
 
   atualizarResumo();
 };
 
-/* ========== Cartão ========== */
-document.addEventListener('DOMContentLoaded', function () {
-  var numInput = document.getElementById('inputCartaoNumero');
-  if (numInput) {
-    numInput.addEventListener('input', function () {
-      this.value = formatarCartaoNumero(this.value);
-      document.getElementById('previewNumero').textContent = this.value || '\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022';
-    });
-  }
-
-  var nomeInput = document.getElementById('inputCartaoNome');
-  if (nomeInput) {
-    nomeInput.addEventListener('input', function () {
-      document.getElementById('previewNome').textContent = this.value.toUpperCase() || 'SEU NOME';
-    });
-  }
-
-  var valInput = document.getElementById('inputCartaoValidade');
-  if (valInput) {
-    valInput.addEventListener('input', function () {
-      this.value = formatarValidade(this.value);
-      document.getElementById('previewValidade').textContent = this.value || 'MM/AA';
-    });
-  }
-
-  var cvvInput = document.getElementById('inputCartaoCvv');
-  if (cvvInput) {
-    cvvInput.addEventListener('input', function () {
-      document.getElementById('previewCvv').textContent = this.value || '\u2022\u2022\u2022';
-    });
-
-    cvvInput.addEventListener('focus', function () {
-      document.getElementById('cartaoPreview').classList.add('mostrar-verso');
-    });
-
-    cvvInput.addEventListener('blur', function () {
-      document.getElementById('cartaoPreview').classList.remove('mostrar-verso');
-    });
-  }
-
-  var telefoneInput = document.getElementById('inputTelefone');
-  if (telefoneInput) {
-    telefoneInput.addEventListener('input', function () {
-      this.value = formatarTelefone(this.value);
-    });
-  }
-
-  var cepInput = document.getElementById('inputCep');
-  if (cepInput) {
-    cepInput.addEventListener('input', function () {
-      this.value = formatarCEP(this.value);
-    });
-  }
-});
-
-window.toggleCvv = function () {
-  var input = document.getElementById('inputCartaoCvv');
-  input.type = input.type === 'password' ? 'text' : 'password';
-};
-
-window.copiarChavePix = function () {
-  var texto = document.getElementById('pixCodigo').textContent;
-  navigator.clipboard.writeText(texto).then(function () {
-    var btn = document.querySelector('.confirmacao-pix .btn-copiar');
-    btn.textContent = 'Copiado!';
-    btn.classList.add('copiado');
-    setTimeout(function () {
-      btn.textContent = 'Copiar código';
-      btn.classList.remove('copiado');
-    }, 2000);
-  });
-};
-
-window.copiarChavePixForm = function () {
-  var texto = document.getElementById('pixCodigoForm').textContent;
-  navigator.clipboard.writeText(texto).then(function () {
-    var btn = document.querySelector('#detalhesPix .btn-copiar');
-    btn.textContent = 'Copiado!';
-    btn.classList.add('copiado');
-    setTimeout(function () {
-      btn.textContent = 'Copiar código';
-      btn.classList.remove('copiado');
-    }, 2000);
-  });
-};
-
-/* ========== VALIDAÇÃO ETAPA 3 ========== */
 function validarEtapa3() {
   limparErros();
   var valido = true;
@@ -454,7 +498,7 @@ function validarEtapa3() {
     var pagOpcoes = document.querySelector('.pagamento-opcoes');
     var msg = document.createElement('span');
     msg.className = 'campo-erro';
-    msg.textContent = 'Selecione um método de pagamento.';
+    msg.textContent = 'Selecione um m\u00e9todo de pagamento.';
     msg.style.marginTop = '8px';
     msg.style.display = 'block';
     var existente = pagOpcoes.querySelector('.campo-erro');
@@ -462,49 +506,14 @@ function validarEtapa3() {
     valido = false;
   }
 
-  if (metodoPagamento === 'cartao') {
-    var numero = document.getElementById('inputCartaoNumero').value.replace(/\s/g, '');
-    var nome = document.getElementById('inputCartaoNome').value.trim();
-    var validade = document.getElementById('inputCartaoValidade').value.trim();
-    var cvv = document.getElementById('inputCartaoCvv').value.trim();
-
-    if (numero.length !== 16 || !/^\d+$/.test(numero)) {
-      mostrarErro('CartaoNumero', 'Número do cartão inválido.');
-      valido = false;
-    }
-
-    if (!nome || nome.length < 3) {
-      mostrarErro('CartaoNome', 'Informe o nome no cartão.');
-      valido = false;
-    }
-
-    var valRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
-    if (!valRegex.test(validade)) {
-      mostrarErro('CartaoValidade', 'Formato inválido (MM/AA).');
-      valido = false;
-    }
-
-    if (!cvv || cvv.length < 3 || !/^\d+$/.test(cvv)) {
-      mostrarErro('CartaoCvv', 'CVV inválido.');
-      valido = false;
-    }
-  }
-
   return valido;
 }
 
-/* ========== NAVEGAÇÃO ENTRE ETAPAS ========== */
-
 window.proximaEtapa = function () {
   var valido = false;
-
-  if (etapaAtual === 1) {
-    valido = validarEtapa1();
-  } else if (etapaAtual === 2) {
-    valido = validarEtapa2();
-  } else if (etapaAtual === 3) {
-    valido = validarEtapa3();
-  }
+  if (etapaAtual === 1) valido = validarEtapa1();
+  else if (etapaAtual === 2) valido = validarEtapa2();
+  else if (etapaAtual === 3) valido = validarEtapa3();
 
   if (!valido) return;
 
@@ -524,6 +533,11 @@ window.proximaEtapa = function () {
   if (etapaAtual === 3) {
     document.getElementById('btnProximaEtapa').style.display = 'none';
     document.getElementById('btnConfirmarPedido').disabled = false;
+    setTimeout(function () {
+      if (metodoPagamento === 'cartao' && cardForm) {
+        cardForm.mount();
+      }
+    }, 100);
   }
 
   atualizarResumo();
@@ -540,16 +554,12 @@ window.etapaAnterior = function () {
     document.querySelector('.step-item[data-step="' + etapaAtual + '"]').classList.add('ativo');
     document.querySelector('.step-item[data-step="' + etapaAtual + '"]').classList.remove('completo');
 
-    if (etapaAtual === 1) {
-      document.getElementById('btnVoltarEtapa').style.display = 'none';
-    }
+    if (etapaAtual === 1) { document.getElementById('btnVoltarEtapa').style.display = 'none'; }
 
     document.getElementById('btnProximaEtapa').style.display = '';
     document.getElementById('btnConfirmarPedido').disabled = true;
   }
 };
-
-/* ========== RESUMO DO PEDIDO ========== */
 
 function getCarrinho() {
   return JSON.parse(localStorage.getItem('carrinho')) || [];
@@ -558,9 +568,7 @@ function getCarrinho() {
 function calcularSubtotal() {
   var carrinho = getCarrinho();
   var total = 0;
-  carrinho.forEach(function (item) {
-    total += Number(item.valor) * item.quantidade;
-  });
+  carrinho.forEach(function (item) { total += Number(item.valor) * item.quantidade; });
   return total;
 }
 
@@ -568,8 +576,8 @@ window.atualizarResumo = function () {
   var carrinho = getCarrinho();
   var subtotal = calcularSubtotal();
   var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
+  var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
 
-  /* Renderizar itens */
   var container = document.getElementById('resumoItens');
   container.innerHTML = '';
   carrinho.forEach(function (item) {
@@ -585,21 +593,37 @@ window.atualizarResumo = function () {
       '</div>';
   });
 
-  /* Subtotal */
   document.getElementById('resumoSubtotal').textContent = formatarPreco(subtotal);
 
-  /* Frete */
-  document.getElementById('resumoFrete').textContent = freteSelecionado
-    ? formatarPreco(freteValor)
-    : '— Selecione o CEP';
+  var resumoBoxLinha = document.getElementById('resumoBoxLinha');
+  var resumoBox = document.getElementById('resumoBox');
+  if (deliveryType === 'delivery' && freteSelecionado && freteSelecionado.tipo !== 'retirada' && boxPrice > 0) {
+    resumoBoxLinha.style.display = '';
+    resumoBox.textContent = formatarPreco(boxPrice);
+  } else {
+    resumoBoxLinha.style.display = 'none';
+  }
 
-  /* Desconto PIX */
+  var resumoFrete = document.getElementById('resumoFrete');
+  if (freteSelecionado) {
+    if (freteSelecionado.tipo === 'retirada') {
+      resumoFrete.textContent = 'Gr\u00e1tis';
+    } else {
+      resumoFrete.textContent = formatarPreco(freteValor);
+    }
+  } else {
+    resumoFrete.textContent = deliveryType === 'pickup' ? 'Gr\u00e1tis' : '\u2014 Selecione o CEP';
+  }
+
   var descontoLinha = document.getElementById('resumoDescontoLinha');
   var descontoEl = document.getElementById('resumoDesconto');
-  var total = subtotal + freteValor;
+  var cupomLinha = document.getElementById('resumoCupomLinha');
+  var cupomEl = document.getElementById('resumoCupom');
+  var total = subtotal + boxPrice + freteValor;
 
   if (metodoPagamento === 'pix') {
-    var desconto = total * 0.05;
+    var taxaDesc = getPixDiscountRate();
+    var desconto = total * taxaDesc;
     total = total - desconto;
     descontoLinha.style.display = '';
     descontoEl.textContent = '- ' + formatarPreco(desconto);
@@ -607,21 +631,17 @@ window.atualizarResumo = function () {
     descontoLinha.style.display = 'none';
   }
 
-  /* Total */
-  document.getElementById('resumoTotal').textContent = formatarPreco(total);
-
-  /* Atualizar parcelas */
-  var selectParcelas = document.getElementById('selectParcelas');
-  if (selectParcelas) {
-    var valorParcela = total / 3;
-    selectParcelas.innerHTML =
-      '<option value="1">1x de ' + formatarPreco(total) + '</option>' +
-      '<option value="2">2x de ' + formatarPreco(valorParcela) + ' sem juros</option>' +
-      '<option value="3">3x de ' + formatarPreco(valorParcela) + ' sem juros</option>';
+  if (cupomAplicado && cupomAplicado.discount_calculated > 0) {
+    total = total - cupomAplicado.discount_calculated;
+    if (total < 0) total = 0;
+    cupomLinha.style.display = '';
+    cupomEl.textContent = '- ' + formatarPreco(cupomAplicado.discount_calculated);
+  } else {
+    cupomLinha.style.display = 'none';
   }
-};
 
-/* ========== CONFIRMAR PEDIDO ========== */
+  document.getElementById('resumoTotal').textContent = formatarPreco(total);
+};
 
 function montarEnderecoCompleto() {
   var endereco = document.getElementById('inputEndereco').value.trim();
@@ -637,33 +657,48 @@ function montarEnderecoCompleto() {
   return partes.join(', ');
 }
 
-function montarNotas() {
-  var freteNome = freteSelecionado ? freteSelecionado.tipo : '—';
-  var metodo = metodoPagamento || '—';
-  var parcelas = '—';
-  if (metodoPagamento === 'cartao') {
-    var sel = document.getElementById('selectParcelas');
-    parcelas = sel ? sel.value + 'x' : '—';
+function getPixDiscountRate() {
+  if (window.siteSettings && window.siteSettings.pix_discount_percent) {
+    return Number(window.siteSettings.pix_discount_percent) / 100;
   }
-  return 'M\u00e9todo: ' + metodo.toUpperCase() + ' | Parcelas: ' + parcelas + ' | Frete: ' + freteNome;
+  return 0.05;
+}
+
+function getTotalFinal() {
+  var subtotal = calcularSubtotal();
+  var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
+  var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
+  var total = subtotal + boxPrice + freteValor;
+  if (metodoPagamento === 'pix') total = total - (total * getPixDiscountRate());
+  if (cupomAplicado && cupomAplicado.discount_calculated > 0) {
+    total = total - cupomAplicado.discount_calculated;
+    if (total < 0) total = 0;
+  }
+  return total;
 }
 
 window.confirmarPedido = function () {
+  if (metodoPagamento === 'cartao' && cardForm) {
+    cardForm.submit();
+    return;
+  }
+
   var valido = validarEtapa3();
   if (!valido) return;
 
   var carrinho = getCarrinho();
-  if (carrinho.length === 0) {
-    alert('Seu carrinho est\u00e1 vazio.');
-    return;
-  }
+  if (carrinho.length === 0) { alert('Seu carrinho est\u00e1 vazio.'); return; }
 
+  criarPedidoEProcessarPagamento();
+};
+
+function criarPedidoEProcessarPagamento() {
+  var carrinho = getCarrinho();
   var subtotal = calcularSubtotal();
   var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
-  var total = subtotal + freteValor;
-  if (metodoPagamento === 'pix') {
-    total = total - (total * 0.05);
-  }
+  var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
+  var total = subtotal + boxPrice + freteValor;
+  if (metodoPagamento === 'pix') total = total - (total * getPixDiscountRate());
 
   var items = carrinho.map(function (item) {
     var isKit = item.tipo === 'kit';
@@ -681,77 +716,450 @@ window.confirmarPedido = function () {
     customer_name: document.getElementById('inputNome').value.trim(),
     customer_email: document.getElementById('inputEmail').value.trim(),
     customer_phone: document.getElementById('inputTelefone').value.trim(),
-    cep: document.getElementById('inputCep').value.replace(/\D/g, ''),
-    address: montarEnderecoCompleto(),
-    city: document.getElementById('inputCidade').value.trim(),
-    state: document.getElementById('inputEstado').value.trim(),
+    cep: deliveryType === 'delivery' ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
+    address: deliveryType === 'delivery' ? montarEnderecoCompleto() : '',
+    number: deliveryType === 'delivery' ? document.getElementById('inputNumero').value.trim() : '',
+    neighborhood: deliveryType === 'delivery' ? document.getElementById('inputBairro').value.trim() : '',
+    complement: deliveryType === 'delivery' ? document.getElementById('inputComplemento').value.trim() : '',
+    city: deliveryType === 'delivery' ? document.getElementById('inputCidade').value.trim() : '',
+    state: deliveryType === 'delivery' ? document.getElementById('inputEstado').value.trim() : '',
+    delivery_type: deliveryType,
     subtotal: subtotal,
     delivery_fee: freteValor,
+    box_amount: boxPrice,
+    selected_box: freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '',
+    shipping_service: freteSelecionado && freteSelecionado.service ? freteSelecionado.service : '',
+    shipping_amount: deliveryType === 'delivery' ? freteValor : 0,
     total: total,
     payment_method: metodoPagamento || 'pix',
-    notes: montarNotas(),
+    coupon_code: cupomAplicado ? cupomAplicado.code : null,
+    notes: deliveryType === 'delivery'
+      ? 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Frete: ' + (freteSelecionado ? freteSelecionado.name + ' (' + freteSelecionado.service + ')' : '\u2014') + ' | BOX: ' + (freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '\u2014') + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
+      : 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Retirada na loja' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : ''),
     items: items
   };
 
-  var btn = document.getElementById('btnConfirmarPedido');
-  btn.disabled = true;
-  document.querySelector('.btn-texto').textContent = 'Enviando...';
-  document.getElementById('btnSpinner').style.display = '';
+  mostrarLoading(true);
 
   fetch(API + '/api/orders', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + getToken()
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
     body: JSON.stringify(payload)
   })
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      if (!data.success) {
-        throw new Error(data.message || 'Erro ao criar pedido.');
-      }
-
-      localStorage.removeItem('carrinho');
-      if (window.atualizarBadgeCarrinho) window.atualizarBadgeCarrinho();
-
-      mostrarConfirmacao(data.order);
+      if (!data.success) throw new Error(data.message || 'Erro ao criar pedido.');
+      pedidoCriado = { id: data.order.id, total: data.order.total };
+      processarPagamentoMetodo();
     })
     .catch(function (err) {
+      mostrarLoading(false);
       alert(err.message || 'Erro ao processar pedido. Tente novamente.');
-    })
-    .finally(function () {
-      btn.disabled = false;
-      document.querySelector('.btn-texto').textContent = 'Confirmar Pedido';
-      document.getElementById('btnSpinner').style.display = '';
     });
+}
+
+function processarPagamentoMetodo() {
+  if (metodoPagamento === 'pix') {
+    enviarPagamentoPix();
+  } else if (metodoPagamento === 'cartao') {
+    console.warn('Cart\u00e3o deve ser processado via cardForm.submit()');
+    mostrarLoading(false);
+  } else {
+    mostrarLoading(false);
+    alert('M\u00e9todo de pagamento n\u00e3o reconhecido.');
+  }
+}
+
+window.enviarPagamentoCartao = async function (dados) {
+  mostrarLoading(true);
+  try {
+    var res = await fetch(API + '/api/payments/process-card', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ orderId: pedidoCriado.id, ...dados })
+    });
+    var data = await res.json();
+
+    if (!res.ok) {
+      console.error('Server error:', data);
+      throw new Error(data.message || 'Erro ao processar pagamento.');
+    }
+
+    if (data.status === 'approved' || data.status === 'processed') {
+      localStorage.removeItem('carrinho');
+      if (window.atualizarBadgeCarrinho) window.atualizarBadgeCarrinho();
+      mostrarTelaConfirmacao({ metodo: 'cartao', pedidoId: pedidoCriado.id, total: dados.amount, status: data.statusDetail || data.status });
+    } else if (data.status === 'in_process' || data.status === 'pending') {
+      mostrarLoading(false);
+      mostrarErroInline('Pagamento em an\u00e1lise. Voc\u00ea receber\u00e1 um e-mail de confirma\u00e7\u00e3o.');
+    } else {
+      mostrarLoading(false);
+      mostrarErroInline(traduzirErroMP(data.statusDetail) || 'Pagamento recusado. Tente novamente.');
+    }
+  } catch (e) {
+    mostrarLoading(false);
+    mostrarErroInline(e.message || 'Erro ao processar pagamento. Tente novamente.');
+  }
 };
 
-/* ========== TELA DE CONFIRMAÇÃO ========== */
+async function enviarPagamentoPix() {
+  try {
+    var res = await fetch(API + '/api/payments/process-pix', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({
+        orderId: pedidoCriado.id,
+        email: document.getElementById('inputEmail').value.trim(),
+        cpf: document.getElementById('inputCpf').value.replace(/\D/g, ''),
+        amount: getTotalFinal()
+      })
+    });
+    var data = await res.json();
 
-function mostrarConfirmacao(order) {
+    if (!res.ok) throw new Error(data.message || 'Erro ao gerar PIX.');
+
+    mostrarLoading(false);
+    localStorage.removeItem('carrinho');
+    if (window.atualizarBadgeCarrinho) window.atualizarBadgeCarrinho();
+
+    document.getElementById('checkoutForm').style.display = 'none';
+    var confirmacao = document.getElementById('checkoutConfirmacao');
+    confirmacao.style.display = '';
+    confirmacao.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    document.getElementById('confirmacaoPedidoId').textContent = pedidoCriado.id;
+    document.getElementById('confirmacaoCliente').textContent = document.getElementById('inputNome').value.trim();
+    document.getElementById('confirmacaoPagamento').textContent = 'PIX - Aguardando pagamento';
+    document.getElementById('confirmacaoEntrega').textContent = deliveryType === 'pickup'
+      ? 'Retirada na loja'
+      : montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim();
+    document.getElementById('confirmacaoTotal').textContent = formatarPreco(getTotalFinal());
+    document.getElementById('confirmacaoPix').style.display = '';
+
+    if (data.qrCodeBase64) {
+      document.getElementById('pix-qrcode-img').src = 'data:image/png;base64,' + data.qrCodeBase64;
+    }
+    if (data.qrCode) {
+      document.getElementById('pixCopiaCola').value = data.qrCode;
+    }
+
+    iniciarPollingPix(data.paymentId);
+  } catch (e) {
+    mostrarLoading(false);
+    alert(e.message || 'Erro ao gerar PIX. Tente novamente.');
+  }
+}
+
+function iniciarPollingPix(paymentId) {
+  if (pixPollingInterval) clearInterval(pixPollingInterval);
+
+  pixPollingInterval = setInterval(async function () {
+    try {
+      var res = await fetch(API + '/api/payments/status/' + paymentId, {
+        headers: { 'Authorization': 'Bearer ' + getToken() }
+      });
+      var data = await res.json();
+
+      if (data.status === 'approved' || data.status === 'processed') {
+        clearInterval(pixPollingInterval);
+        pixPollingInterval = null;
+        document.getElementById('confirmacaoPagamento').textContent = 'PIX - Pago';
+        var icon = document.querySelector('.confirmacao-icon');
+        if (icon) icon.innerHTML = '\u2705';
+        var subtitle = document.querySelector('.confirmacao-subtitle');
+        if (subtitle) subtitle.textContent = 'PIX recebido! Pedido #' + pedidoCriado.id + ' confirmado!';
+      }
+    } catch (e) {
+      console.warn('Erro no polling PIX:', e);
+    }
+  }, 5000);
+
+  setTimeout(function () {
+    if (pixPollingInterval) {
+      clearInterval(pixPollingInterval);
+      pixPollingInterval = null;
+    }
+  }, 30 * 60 * 1000);
+}
+
+function mostrarTelaConfirmacao(dados) {
+  mostrarLoading(false);
+  localStorage.removeItem('carrinho');
+  if (window.atualizarBadgeCarrinho) window.atualizarBadgeCarrinho();
+
   document.getElementById('checkoutForm').style.display = 'none';
   var confirmacao = document.getElementById('checkoutConfirmacao');
   confirmacao.style.display = '';
   confirmacao.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-  document.getElementById('confirmacaoPedidoId').textContent = order.id;
-  document.getElementById('confirmacaoCliente').textContent = order.customer_name;
-  document.getElementById('confirmacaoPagamento').textContent = order.payment_method.toUpperCase();
-  document.getElementById('confirmacaoEntrega').textContent = order.address + ', ' + order.city + '/' + order.state;
-  document.getElementById('confirmacaoTotal').textContent = formatarPreco(order.total);
+  document.getElementById('confirmacaoPedidoId').textContent = dados.pedidoId;
+  document.getElementById('confirmacaoCliente').textContent = document.getElementById('inputNome').value.trim();
+  document.getElementById('confirmacaoTotal').textContent = formatarPreco(dados.total || getTotalFinal());
+  document.getElementById('confirmacaoEntrega').textContent = deliveryType === 'pickup'
+    ? 'Retirada na loja'
+    : montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim();
 
-  if (order.payment_method === 'pix') {
-    document.getElementById('confirmacaoPix').style.display = '';
-  }
-
-  if (order.payment_method === 'boleto') {
-    document.getElementById('confirmacaoBoleto').style.display = '';
+  if (dados.metodo === 'cartao') {
+    document.getElementById('confirmacaoPagamento').textContent = 'Cart\u00e3o de Cr\u00e9dito - Pago';
+    document.getElementById('confirmacaoCartao').style.display = '';
+    document.getElementById('confirmacaoCartaoDetalhes').textContent = 'Valor cobrado: ' + formatarPreco(dados.total || getTotalFinal()) + ' | Processado pelo Mercado Pago';
+    var subtitle = document.querySelector('.confirmacao-subtitle');
+    if (subtitle) subtitle.textContent = 'Pedido #' + dados.pedidoId + ' confirmado e pago!';
   }
 }
 
-/* ========== INICIALIZAÇÃO ========== */
+function traduzirErroMP(statusDetail) {
+  var erros = {
+    'cc_rejected_bad_filled_card_number': 'N\u00famero do cart\u00e3o inv\u00e1lido.',
+    'cc_rejected_bad_filled_date': 'Data de vencimento inv\u00e1lida.',
+    'cc_rejected_bad_filled_security_code': 'CVV inv\u00e1lido.',
+    'cc_rejected_bad_filled_other': 'Dados do cart\u00e3o incorretos.',
+    'cc_rejected_blacklist': 'Cart\u00e3o n\u00e3o autorizado. Contate seu banco.',
+    'cc_rejected_call_for_authorize': 'Ligue para seu banco para autorizar.',
+    'cc_rejected_card_disabled': 'Cart\u00e3o desativado. Contate seu banco.',
+    'cc_rejected_duplicated_payment': 'Pagamento duplicado detectado.',
+    'cc_rejected_high_risk': 'Pagamento recusado por seguran\u00e7a.',
+    'cc_rejected_insufficient_amount': 'Saldo insuficiente.',
+    'cc_rejected_invalid_installments': 'Parcelamento n\u00e3o permitido.',
+    'cc_rejected_max_attempts': 'Limite de tentativas atingido. Tente amanh\u00e3.',
+    'pending_review_manual': 'Pagamento em an\u00e1lise manual pelo Mercado Pago.'
+  };
+  return erros[statusDetail] || 'Pagamento n\u00e3o aprovado. Verifique os dados e tente novamente.';
+}
+
+function inicializarMercadoPago() {
+  fetch(API + '/api/config/mp-key')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.publicKey || data.publicKey === 'APP_USR-xxxx' || data.publicKey === 'TEST-xxxx') {
+        console.warn('MP_PUBLIC_KEY n\u00e3o configurada. Pagamento por cart\u00e3o desabilitado.');
+        var cardOption = document.querySelector('.pagamento-card[data-metodo="cartao"]');
+        if (cardOption) { cardOption.style.opacity = '0.5'; cardOption.style.pointerEvents = 'none'; }
+        return;
+      }
+
+      mpPublicKey = data.publicKey;
+      mp = new MercadoPago(data.publicKey, { locale: 'pt-BR' });
+    })
+    .catch(function (err) {
+      console.warn('Erro ao carregar chave do Mercado Pago:', err);
+    });
+}
+
+var cardBin = '';
+var cardPaymentMethodId = '';
+
+function detectPaymentMethodId(bin) {
+  if (!bin || bin.length < 3) return '';
+  if (bin.startsWith('4')) return 'visa';
+  if (/^5[1-5]/.test(bin) || /^2[2-7]/.test(bin) || /^50/.test(bin)) return 'master';
+  if (/^3[47]/.test(bin)) return 'amex';
+  if (bin.startsWith('606')) return 'hipercard';
+  if (/^506[7-9]/.test(bin) || /^5090/.test(bin) || /^6504/.test(bin)) return 'elo';
+  return '';
+}
+
+function iniciarCardForm() {
+  if (!mp) return;
+
+  var total = getTotalFinal();
+  var installmentsSelect = document.getElementById('form-checkout__installments');
+  if (installmentsSelect) {
+    installmentsSelect.innerHTML = '';
+    for (var i = 1; i <= 3; i++) {
+      var opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = i + 'x de R$ ' + (total / i).toFixed(2).replace('.', ',') + ' sem juros';
+      installmentsSelect.appendChild(opt);
+    }
+  }
+
+  var cardFormOptions = {
+    amount: String(total),
+    iframe: true,
+    form: {
+      id: 'form-checkout',
+      cardNumber: { id: 'form-checkout__cardNumber', placeholder: 'N\u00famero do cart\u00e3o' },
+      expirationDate: { id: 'form-checkout__expirationDate', placeholder: 'MM/AA' },
+      securityCode: { id: 'form-checkout__securityCode', placeholder: 'CVV' },
+      cardholderName: { id: 'form-checkout__cardholderName', placeholder: 'Nome como no cart\u00e3o' },
+      issuer: { id: 'form-checkout__issuer' },
+      installments: { id: 'form-checkout__installments' },
+      identificationType: { id: 'form-checkout__identificationType' },
+      identificationNumber: { id: 'form-checkout__identificationNumber' },
+      cardholderEmail: { id: 'form-checkout__cardholderEmail' }
+    },
+    callbacks: {
+      onFormMounted: function (error) {
+        if (error) console.warn('MP cardForm mount error:', error);
+      },
+      onBinChange: function (bin) {
+        cardBin = bin;
+        cardPaymentMethodId = detectPaymentMethodId(bin);
+      },
+      onSubmit: function (event) {
+        event.preventDefault();
+        var formData = cardForm.getCardFormData();
+        console.log('cardForm data:', JSON.stringify(formData));
+        var cpf = document.getElementById('inputCpf').value.replace(/\D/g, '');
+        var email = document.getElementById('inputEmail').value.trim();
+        var pmId = formData.paymentMethodId || cardPaymentMethodId;
+        console.log('pmId:', pmId, 'cardPaymentMethodId:', cardPaymentMethodId, 'bin:', cardBin);
+
+        if (!formData.token) {
+          mostrarLoading(false);
+          mostrarErroInline('Token do cart\u00e3o n\u00e3o gerado. Verifique os dados do cart\u00e3o.');
+          return;
+        }
+
+        if (!pmId) {
+          mostrarLoading(false);
+          mostrarErroInline('Bandeira do cart\u00e3o n\u00e3o reconhecida. Verifique o n\u00famero.');
+          return;
+        }
+
+        if (!cpf || !validarCPF(cpf)) {
+          mostrarErro('Cpf', 'Informe um CPF v\u00e1lido.');
+          return;
+        }
+
+        if (pedidoCriado) {
+          enviarPagamentoCartao({
+            token: formData.token,
+            installments: formData.installments,
+            paymentMethodId: pmId,
+            issuerId: formData.issuerId,
+            email: email,
+            cpf: cpf,
+            amount: getTotalFinal()
+          });
+        } else {
+          criarPedidoESubmeterCartao(formData, email, cpf, pmId);
+        }
+      },
+      onFetching: function () {}
+    }
+  };
+
+  cardForm = mp.cardForm(cardFormOptions);
+}
+
+function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
+  var carrinho = getCarrinho();
+  var subtotal = calcularSubtotal();
+  var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
+  var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
+  var total = subtotal + boxPrice + freteValor;
+
+  var items = carrinho.map(function (item) {
+    var isKit = item.tipo === 'kit';
+    return {
+      product_id: isKit ? null : Number(item.id),
+      kit_id: isKit ? Number(item.id) : null,
+      item_name: item.nome,
+      unit_price: Number(item.valor),
+      quantity: item.quantidade,
+      total: Number(item.valor) * item.quantidade
+    };
+  });
+
+  var payload = {
+    customer_name: document.getElementById('inputNome').value.trim(),
+    customer_email: email,
+    customer_phone: document.getElementById('inputTelefone').value.trim(),
+    cep: deliveryType === 'delivery' ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
+    address: deliveryType === 'delivery' ? montarEnderecoCompleto() : '',
+    number: deliveryType === 'delivery' ? document.getElementById('inputNumero').value.trim() : '',
+    neighborhood: deliveryType === 'delivery' ? document.getElementById('inputBairro').value.trim() : '',
+    complement: deliveryType === 'delivery' ? document.getElementById('inputComplemento').value.trim() : '',
+    city: deliveryType === 'delivery' ? document.getElementById('inputCidade').value.trim() : '',
+    state: deliveryType === 'delivery' ? document.getElementById('inputEstado').value.trim() : '',
+    delivery_type: deliveryType,
+    subtotal: subtotal,
+    delivery_fee: freteValor,
+    box_amount: boxPrice,
+    selected_box: freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '',
+    shipping_service: freteSelecionado && freteSelecionado.service ? freteSelecionado.service : '',
+    shipping_amount: deliveryType === 'delivery' ? freteValor : 0,
+    total: total,
+    payment_method: 'cartao',
+    coupon_code: cupomAplicado ? cupomAplicado.code : null,
+    notes: deliveryType === 'delivery'
+      ? 'M\u00e9todo: CARTAO | Frete: ' + (freteSelecionado ? freteSelecionado.name + ' (' + freteSelecionado.service + ')' : '\u2014') + ' | BOX: ' + (freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '\u2014') + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
+      : 'M\u00e9todo: CARTAO | Retirada na loja' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : ''),
+    items: items
+  };
+
+  mostrarLoading(true);
+
+  fetch(API + '/api/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+    body: JSON.stringify(payload)
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.success) throw new Error(data.message || 'Erro ao criar pedido.');
+      pedidoCriado = { id: data.order.id, total: data.order.total };
+
+      enviarPagamentoCartao({
+        token: formData.token,
+        installments: formData.installments,
+        paymentMethodId: pmId,
+        issuerId: formData.issuerId,
+        email: email,
+        cpf: cpf,
+        amount: total
+      });
+    })
+    .catch(function (err) {
+      mostrarLoading(false);
+      mostrarErroInline(err.message || 'Erro ao criar pedido. Tente novamente.');
+    });
+}
+
+window.copiarChavePix = function () {
+  var input = document.getElementById('pixCopiaCola');
+  if (!input || !input.value) return;
+  navigator.clipboard.writeText(input.value).then(function () {
+    var btn = document.querySelector('.confirmacao-pix .btn-copiar');
+    btn.textContent = 'Copiado!';
+    btn.classList.add('copiado');
+    setTimeout(function () {
+      btn.textContent = 'Copiar c\u00f3digo';
+      btn.classList.remove('copiado');
+    }, 2000);
+  });
+};
+
 document.addEventListener('DOMContentLoaded', function () {
+  mostrarLoading(false);
+
+  document.querySelector('.delivery-option[data-delivery="delivery"]').classList.add('selecionado');
+  document.getElementById('deliveryRadioDelivery').textContent = '\u25C9';
+
   carregarPerfil();
   atualizarResumo();
+  inicializarMercadoPago();
+
+  var cpfInput = document.getElementById('inputCpf');
+  if (cpfInput) {
+    cpfInput.addEventListener('input', function () {
+      this.value = formatarCPF(this.value);
+    });
+  }
+
+  var telefoneInput = document.getElementById('inputTelefone');
+  if (telefoneInput) {
+    telefoneInput.addEventListener('input', function () {
+      this.value = formatarTelefone(this.value);
+    });
+  }
+
+  var cepInput = document.getElementById('inputCep');
+  if (cepInput) {
+    cepInput.addEventListener('input', function () {
+      this.value = formatarCEP(this.value);
+    });
+  }
 });

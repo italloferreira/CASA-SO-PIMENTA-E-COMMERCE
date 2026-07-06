@@ -1,5 +1,5 @@
 import { protectRoute, showToast } from './admin-auth.js';
-import { API_BASE, apiRequest } from '../../../../assets/js/api.js';
+import { apiRequest } from '../../../../assets/js/api.js';
 
 protectRoute();
 
@@ -11,7 +11,7 @@ const METRICS = [
   { key: 'faturamento', icon: 'R$', label: 'Receita do mês', color: 'var(--color-success)', link: '/site/pages/admin/pedidos/index.html' },
   { key: 'kits', icon: '❏', label: 'Kits ativos', color: 'var(--color-primary)', link: '/site/pages/admin/kits/index.html' },
   { key: 'banners', icon: '◫', label: 'Banners no ar', color: 'var(--color-info)', link: '/site/pages/admin/banners/index.html' },
-  { key: 'clientes', icon: '◎', label: 'Clientes (Firebase)', color: 'var(--color-text-secondary)', value: '—', link: '/site/pages/admin/clientes/index.html' }
+  { key: 'clientes', icon: '◎', label: 'Clientes cadastrados', color: 'var(--color-text-secondary)', link: '/site/pages/admin/clientes/index.html' }
 ];
 
 function renderMetricCards(data) {
@@ -20,7 +20,10 @@ function renderMetricCards(data) {
 
   container.innerHTML = '';
   METRICS.forEach(function (m) {
-    const val = data[m.key] !== undefined ? data[m.key] : m.value || 0;
+    const raw = data[m.key];
+    const val = m.key === 'faturamento'
+      ? 'R$ ' + Number(raw).toFixed(2).replace('.', ',')
+      : raw !== undefined ? raw : (m.value || 0);
     const card = document.createElement('a');
     card.href = m.link;
     card.className = 'metric-card';
@@ -44,12 +47,11 @@ function renderRecentOrders(orders) {
     return;
   }
 
-  const recent = orders.slice(0, 5);
   const statusMap = { pending: 'Pendente', confirmed: 'Confirmado', shipped: 'Enviado', delivered: 'Entregue', cancelled: 'Cancelado' };
   const badgeClass = { pending: 'badge-warning', confirmed: 'badge-info', shipped: 'badge-info', delivered: 'badge-success', cancelled: 'badge-danger' };
 
   let html = '<table class="admin-table"><thead><tr><th>#ID</th><th>Cliente</th><th>Total</th><th>Status</th><th>Data</th><th class="col-hide-tablet">Ações</th></tr></thead><tbody>';
-  recent.forEach(function (o) {
+  orders.forEach(function (o) {
     const total = Number(o.total).toFixed(2).replace('.', ',');
     const data = new Date(o.created_at).toLocaleDateString('pt-BR');
     html += '<tr>' +
@@ -69,17 +71,15 @@ function renderLowStock(products) {
   const container = document.getElementById('lowStockTable');
   if (!container) return;
 
-  const low = products.filter(function (p) { return p.stock < 5; });
-  if (low.length === 0) {
+  if (products.length === 0) {
     container.innerHTML = '<div class="table-container"><p style="padding:20px;text-align:center;color:var(--color-text-muted);">Nenhum produto com estoque crítico.</p></div>';
     return;
   }
 
-  let html = '<table class="admin-table"><thead><tr><th>Nome</th><th>Categoria</th><th>Estoque</th><th>Ações</th></tr></thead><tbody>';
-  low.forEach(function (p) {
+  let html = '<table class="admin-table"><thead><tr><th>Nome</th><th>Estoque</th><th>Ações</th></tr></thead><tbody>';
+  products.forEach(function (p) {
     html += '<tr>' +
       '<td data-label="Nome">' + p.name + '</td>' +
-      '<td data-label="Categoria">' + (p.category_name || '—') + '</td>' +
       '<td data-label="Estoque"><span class="badge badge-danger">' + p.stock + '</span></td>' +
       '<td data-label="Ações"><a href="/site/pages/admin/produtos/index.html" class="btn btn-sm btn-secondary">Editar</a></td>' +
       '</tr>';
@@ -90,42 +90,12 @@ function renderLowStock(products) {
 
 document.addEventListener('DOMContentLoaded', async function () {
   try {
-    const [products, orders, kits, banners] = await Promise.all([
-      apiRequest('GET', '/api/products'),
-      apiRequest('GET', '/api/orders'),
-      apiRequest('GET', '/api/kits'),
-      apiRequest('GET', '/api/banners')
-    ]);
+    const res = await apiRequest('GET', '/api/dashboard');
+    if (!res.success) throw new Error(res.message);
 
-    const hoje = new Date();
-    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-
-    const pedidosHoje = orders.filter(function (o) {
-      const d = new Date(o.created_at);
-      return d.toDateString() === hoje.toDateString();
-    });
-
-    const pedidosMes = orders.filter(function (o) {
-      return new Date(o.created_at) >= inicioMes;
-    });
-
-    const faturamentoMes = pedidosMes.reduce(function (sum, o) {
-      return sum + Number(o.total);
-    }, 0);
-
-    const data = {
-      produtos: products.length,
-      estoqueBaixo: products.filter(function (p) { return p.stock < 5; }).length,
-      pedidosPendentes: orders.filter(function (o) { return o.status === 'pending'; }).length,
-      pedidosHoje: pedidosHoje.length,
-      faturamento: 'R$ ' + faturamentoMes.toFixed(2).replace('.', ','),
-      kits: kits.length,
-      banners: banners.length
-    };
-
-    renderMetricCards(data);
-    renderRecentOrders(orders);
-    renderLowStock(products);
+    renderMetricCards(res.data);
+    renderRecentOrders(res.data.pedidosRecentes);
+    renderLowStock(res.data.estoqueCritico);
   } catch (err) {
     document.getElementById('metricCards').innerHTML = '<div class="error-banner">Não foi possível conectar ao servidor. Verifique se o backend está rodando na porta 3333.</div>';
   }

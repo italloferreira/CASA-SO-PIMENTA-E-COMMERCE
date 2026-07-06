@@ -13,11 +13,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderizarProduto(produto) {
-    const valorFormatado = Number(produto.price).toFixed(2).replace('.', ',');
+    var venda = produto.compare_price || produto.price;
+    const valorFormatado = Number(venda).toFixed(2).replace('.', ',');
     document.title = 'Casa Só Pimenta / ' + produto.name;
 
     const imgSrc = produto.image_url
-      ? 'http://localhost:3333' + produto.image_url
+      ? (window.API_BASE_URL || 'http://localhost:3333') + produto.image_url
       : '/site/imgs/logo.jpeg';
 
     const ingredientes = produto.ingredients
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <span class="produto-categoria">${produto.category_name || categoria}</span>
           <h1>${produto.name}</h1>
 
+          ${produto.compare_price ? '<p class="produto-preco-antigo">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</p>' : ''}
           <p class="produto-preco">R$ ${valorFormatado}</p>
 
           ${produto.stock !== null && produto.stock !== undefined ? `
@@ -78,13 +80,13 @@ document.addEventListener('DOMContentLoaded', function () {
     window._produtoAtual = {
       id: produto.id,
       nome: produto.name,
-      valor: produto.price,
+      valor: produto.compare_price || produto.price,
       img: imgSrc
     };
   }
 
-  const chaveCache = 'produto_' + produtoId + '_cache';
-  const chaveTempo = 'produto_' + produtoId + '_timestamp';
+  const chaveCache = 'produto_v2_' + produtoId + '_cache';
+  const chaveTempo = 'produto_v2_' + produtoId + '_timestamp';
   const tempoAgora = Date.now();
   const tempoValidade = 5 * 60 * 1000;
 
@@ -98,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   container.innerHTML = '<p class="carregando-produto">Carregando produto...</p>';
 
-  fetch('http://localhost:3333/api/products/' + produtoId)
+  fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/products/' + produtoId)
     .then(function (r) { return r.json(); })
     .then(function (produto) {
       localStorage.setItem(chaveCache, JSON.stringify(produto));

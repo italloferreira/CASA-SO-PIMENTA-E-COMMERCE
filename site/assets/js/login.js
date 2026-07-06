@@ -1,6 +1,15 @@
 window.toggleForm = function () {
   document.getElementById("login").classList.toggle("ativo");
   document.getElementById("cadastro").classList.toggle("ativo");
+  document.getElementById("forgot").classList.remove("ativo");
+  limparErros();
+};
+
+window.mostrarForgot = function (e) {
+  if (e) e.preventDefault();
+  document.getElementById("login").classList.remove("ativo");
+  document.getElementById("cadastro").classList.remove("ativo");
+  document.getElementById("forgot").classList.add("ativo");
   limparErros();
 };
 
@@ -22,7 +31,6 @@ function limparErros() {
 document.addEventListener("DOMContentLoaded", function () {
   const btnLogin    = document.querySelector("#login .btn");
   const btnCadastro = document.querySelector("#cadastro .btn");
-  const botoesGoogle = document.querySelectorAll(".btn-google");
 
   /* LOGIN EMAIL/SENHA */
   btnLogin.addEventListener("click", function (e) {
@@ -40,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
     btnLogin.textContent = "Entrando...";
     btnLogin.disabled = true;
 
-    fetch("http://localhost:3333/api/auth/login", {
+    fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/auth/login', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password: senha })
@@ -93,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
     btnCadastro.textContent = "Cadastrando...";
     btnCadastro.disabled = true;
 
-    fetch("http://localhost:3333/api/auth/register", {
+    fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/auth/register', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: nome, email, password: senha })
@@ -122,22 +130,44 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  /* GOOGLE OAUTH */
-  botoesGoogle.forEach(function (btn) {
-    btn.addEventListener("click", function (e) {
+  /* ESQUECI SENHA */
+  var btnForgot = document.getElementById("btnForgot");
+  if (btnForgot) {
+    btnForgot.addEventListener("click", function (e) {
       e.preventDefault();
-      import("https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js")
-        .then(function (mod) {
-          const provider = new mod.GoogleAuthProvider();
-          return mod.signInWithPopup(mod.getAuth(), provider);
-        })
-        .then(function () {
-          window.location.href = "/site/pages/index.html";
-        })
-        .catch(function () {
-          const ativa = document.querySelector(".campos.ativo");
-          mostrarErro(ativa ? ativa.id : "login", "Erro ao entrar com Google.");
-        });
+      limparErros();
+
+      var email = document.getElementById("forgotEmail").value.trim();
+
+      if (!email) {
+        mostrarErro("forgot", "Digite seu email.");
+        return;
+      }
+
+      btnForgot.textContent = "Enviando...";
+      btnForgot.disabled = true;
+
+      fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/auth/forgot-password', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email })
+      })
+      .then(function (res) {
+        if (!res.ok) return res.json().then(function (data) { throw new Error(data.message || "Erro ao enviar. Tente novamente."); });
+        return res.json();
+      })
+      .then(function () {
+        document.getElementById("forgot").innerHTML =
+          '<h1>Email enviado!</h1>' +
+          '<p style="text-align:center;margin-top:20px;padding:0 20px;">Se o email estiver cadastrado, você receberá um link de recuperação.</p>' +
+          '<div class="extra" style="margin-top:20px;"><a href="/site/pages/login/index.html">Voltar ao login</a></div>';
+      })
+      .catch(function (err) {
+        mostrarErro("forgot", err.message);
+      })
+      .finally(function () {
+        btnForgot.textContent = "Enviar link";
+        btnForgot.disabled = false;
+      });
     });
-  });
-});
+  }});

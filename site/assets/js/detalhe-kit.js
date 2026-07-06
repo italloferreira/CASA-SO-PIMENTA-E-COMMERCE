@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.title = 'Casa Só Pimenta / ' + kit.name;
 
     const imgSrc = kit.image_url
-      ? 'http://localhost:3333' + kit.image_url
+      ? (window.API_BASE_URL || 'http://localhost:3333') + kit.image_url
       : '/site/imgs/logo.jpeg';
 
     let itensHtml = '';
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   container.innerHTML = '<p class="carregando-produto">Carregando kit...</p>';
 
-  fetch('http://localhost:3333/api/kits/' + kitId)
+  fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/kits/' + kitId)
     .then(function (r) { return r.json(); })
     .then(function (kit) {
       localStorage.setItem(chaveCache, JSON.stringify(kit));

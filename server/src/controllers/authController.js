@@ -1,6 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import sgMail from '@sendgrid/mail';
 import { pool } from '../database/connection.js';
+import { forgotPasswordEmail } from '../utils/emailTemplates.js';
 
 export async function register(req, res) {
   const { name, email, password, phone } = req.body;
@@ -147,4 +150,105 @@ export async function updateProfile(req, res) {
     message: 'Perfil atualizado com sucesso.',
     user: updatedUser
   });
+}
+
+export async function forgotPassword(req, res) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email é obrigatório.' });
+  }
+
+  let user;
+  try {
+    const result = await pool.query(`SELECT id, name FROM users WHERE email = $1`, [email]);
+    user = result.rows[0];
+  } catch (err) {
+    console.error('Erro ao consultar usuário:', err.message);
+    return res.status(503).json({ message: 'Banco de dados indisponível. Tente novamente mais tarde.' });
+  }
+
+  if (!user) {
+    return res.status(200).json({ message: 'Se o email existir, você receberá um link de recuperação.' });
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+
+  try {
+    await pool.query(`
+      INSERT INTO password_resets (user_id, token, expires_at)
+      VALUES ($1, $2, NOW() + INTERVAL '1 hour')
+    `, [user.id, token]);
+  } catch (err) {
+    console.error('Erro ao salvar token:', err.message);
+    return res.status(500).json({ message: 'Erro interno. Tente novamente.' });
+  }
+
+  const resetLink = process.env.FRONTEND_URL + '/site/pages/login/reset-password/index.html?token=' + token;
+
+  if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY !== 'SUA_CHAVE_AQUI') {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    try {
+      await sgMail.send({
+        to: email,
+        from: process.env.SENDGRID_FROM || '"Casa Só Pimenta" <noreply@casasopimenta.com>',
+        subject: 'Recuperação de senha - Casa Só Pimenta',
+        html: forgotPasswordEmail(user.name, resetLink)
+      });
+      console.log('Email enviado com sucesso para', email);
+    } catch (err) {
+      const sendgridErr = err.response?.body?.errors?.[0]?.message || err.message;
+      console.error('Erro SendGrid:', sendgridErr);
+      return res.status(500).json({
+        message: 'Erro ao enviar email.',
+        detail: sendgridErr
+      });
+    }
+  } else {
+    console.log('\n========== LINK DE RECUPERAÇÃO (modo dev) ==========');
+    console.log(resetLink);
+    console.log('==================================================\n');
+  }
+
+  res.json({ message: 'Se o email existir, você receberá um link de recuperação.' });
+}
+
+export async function resetPassword(req, res) {
+  const { token, password } = req.body;
+
+  if (!token || !password) {
+    return res.status(400).json({ message: 'Token e nova senha são obrigatórios.' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ message: 'A senha deve ter no mínimo 6 caracteres.' });
+  }
+
+  let result;
+  try {
+    result = await pool.query(`
+      SELECT * FROM password_resets
+      WHERE token = $1 AND used = 0 AND expires_at > NOW()
+    `, [token]);
+  } catch (err) {
+    console.error('Erro ao consultar token:', err.message);
+    return res.status(503).json({ message: 'Banco de dados indisponível.' });
+  }
+
+  if (result.rows.length === 0) {
+    return res.status(400).json({ message: 'Token inválido ou expirado.' });
+  }
+
+  const reset = result.rows[0];
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  try {
+    await pool.query(`UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, [hashedPassword, reset.user_id]);
+    await pool.query(`UPDATE password_resets SET used = 1 WHERE id = $1`, [reset.id]);
+  } catch (err) {
+    console.error('Erro ao redefinir senha:', err.message);
+    return res.status(500).json({ message: 'Erro ao redefinir senha. Tente novamente.' });
+  }
+
+  res.json({ message: 'Senha redefinida com sucesso.' });
 }

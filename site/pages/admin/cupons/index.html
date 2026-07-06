@@ -60,10 +60,6 @@
     </header>
 
     <main class="admin-main" id="adminMain">
-      <div class="warning-banner">
-        ⚠ Os cupons estão sendo salvos apenas no navegador (localStorage). Crie um endpoint <code>/api/coupons</code> no backend para persistência real.
-      </div>
-
       <div class="table-toolbar">
         <div class="toolbar-left">
           <input type="text" class="form-input toolbar-search" placeholder="Buscar cupom..." id="searchInput">
@@ -92,12 +88,26 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="cupomDiscount">Desconto (R$) *</label>
+            <label class="form-label" for="cupomDiscountType">Tipo de desconto *</label>
+            <select class="form-input" id="cupomDiscountType" required>
+              <option value="fixed">Valor fixo (R$)</option>
+              <option value="percentage">Percentual (%)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cupomDiscount">Valor do desconto *</label>
             <input type="number" step="0.01" min="0" class="form-input" id="cupomDiscount" required>
           </div>
+        </div>
+
+        <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="cupomMinOrder">Pedido mínimo (R$)</label>
             <input type="number" step="0.01" min="0" class="form-input" id="cupomMinOrder">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cupomMaxUses">Limite de usos</label>
+            <input type="number" step="1" min="0" class="form-input" id="cupomMaxUses">
           </div>
         </div>
 
@@ -132,6 +142,7 @@
     </div>
   </div>
 
+  <script src="/site/assets/js/config.js"></script>
   <script type="module" src="../assets/js/admin-auth.js"></script>
   <script type="module" src="../assets/js/sidebar.js"></script>
   <script type="module" src="../assets/js/cupons.js"></script>

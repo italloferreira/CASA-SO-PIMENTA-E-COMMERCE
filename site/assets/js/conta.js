@@ -1,4 +1,4 @@
-var API_BASE = 'http://localhost:3333';
+var API_BASE = window.API_BASE_URL || 'http://localhost:3333';
 
 function getToken() {
   return localStorage.getItem('csp_admin_token');

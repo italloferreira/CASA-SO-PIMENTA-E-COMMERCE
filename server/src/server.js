@@ -9,6 +9,12 @@ import bannerRoutes from './routes/bannerRoutes.js';
 import kitRoutes from './routes/kitRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import couponRoutes from './routes/couponRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
+import { getMpPublicKey } from './controllers/paymentController.js';
 
 import { createTables } from './database/schema.js';
 import { seedDatabase } from './database/seed.js';
@@ -19,7 +25,20 @@ const app = express();
 
 const PORT = process.env.PORT || 3333;
 
-app.use(cors());
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || 'http://localhost:5500')
+  .split(',')
+  .map(function (o) { return o.trim(); })
+  .filter(Boolean);
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Origem não permitida pelo CORS.'));
+    }
+  }
+}));
 
 app.use(express.json());
 
@@ -38,6 +57,15 @@ app.use('/api/kits', kitRoutes);
 app.use('/api/auth', authRoutes);
 
 app.use('/api/orders', orderRoutes);
+
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/coupons', couponRoutes);
+
+app.use('/api/settings', settingsRoutes);
+
+app.get('/api/config/mp-key', getMpPublicKey);
 
 app.get('/', (req, res) => {
   res.json({

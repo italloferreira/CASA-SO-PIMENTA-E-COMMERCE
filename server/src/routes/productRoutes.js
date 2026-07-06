@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
+import { authMiddleware, adminMiddleware, optionalAuth } from '../middlewares/authMiddleware.js';
 
 import {
   listProducts,
   getProductById,
+  searchProducts,
   createProduct,
   updateProduct,
   deleteProduct
@@ -11,7 +12,8 @@ import {
 
 const router = Router();
 
-router.get('/', listProducts);
+router.get('/', optionalAuth, listProducts);
+router.get('/search', searchProducts);
 router.get('/:id', getProductById);
 router.post('/', authMiddleware, adminMiddleware, createProduct);
 router.put('/:id', authMiddleware, adminMiddleware, updateProduct);

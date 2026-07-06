@@ -11,7 +11,7 @@ export async function listCategories(req, res) {
 }
 
 export async function createCategory(req, res) {
-  const { name, slug } = req.body;
+  const { name, slug, color } = req.body;
 
   if (!name || !slug) {
     return res.status(400).json({
@@ -20,27 +20,28 @@ export async function createCategory(req, res) {
   }
 
   const result = await pool.query(`
-    INSERT INTO categories (name, slug)
-    VALUES ($1, $2)
+    INSERT INTO categories (name, slug, color)
+    VALUES ($1, $2, $3)
     RETURNING id
-  `, [name, slug]);
+  `, [name, slug, color || null]);
 
   res.status(201).json({
     id: result.rows[0].id,
     name,
-    slug
+    slug,
+    color
   });
 }
 
 export async function updateCategory(req, res) {
   const { id } = req.params;
-  const { name, slug, is_active } = req.body;
+  const { name, slug, color, is_active } = req.body;
 
   const result = await pool.query(`
     UPDATE categories
-    SET name = $1, slug = $2, is_active = $3, updated_at = CURRENT_TIMESTAMP
-    WHERE id = $4
-  `, [name, slug, is_active ? 1 : 0, id]);
+    SET name = $1, slug = $2, color = $3, is_active = $4, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $5
+  `, [name, slug, color || null, is_active ? 1 : 0, id]);
 
   if (result.rowCount === 0) {
     return res.status(404).json({

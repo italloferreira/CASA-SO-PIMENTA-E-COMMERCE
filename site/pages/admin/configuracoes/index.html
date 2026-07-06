@@ -93,10 +93,6 @@
     </header>
 
     <main class="admin-main" id="adminMain">
-      <div class="warning-banner" style="margin-bottom:24px;">
-        ⚠ As configurações estão sendo salvas apenas no navegador (localStorage). Crie um endpoint <code>/api/settings</code> no backend para persistência real.
-      </div>
-
       <form id="settingsForm">
 
         <!-- LOJA -->
@@ -114,6 +110,10 @@
             <div class="form-group">
               <label class="form-label" for="storeLogo">URL da logo</label>
               <input type="text" class="form-input" id="storeLogo" placeholder="/uploads/logo.png">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="storeHours">Horário de funcionamento</label>
+              <input type="text" class="form-input" id="storeHours" placeholder="Seg a Sex: 08h-18h | Sáb: 08h-12h">
             </div>
           </div>
         </div>
@@ -153,6 +153,10 @@
                 <input type="text" class="form-input" id="socialFacebook" placeholder="/casasopimenta">
               </div>
             </div>
+            <div class="form-group">
+              <label class="form-label" for="socialTiktok">TikTok</label>
+              <input type="text" class="form-input" id="socialTiktok" placeholder="@casa.so.pimenta">
+            </div>
           </div>
         </div>
 
@@ -167,6 +171,26 @@
             <div class="form-group">
               <label class="form-label" for="paymentChavePix">Chave Pix</label>
               <input type="text" class="form-input" id="paymentChavePix" placeholder="CPF, CNPJ, e-mail ou telefone">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pixDiscountPercent">Desconto Pix (%)</label>
+              <input type="number" step="0.1" min="0" max="100" class="form-input" id="pixDiscountPercent" placeholder="5">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="pixKeyType">Tipo da chave Pix</label>
+                <select class="form-input" id="pixKeyType">
+                  <option value="CPF">CPF</option>
+                  <option value="CNPJ">CNPJ</option>
+                  <option value="EMAIL">E-mail</option>
+                  <option value="PHONE">Telefone</option>
+                  <option value="RANDOM">Chave aleatória</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="pixRecipientName">Nome do recebedor</label>
+                <input type="text" class="form-input" id="pixRecipientName" placeholder="Nome completo">
+              </div>
             </div>
           </div>
         </div>
@@ -195,6 +219,7 @@
     </main>
   </div>
 
+  <script src="/site/assets/js/config.js"></script>
   <script type="module" src="../assets/js/admin-auth.js"></script>
   <script type="module" src="../assets/js/sidebar.js"></script>
   <script type="module" src="../assets/js/configuracoes.js"></script>

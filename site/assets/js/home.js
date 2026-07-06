@@ -1,3 +1,32 @@
+function formatPrice(val) {
+  return Number(val).toFixed(2).replace('.', ',');
+}
+
+function precoVenda(prod) {
+  return prod.compare_price || prod.price;
+}
+
+function renderProductCard(prod) {
+  var baseUrl = window.API_BASE_URL || 'http://localhost:3333';
+  var imgSrc = prod.image_url
+    ? baseUrl + prod.image_url
+    : '/site/imgs/logo.jpeg';
+  var venda = precoVenda(prod);
+  var precoHtml = prod.compare_price
+    ? '<p style="text-decoration:line-through;color:#999;font-size:14px;">R$ ' + formatPrice(prod.price) + '</p><h3 style="color:#c53b22;">R$ ' + formatPrice(venda) + '</h3>'
+    : '<p>R$</p><h3>' + formatPrice(venda) + '</h3>';
+
+  return '<div class="cartao">' +
+    '<img class="cartao-img" src="' + imgSrc + '" alt="' + prod.name + '" onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + prod.id + '\'" style="cursor:pointer;">' +
+    '<h1 class="cartao-h1">' + prod.name + '</h1>' +
+    '<div class="cartao-valor">' + precoHtml + '</div>' +
+    '<div class="conteiner-botões-kit">' +
+      '<button class="add-carrinho-botao" onclick=\'addCarrinho(' + JSON.stringify({ id: prod.id, nome: prod.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
+      '<button class="ver-mais-botao" onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + prod.id + '\'">Ver mais</button>' +
+    '</div>' +
+    '</div>';
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 
   /* ===== CARROSSEL ===== */
@@ -14,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
       slidesContainer.style.transform = 'translateX(-' + (slideAtual * 100) + '%)';
     }
 
-    fetch('http://localhost:3333/api/banners')
+    fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/banners')
       .then(function (resposta) { return resposta.json(); })
       .then(function (banners) {
         totalSlides = banners.length;
@@ -27,7 +56,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         banners.forEach(function (banner, index) {
-          slidesContainer.innerHTML += '<div class="slide"><img src="http://localhost:3333' + banner.image_url + '" alt="' + (banner.title || 'Slide ' + (index + 1)) + '"></div>';
+          var baseUrl = window.API_BASE_URL || 'http://localhost:3333';
+          slidesContainer.innerHTML += '<div class="slide"><img src="' + baseUrl + banner.image_url + '" alt="' + (banner.title || 'Slide ' + (index + 1)) + '"></div>';
         });
 
         atualizarCarrossel();
@@ -53,12 +83,34 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  /* ===== PRODUTOS EM DESTAQUE ===== */
+
+  var destaquesSection = document.getElementById('destaques-section');
+
+  if (destaquesSection) {
+    fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/products?featured=true')
+      .then(function (resposta) { return resposta.json(); })
+      .then(function (produtos) {
+        if (produtos.length === 0) {
+          document.querySelector('.destaques-section').style.display = 'none';
+          return;
+        }
+
+        produtos.forEach(function (prod) {
+          destaquesSection.innerHTML += renderProductCard(prod);
+        });
+      })
+      .catch(function () {
+        document.querySelector('.destaques-section').style.display = 'none';
+      });
+  }
+
   /* ===== KITS ===== */
 
   const cartoesSection = document.getElementById('cartoes-section');
 
   if (cartoesSection) {
-    fetch('http://localhost:3333/api/kits?active=true')
+    fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/kits?active=true')
       .then(function (resposta) { return resposta.json(); })
       .then(function (kits) {
         if (kits.length === 0) {
@@ -69,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
         kits.forEach(function (kit) {
           const valorFormatado = Number(kit.price).toFixed(2).replace('.', ',');
           const imgSrc = kit.image_url
-            ? 'http://localhost:3333' + kit.image_url
+            ? (window.API_BASE_URL || 'http://localhost:3333') + kit.image_url
             : '/site/imgs/logo.jpeg';
 
           var produtosHtml = '';

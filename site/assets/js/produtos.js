@@ -3,37 +3,43 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!produtosSection) return;
 
   const categoria = produtosSection.dataset.categoria;
-  const API_URL = 'http://localhost:3333/api/products?category=' + encodeURIComponent(categoria);
+  const API_URL = (window.API_BASE_URL || 'http://localhost:3333') + '/api/products?category=' + encodeURIComponent(categoria);
 
-  const chaveCache = 'produtos_' + categoria + '_cache';
-  const chaveTempo = 'produtos_' + categoria + '_timestamp';
+  const chaveCache = 'produtos_v2_' + categoria + '_cache';
+  const chaveTempo = 'produtos_v2_' + categoria + '_timestamp';
   const tempoAgora = Date.now();
   const tempoValidade = 5 * 60 * 1000;
+
+  var todosProdutos = [];
 
   function renderizarProdutos(produtos) {
     produtosSection.innerHTML = '';
 
     if (produtos.length === 0) {
-      produtosSection.innerHTML = '<p>Nenhum produto encontrado nesta categoria.</p>';
+      produtosSection.innerHTML = '<p>Nenhum produto encontrado.</p>';
       return;
     }
 
     produtos.forEach(function (produto) {
-      const valorFormatado = Number(produto.price).toFixed(2).replace('.', ',');
+      var venda = produto.compare_price || produto.price;
+      var valorFormatado = Number(venda).toFixed(2).replace('.', ',');
       const imgSrc = produto.image_url
-        ? 'http://localhost:3333' + produto.image_url
+        ? (window.API_BASE_URL || 'http://localhost:3333') + produto.image_url
         : '/site/imgs/logo.jpeg';
+      const precoHtml = produto.compare_price
+        ? '<span style="text-decoration:line-through;color:#999;font-size:12px;">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</span><br><strong style="color:#c53b22;">R$ ' + valorFormatado + '</strong>'
+        : 'R$ ' + valorFormatado;
 
       produtosSection.innerHTML += `
         <div class="cartao">
           <img src="${imgSrc}" alt="${produto.name}" loading="lazy">
           <h3>${produto.name}</h3>
-          <p>R$ ${valorFormatado}</p>
+          <p>${precoHtml}</p>
           <div>
             <button onclick='addCarrinho(${JSON.stringify({
               id: produto.id,
               nome: produto.name,
-              valor: produto.price,
+              valor: venda,
               img: imgSrc,
               tipo: "produto"
             })})'>
@@ -46,12 +52,25 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  function filterProducts(term) {
+    if (!term || term.trim().length === 0) {
+      renderizarProdutos(todosProdutos);
+      return;
+    }
+    var lower = term.trim().toLowerCase();
+    var filtered = todosProdutos.filter(function (p) {
+      return p.name.toLowerCase().indexOf(lower) !== -1
+        || (p.description && p.description.toLowerCase().indexOf(lower) !== -1);
+    });
+    renderizarProdutos(filtered);
+  }
+
   const cacheSalvo = localStorage.getItem(chaveCache);
   const tempoSalvo = localStorage.getItem(chaveTempo);
 
   if (cacheSalvo && tempoSalvo && (tempoAgora - Number(tempoSalvo) < tempoValidade)) {
-    const dados = JSON.parse(cacheSalvo);
-    renderizarProdutos(dados);
+    todosProdutos = JSON.parse(cacheSalvo);
+    renderizarProdutos(todosProdutos);
     return;
   }
 
@@ -62,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return resposta.json();
     })
     .then(function (produtos) {
+      todosProdutos = produtos;
       localStorage.setItem(chaveCache, JSON.stringify(produtos));
       localStorage.setItem(chaveTempo, String(tempoAgora));
       renderizarProdutos(produtos);
@@ -69,4 +89,11 @@ document.addEventListener('DOMContentLoaded', function () {
     .catch(function () {
       produtosSection.innerHTML = '<p>Não foi possível carregar os produtos.</p>';
     });
+
+  var inputPesquisa = document.querySelector('.pesquisa');
+  if (inputPesquisa) {
+    inputPesquisa.addEventListener('input', function () {
+      filterProducts(this.value);
+    });
+  }
 });
