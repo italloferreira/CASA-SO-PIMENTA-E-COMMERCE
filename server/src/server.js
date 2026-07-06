@@ -29,9 +29,17 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL 
   .map(function (o) { return o.trim(); })
   .filter(Boolean);
 
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.indexOf(origin) !== -1) return true;
+  if (process.env.NODE_ENV !== 'production') return true;
+  if (origin.endsWith('.vercel.app')) return true;
+  return false;
+}
+
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Origem não permitida pelo CORS.'));
