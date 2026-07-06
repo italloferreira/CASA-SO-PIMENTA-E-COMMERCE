@@ -1,5 +1,5 @@
 import { protectRoute, showToast } from './admin-auth.js';
-import { API_BASE, apiRequest } from '../../../../assets/js/api.js';
+import { API_BASE, apiRequest, imageUrl } from '../../../../assets/js/api.js';
 
 protectRoute();
 
@@ -40,7 +40,7 @@ function renderBanners() {
 
   sorted.forEach(function (banner, index) {
     var activeBadge = banner.is_active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
-    var img = banner.image_url ? '<img class="banner-image" src="' + API_BASE + banner.image_url + '" alt="' + banner.title + '">' : '<div class="banner-image" style="display:flex;align-items:center;justify-content:center;color:var(--color-text-muted);font-size:32px;">◫</div>';
+    var img = banner.image_url ? '<img class="banner-image" src="' + imageUrl(banner.image_url) + '" alt="' + banner.title + '">' : '<div class="banner-image" style="display:flex;align-items:center;justify-content:center;color:var(--color-text-muted);font-size:32px;">◫</div>';
 
     var card = document.createElement('div');
     card.className = 'banner-card';
@@ -138,7 +138,7 @@ function openDrawer(banner) {
     if (banner.image_url) {
       document.getElementById('bannerImageUrl').value = banner.image_url;
       var preview = document.getElementById('bannerImagePreview');
-      preview.src = API_BASE + banner.image_url;
+      preview.src = imageUrl(banner.image_url);
       preview.style.display = 'block';
     } else {
       document.getElementById('bannerImageUrl').value = '';
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var result = await apiRequest('POST', '/api/uploads', formData, true);
       document.getElementById('bannerImageUrl').value = result.image_url;
       var preview = document.getElementById('bannerImagePreview');
-      preview.src = API_BASE + result.image_url;
+      preview.src = imageUrl(result.image_url);
       preview.style.display = 'block';
     } catch (err) {
       showToast(err.message || 'Erro ao fazer upload da imagem.', 'error');

@@ -1,5 +1,5 @@
 import { protectRoute, showToast } from './admin-auth.js';
-import { API_BASE, apiRequest } from '../../../../assets/js/api.js';
+import { API_BASE, apiRequest, imageUrl } from '../../../../assets/js/api.js';
 
 protectRoute();
 
@@ -42,7 +42,7 @@ function renderKits() {
 
   var rows = pageItems.map(function (k) {
     var price = Number(k.price).toFixed(2).replace('.', ',');
-    var img = k.image_url ? '<img src="' + API_BASE + k.image_url + '" class="table-thumb" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">' : '<span style="font-size:24px;opacity:0.3;">❏</span>';
+    var img = k.image_url ? '<img src="' + imageUrl(k.image_url) + '" class="table-thumb" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">' : '<span style="font-size:24px;opacity:0.3;">❏</span>';
     var badge = k.is_active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
     return '<tr>' +
       '<td data-label="Imagem">' + img + '</td>' +
@@ -88,7 +88,7 @@ function openDrawer(kit) {
     if (kit.image_url) {
       document.getElementById('kitImageUrl').value = kit.image_url;
       var preview = document.getElementById('kitImagePreview');
-      preview.src = API_BASE + kit.image_url;
+      preview.src = imageUrl(kit.image_url);
       preview.style.display = 'block';
     } else {
       document.getElementById('kitImageUrl').value = '';
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var result = await apiRequest('POST', '/api/uploads', formData, true);
       document.getElementById('kitImageUrl').value = result.image_url;
       var preview = document.getElementById('kitImagePreview');
-      preview.src = API_BASE + result.image_url;
+      preview.src = imageUrl(result.image_url);
       preview.style.display = 'block';
     } catch (err) {
       showToast(err.message || 'Erro ao fazer upload.', 'error');

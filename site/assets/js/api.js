@@ -43,4 +43,10 @@ function apiRequest(method, path, body, isFormData) {
   });
 }
 
-export { API_BASE, apiRequest };
+function imageUrl(path) {
+  if (!path) return '/site/imgs/logo.jpeg';
+  if (path.startsWith('http')) return path;
+  return API_BASE + path;
+}
+
+export { API_BASE, apiRequest, imageUrl };

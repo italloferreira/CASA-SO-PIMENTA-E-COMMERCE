@@ -7,10 +7,7 @@ function precoVenda(prod) {
 }
 
 function renderProductCard(prod) {
-  var baseUrl = window.API_BASE_URL || 'http://localhost:3333';
-  var imgSrc = prod.image_url
-    ? baseUrl + prod.image_url
-    : '/site/imgs/logo.jpeg';
+  var imgSrc = imgUrl(prod.image_url);
   var venda = precoVenda(prod);
   var precoHtml = prod.compare_price
     ? '<p style="text-decoration:line-through;color:#999;font-size:14px;">R$ ' + formatPrice(prod.price) + '</p><h3 style="color:#c53b22;">R$ ' + formatPrice(venda) + '</h3>'
@@ -56,8 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         banners.forEach(function (banner, index) {
-          var baseUrl = window.API_BASE_URL || 'http://localhost:3333';
-          slidesContainer.innerHTML += '<div class="slide"><img src="' + baseUrl + banner.image_url + '" alt="' + (banner.title || 'Slide ' + (index + 1)) + '"></div>';
+          slidesContainer.innerHTML += '<div class="slide"><img src="' + imgUrl(banner.image_url) + '" alt="' + (banner.title || 'Slide ' + (index + 1)) + '"></div>';
         });
 
         atualizarCarrossel();
@@ -120,9 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         kits.forEach(function (kit) {
           const valorFormatado = Number(kit.price).toFixed(2).replace('.', ',');
-          const imgSrc = kit.image_url
-            ? (window.API_BASE_URL || 'http://localhost:3333') + kit.image_url
-            : '/site/imgs/logo.jpeg';
+          const imgSrc = imgUrl(kit.image_url);
 
           var produtosHtml = '';
           if (kit.items && kit.items.length > 0) {

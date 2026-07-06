@@ -1,5 +1,5 @@
 import { protectRoute, showToast } from './admin-auth.js';
-import { API_BASE, apiRequest } from '../../../../assets/js/api.js';
+import { API_BASE, apiRequest, imageUrl } from '../../../../assets/js/api.js';
 
 protectRoute();
 
@@ -51,7 +51,7 @@ function renderTable(products) {
   var rows = pageItems.map(function (p) {
     var price = Number(p.price).toFixed(2).replace('.', ',');
     var compare = p.compare_price ? '<span style="text-decoration:line-through;color:var(--color-text-muted);font-size:12px;">R$ ' + Number(p.compare_price).toFixed(2).replace('.', ',') + '</span><br>' : '';
-    var img = p.image_url ? '<img src="' + API_BASE + p.image_url + '" class="table-thumb" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">' : '<span style="font-size:24px;opacity:0.3;">▦</span>';
+    var img = p.image_url ? '<img src="' + imageUrl(p.image_url) + '" class="table-thumb" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">' : '<span style="font-size:24px;opacity:0.3;">▦</span>';
     var activeBadge = p.is_active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-danger">Inativo</span>';
     var featuredBadge = p.is_featured ? '<span class="badge badge-info">Destaque</span>' : '';
     return '<tr>' +
@@ -132,7 +132,7 @@ function openDrawer(product) {
     if (product.image_url) {
       document.getElementById('prodImageUrl').value = product.image_url;
       var preview = document.getElementById('prodImagePreview');
-      preview.src = API_BASE + product.image_url;
+      preview.src = imageUrl(product.image_url);
       preview.style.display = 'block';
     } else {
       document.getElementById('prodImageUrl').value = '';
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
       console.log('Upload resposta:', result);
       document.getElementById('prodImageUrl').value = result.image_url;
       var preview = document.getElementById('prodImagePreview');
-      preview.src = API_BASE + result.image_url;
+      preview.src = imageUrl(result.image_url);
       preview.style.display = 'block';
       console.log('Preview atualizado');
     } catch (err) {

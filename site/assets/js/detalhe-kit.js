@@ -13,9 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const valorFormatado = Number(kit.price).toFixed(2).replace('.', ',');
     document.title = 'Casa Só Pimenta / ' + kit.name;
 
-    const imgSrc = kit.image_url
-      ? (window.API_BASE_URL || 'http://localhost:3333') + kit.image_url
-      : '/site/imgs/logo.jpeg';
+    const imgSrc = imgUrl(kit.image_url);
 
     let itensHtml = '';
     if (kit.items && kit.items.length > 0) {

@@ -23,9 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
     produtos.forEach(function (produto) {
       var venda = produto.compare_price || produto.price;
       var valorFormatado = Number(venda).toFixed(2).replace('.', ',');
-      const imgSrc = produto.image_url
-        ? (window.API_BASE_URL || 'http://localhost:3333') + produto.image_url
-        : '/site/imgs/logo.jpeg';
+      const imgSrc = imgUrl(produto.image_url);
       const precoHtml = produto.compare_price
         ? '<span style="text-decoration:line-through;color:#999;font-size:12px;">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</span><br><strong style="color:#c53b22;">R$ ' + valorFormatado + '</strong>'
         : 'R$ ' + valorFormatado;

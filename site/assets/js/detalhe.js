@@ -17,9 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const valorFormatado = Number(venda).toFixed(2).replace('.', ',');
     document.title = 'Casa Só Pimenta / ' + produto.name;
 
-    const imgSrc = produto.image_url
-      ? (window.API_BASE_URL || 'http://localhost:3333') + produto.image_url
-      : '/site/imgs/logo.jpeg';
+    const imgSrc = imgUrl(produto.image_url);
 
     const ingredientes = produto.ingredients
       ? produto.ingredients.split(',').map(function (i) { return i.trim(); })
