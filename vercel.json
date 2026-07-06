@@ -1,8 +1,5 @@
 {
   "buildCommand": null,
   "framework": null,
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/", "destination": "/site/pages/index.html" }
-  ]
+  "cleanUrls": true
 }
