@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
 import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
@@ -41,8 +40,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-app.use('/uploads', express.static(path.resolve('src', 'uploads')));
 
 app.use('/api/categories', categoryRoutes);
 
