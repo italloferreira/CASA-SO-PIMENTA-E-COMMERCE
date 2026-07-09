@@ -17,7 +17,7 @@ function getAuthHeaders() {
 function apiRequest(method, path, body, isFormData) {
   const url = API_BASE + path;
 
-  const options = { method, credentials: 'include' };
+  const options = { method, credentials: 'include', cache: 'no-store' };
 
   if (body) {
     if (isFormData) {
