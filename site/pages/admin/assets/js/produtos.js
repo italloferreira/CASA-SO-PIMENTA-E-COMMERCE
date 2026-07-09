@@ -104,7 +104,8 @@ async function loadProducts() {
   var container = document.getElementById('tableContainer');
   container.innerHTML = '<div class="skeleton skeleton-table"></div>';
   try {
-    allProducts = await apiRequest('GET', '/api/products');
+    var data = await apiRequest('GET', '/api/products');
+    allProducts = data.products || [];
     applyFilters();
   } catch (e) {
     container.innerHTML = '<div class="error-banner">Erro ao carregar produtos. Verifique a conexão com o servidor.</div>';
