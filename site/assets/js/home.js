@@ -24,6 +24,30 @@ function renderProductCard(prod) {
     '</div>';
 }
 
+function carregarDados(chave, url, callback) {
+  var cacheStr = localStorage.getItem(chave);
+  var tempoStr = localStorage.getItem(chave + '_tempo');
+  if (cacheStr && tempoStr && (Date.now() - Number(tempoStr) < 5 * 60 * 1000)) {
+    callback(JSON.parse(cacheStr));
+    return;
+  }
+  fetch(url)
+    .then(function (r) { return r.json(); })
+    .then(function (dados) {
+      localStorage.setItem(chave, JSON.stringify(dados));
+      localStorage.setItem(chave + '_tempo', String(Date.now()));
+      callback(dados);
+    })
+    .catch(function () { callback(null); });
+}
+
+function observarSecao(el, chave, url, renderFn) {
+  if (!el) return;
+  carregarDados(chave, url, function (dados) {
+    if (dados) renderFn(dados);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 
   /* ===== CARROSSEL ===== */
@@ -40,29 +64,21 @@ document.addEventListener('DOMContentLoaded', function () {
       slidesContainer.style.transform = 'translateX(-' + (slideAtual * 100) + '%)';
     }
 
-    fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/banners')
-      .then(function (resposta) { return resposta.json(); })
-      .then(function (banners) {
-        totalSlides = banners.length;
-
-        if (totalSlides === 0) {
-          slidesContainer.innerHTML = '<div class="slide"><p style="padding:2rem;text-align:center;">Em breve</p></div>';
-          totalSlides = 1;
-          atualizarCarrossel();
-          return;
-        }
-
-        banners.forEach(function (banner, index) {
-          slidesContainer.innerHTML += '<div class="slide"><img src="' + imgUrl(banner.image_url) + '" alt="' + (banner.title || 'Slide ' + (index + 1)) + '"></div>';
-        });
-
-        atualizarCarrossel();
-      })
-      .catch(function () {
-        slidesContainer.innerHTML = '<div class="slide"><p style="padding:2rem;text-align:center;">Carrossel indisponível no momento</p></div>';
+    carregarDados('home_banners', (window.API_BASE_URL || 'http://localhost:3333') + '/api/banners', function (banners) {
+      if (!banners || banners.length === 0) {
+        slidesContainer.innerHTML = '<div class="slide"><p style="padding:2rem;text-align:center;">Em breve</p></div>';
         totalSlides = 1;
         atualizarCarrossel();
+        return;
+      }
+
+      banners.forEach(function (banner, index) {
+        slidesContainer.innerHTML += '<div class="slide"><img src="' + imgUrl(banner.image_url) + '" alt="' + (banner.title || 'Slide ' + (index + 1)) + '"></div>';
       });
+
+      totalSlides = banners.length;
+      atualizarCarrossel();
+    });
 
     btnProximo.addEventListener('click', function () {
       if (totalSlides === 0) return;
@@ -79,67 +95,84 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* ===== PRODUTOS EM DESTAQUE ===== */
+  /* ===== PRODUTOS EM DESTAQUE (LAZY) ===== */
 
+  var destaquesWrapper = document.querySelector('.destaques-section');
   var destaquesSection = document.getElementById('destaques-section');
 
-  if (destaquesSection) {
-    fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/products?featured=true')
-      .then(function (resposta) { return resposta.json(); })
-      .then(function (produtos) {
-        if (produtos.length === 0) {
-          document.querySelector('.destaques-section').style.display = 'none';
-          return;
-        }
-
-        produtos.forEach(function (prod) {
-          destaquesSection.innerHTML += renderProductCard(prod);
-        });
-      })
-      .catch(function () {
-        document.querySelector('.destaques-section').style.display = 'none';
-      });
+  function renderizarDestaques(produtos) {
+    if (!produtos || produtos.length === 0) {
+      var section = document.querySelector('.destaques-section');
+      if (section) section.style.display = 'none';
+      return;
+    }
+    produtos.forEach(function (prod) {
+      destaquesSection.innerHTML += renderProductCard(prod);
+    });
   }
 
-  /* ===== KITS ===== */
+  function renderizarDestaquesWrapper(dados) {
+    if (dados && dados.products) renderizarDestaques(dados.products);
+    else renderizarDestaques(dados);
+  }
 
-  const cartoesSection = document.getElementById('cartoes-section');
-
-  if (cartoesSection) {
-    fetch((window.API_BASE_URL || 'http://localhost:3333') + '/api/kits?active=true')
-      .then(function (resposta) { return resposta.json(); })
-      .then(function (kits) {
-        if (kits.length === 0) {
-          cartoesSection.innerHTML = '<p class="fallback-msg">Produtos em breve</p>';
-          return;
+  if (destaquesWrapper && destaquesSection) {
+    var observerDestaques = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          observerDestaques.disconnect();
+          observarSecao(destaquesSection, 'home_destaques', (window.API_BASE_URL || 'http://localhost:3333') + '/api/products?featured=true', renderizarDestaquesWrapper);
         }
-
-        kits.forEach(function (kit) {
-          const valorFormatado = Number(kit.price).toFixed(2).replace('.', ',');
-          const imgSrc = imgUrl(kit.image_url);
-
-          var produtosHtml = '';
-          if (kit.items && kit.items.length > 0) {
-            produtosHtml = '<div class="cartao-produtos"><h1>Ingredientes</h1><ul>' +
-              kit.items.map(function (item) { return '<li>' + (item.custom_name || 'Item') + '</li>'; }).join('') +
-              '</ul></div>';
-          }
-
-          cartoesSection.innerHTML += '<div class="cartao">' +
-            '<img class="cartao-img" src="' + imgSrc + '" alt="' + kit.name + '">' +
-            '<h1 class="cartao-h1">' + kit.name + '</h1>' +
-            '<div class="cartao-valor"><p>R$</p><h3>' + valorFormatado + '</h3></div>' +
-            produtosHtml +
-            '<div class = "conteiner-botões-kit">' +
-              '<button class="add-carrinho-botao" onclick=\'addCarrinho(' + JSON.stringify({ id: kit.id, nome: kit.name, valor: kit.price, img: imgSrc, tipo: "kit" }) + ')\'><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
-              '<button class="ver-mais-botao" onclick="window.location.href=\'/site/pages/kits/detalhe/index.html?id=' + kit.id + '\'">Ver mais</button>' +
-            '</div>' +
-            '</div>';
-        });
-      })
-      .catch(function () {
-        cartoesSection.innerHTML = '<p class="fallback-msg">Produtos em breve</p>';
       });
+    }, { rootMargin: '200px' });
+    observerDestaques.observe(destaquesWrapper);
+  }
+
+  /* ===== KITS (LAZY) ===== */
+
+  var cartoesSection = document.getElementById('cartoes-section');
+  var kitsWrapper = cartoesSection ? cartoesSection.parentElement : null;
+
+  function renderizarKits(kits) {
+    if (!kits || kits.length === 0) {
+      cartoesSection.innerHTML = '<p class="fallback-msg">Produtos em breve</p>';
+      return;
+    }
+
+    kits.forEach(function (kit) {
+      const valorFormatado = Number(kit.price).toFixed(2).replace('.', ',');
+      const imgSrc = imgUrl(kit.image_url);
+
+      var produtosHtml = '';
+      if (kit.items && kit.items.length > 0) {
+        produtosHtml = '<div class="cartao-produtos"><h1>Ingredientes</h1><ul>' +
+          kit.items.map(function (item) { return '<li>' + (item.custom_name || 'Item') + '</li>'; }).join('') +
+          '</ul></div>';
+      }
+
+      cartoesSection.innerHTML += '<div class="cartao">' +
+        '<img class="cartao-img" src="' + imgSrc + '" alt="' + kit.name + '">' +
+        '<h1 class="cartao-h1">' + kit.name + '</h1>' +
+        '<div class="cartao-valor"><p>R$</p><h3>' + valorFormatado + '</h3></div>' +
+        produtosHtml +
+        '<div class = "conteiner-botões-kit">' +
+          '<button class="add-carrinho-botao" onclick=\'addCarrinho(' + JSON.stringify({ id: kit.id, nome: kit.name, valor: kit.price, img: imgSrc, tipo: "kit" }) + ')\'><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
+          '<button class="ver-mais-botao" onclick="window.location.href=\'/site/pages/kits/detalhe/index.html?id=' + kit.id + '\'">Ver mais</button>' +
+        '</div>' +
+        '</div>';
+    });
+  }
+
+  if (kitsWrapper && cartoesSection) {
+    var observerKits = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          observerKits.disconnect();
+          observarSecao(cartoesSection, 'home_kits', (window.API_BASE_URL || 'http://localhost:3333') + '/api/kits?active=true', renderizarKits);
+        }
+      });
+    }, { rootMargin: '200px' });
+    observerKits.observe(kitsWrapper);
   }
 
 });

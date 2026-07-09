@@ -3,14 +3,55 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!produtosSection) return;
 
   const categoria = produtosSection.dataset.categoria;
-  const API_URL = (window.API_BASE_URL || 'http://localhost:3333') + '/api/products?category=' + encodeURIComponent(categoria);
-
-  const chaveCache = 'produtos_v2_' + categoria + '_cache';
-  const chaveTempo = 'produtos_v2_' + categoria + '_timestamp';
-  const tempoAgora = Date.now();
-  const tempoValidade = 5 * 60 * 1000;
+  const API_BASE = window.API_BASE_URL || 'http://localhost:3333';
 
   var todosProdutos = [];
+  var total = 0;
+  var loading = false;
+  var allLoaded = false;
+  var sentinel = null;
+  var observer = null;
+
+  function cartaoHtml(produto) {
+    var venda = produto.compare_price || produto.price;
+    var valorFormatado = Number(venda).toFixed(2).replace('.', ',');
+    const imgSrc = imgUrl(produto.image_url);
+    const precoHtml = produto.compare_price
+      ? '<span style="text-decoration:line-through;color:#999;font-size:12px;">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</span><br><strong style="color:#c53b22;">R$ ' + valorFormatado + '</strong>'
+      : 'R$ ' + valorFormatado;
+
+    return '<div class="cartao">' +
+      '<img src="' + imgSrc + '" alt="' + produto.name + '" loading="lazy">' +
+      '<h3>' + produto.name + '</h3>' +
+      '<p>' + precoHtml + '</p>' +
+      '<div>' +
+        '<button onclick=\'addCarrinho(' + JSON.stringify({ id: produto.id, nome: produto.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'>' +
+          '<img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho">' +
+        '</button>' +
+        '<button onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + produto.id + '&categoria=' + categoria + '\'">Ver produto</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function atualizarSentinel() {
+    if (sentinel) sentinel.remove();
+    if (observer) observer.disconnect();
+
+    if (allLoaded) return;
+
+    sentinel = document.createElement('div');
+    sentinel.className = 'sentinel';
+    sentinel.textContent = 'Carregando mais...';
+    sentinel.style.cssText = 'text-align:center;padding:20px;color:#999;';
+    produtosSection.appendChild(sentinel);
+
+    observer = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting && !loading && !allLoaded) {
+        carregarPagina();
+      }
+    }, { rootMargin: '300px' });
+    observer.observe(sentinel);
+  }
 
   function renderizarProdutos(produtos) {
     produtosSection.innerHTML = '';
@@ -20,34 +61,37 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    produtos.forEach(function (produto) {
-      var venda = produto.compare_price || produto.price;
-      var valorFormatado = Number(venda).toFixed(2).replace('.', ',');
-      const imgSrc = imgUrl(produto.image_url);
-      const precoHtml = produto.compare_price
-        ? '<span style="text-decoration:line-through;color:#999;font-size:12px;">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</span><br><strong style="color:#c53b22;">R$ ' + valorFormatado + '</strong>'
-        : 'R$ ' + valorFormatado;
-
-      produtosSection.innerHTML += `
-        <div class="cartao">
-          <img src="${imgSrc}" alt="${produto.name}" loading="lazy">
-          <h3>${produto.name}</h3>
-          <p>${precoHtml}</p>
-          <div>
-            <button onclick='addCarrinho(${JSON.stringify({
-              id: produto.id,
-              nome: produto.name,
-              valor: venda,
-              img: imgSrc,
-              tipo: "produto"
-            })})'>
-              <img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho">
-            </button>
-            <button onclick="window.location.href='/site/pages/produtos/detalhe/index.html?id=${produto.id}&categoria=${categoria}'">Ver produto</button>
-          </div>
-        </div>
-      `;
+    produtos.forEach(function (p) {
+      produtosSection.innerHTML += cartaoHtml(p);
     });
+  }
+
+  function carregarPagina() {
+    if (loading || allLoaded) return;
+    loading = true;
+
+    if (todosProdutos.length === 0) {
+      produtosSection.innerHTML = '<p>Carregando produtos...</p>';
+    }
+
+    fetch(API_BASE + '/api/products?category=' + encodeURIComponent(categoria) + '&limit=20&offset=' + todosProdutos.length)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        todosProdutos = todosProdutos.concat(data.products);
+        total = data.total;
+        allLoaded = todosProdutos.length >= total;
+
+        renderizarProdutos(todosProdutos);
+        loading = false;
+        atualizarSentinel();
+      })
+      .catch(function () {
+        if (todosProdutos.length === 0) {
+          produtosSection.innerHTML = '<p>Não foi possível carregar os produtos.</p>';
+        }
+        loading = false;
+        allLoaded = true;
+      });
   }
 
   function filterProducts(term) {
@@ -70,28 +114,5 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  const cacheSalvo = localStorage.getItem(chaveCache);
-  const tempoSalvo = localStorage.getItem(chaveTempo);
-
-  if (cacheSalvo && tempoSalvo && (tempoAgora - Number(tempoSalvo) < tempoValidade)) {
-    todosProdutos = JSON.parse(cacheSalvo);
-    renderizarProdutos(todosProdutos);
-    return;
-  }
-
-  produtosSection.innerHTML = '<p>Carregando produtos...</p>';
-
-  fetch(API_URL)
-    .then(function (resposta) {
-      return resposta.json();
-    })
-    .then(function (produtos) {
-      todosProdutos = produtos;
-      localStorage.setItem(chaveCache, JSON.stringify(produtos));
-      localStorage.setItem(chaveTempo, String(tempoAgora));
-      renderizarProdutos(produtos);
-    })
-    .catch(function () {
-      produtosSection.innerHTML = '<p>Não foi possível carregar os produtos.</p>';
-    });
+  carregarPagina();
 });

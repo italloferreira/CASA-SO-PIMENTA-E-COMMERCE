@@ -1,7 +1,7 @@
 import { pool } from '../database/connection.js';
 
 export async function listProducts(req, res) {
-  const { category, featured } = req.query;
+  const { category, featured, limit, offset } = req.query;
   const isAdmin = req.user?.role === 'admin';
 
   let conditions = [];
@@ -23,6 +23,18 @@ export async function listProducts(req, res) {
 
   const whereClause = conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '';
 
+  const limitVal = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+  const offsetVal = Math.max(parseInt(offset) || 0, 0);
+
+  const countResult = await pool.query(`
+    SELECT COUNT(*) AS total
+    FROM products
+    LEFT JOIN categories ON categories.id = products.category_id
+    ${whereClause}
+  `, params);
+
+  const total = parseInt(countResult.rows[0].total);
+
   const query = `
     SELECT
       products.*,
@@ -32,10 +44,11 @@ export async function listProducts(req, res) {
     LEFT JOIN categories ON categories.id = products.category_id
     ${whereClause}
     ORDER BY products.created_at DESC
+    LIMIT $${paramIndex++} OFFSET $${paramIndex++}
   `;
 
-  const result = await pool.query(query, params);
-  res.json(result.rows);
+  const result = await pool.query(query, [...params, limitVal, offsetVal]);
+  res.json({ products: result.rows, total });
 }
 
 export async function getProductById(req, res) {
