@@ -1,21 +1,13 @@
 var API_BASE = window.API_BASE_URL || 'http://localhost:3333';
 
-function getToken() {
-  return localStorage.getItem('csp_admin_token');
-}
-
 function getAuthHeaders() {
-  var token = getToken();
-  return token ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+  return { 'Content-Type': 'application/json' };
 }
 
 export async function getUserProfile() {
-  var token = getToken();
-  if (!token) return null;
-
   try {
     var res = await fetch(API_BASE + '/api/auth/profile', {
-      headers: { 'Authorization': 'Bearer ' + token }
+      credentials: 'include'
     });
 
     if (!res.ok) return null;
@@ -74,7 +66,7 @@ async function buscarCEP(cep) {
 document.addEventListener('DOMContentLoaded', function () {
   var userData = localStorage.getItem('csp_admin_user');
 
-  if (!userData || !getToken()) {
+  if (!userData) {
     window.location.href = '/site/pages/login/index.html';
     return;
   }
@@ -107,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Carrega perfil completo da API */
   fetch(API_BASE + '/api/auth/profile', {
-    headers: { 'Authorization': 'Bearer ' + getToken() }
+    credentials: 'include'
   })
     .then(function (r) { return r.json(); })
     .then(function (perfil) {
@@ -149,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fetch(API_BASE + '/api/auth/profile', {
       method: 'PUT',
       headers: getAuthHeaders(),
+      credentials: 'include',
       body: JSON.stringify({
         name: novoNome,
         phone: telefone,
@@ -181,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Sair da conta */
   document.getElementById('btnSair').addEventListener('click', function () {
-    localStorage.removeItem('csp_admin_token');
+    fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(function () {});
     localStorage.removeItem('csp_admin_user');
     window.location.href = '/site/pages/index.html';
   });

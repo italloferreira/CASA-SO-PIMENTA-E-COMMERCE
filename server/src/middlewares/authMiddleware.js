@@ -1,21 +1,27 @@
 import jwt from 'jsonwebtoken';
 
 export function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
+  let token = null;
 
-  if (!authHeader) {
+  if (req.cookies && req.cookies.csp_admin_token) {
+    token = req.cookies.csp_admin_token;
+  } else {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const parts = authHeader.split(' ');
+      if (parts.length === 2) token = parts[1];
+    }
+  }
+
+  if (!token) {
     return res.status(401).json({
       message: 'Token não informado.'
     });
   }
 
-  const [, token] = authHeader.split(' ');
-
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     req.user = decoded;
-
     next();
   } catch {
     return res.status(401).json({
@@ -35,13 +41,19 @@ export function adminMiddleware(req, res, next) {
 }
 
 export function optionalAuth(req, res, next) {
-  const authHeader = req.headers.authorization;
+  let token = null;
 
-  if (!authHeader) {
-    return next();
+  if (req.cookies && req.cookies.csp_admin_token) {
+    token = req.cookies.csp_admin_token;
+  } else {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const parts = authHeader.split(' ');
+      if (parts.length === 2) token = parts[1];
+    }
   }
 
-  const [, token] = authHeader.split(' ');
+  if (!token) return next();
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -52,3 +64,4 @@ export function optionalAuth(req, res, next) {
 
   next();
 }
+

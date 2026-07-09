@@ -5,10 +5,6 @@ function getDadosUsuario() {
   return data ? JSON.parse(data) : null;
 }
 
-function getToken() {
-  return localStorage.getItem('csp_admin_token');
-}
-
 /* ── Helpers local ── */
 function salvarCarrinho(carrinho) {
   localStorage.setItem('carrinho', JSON.stringify(carrinho));
@@ -27,7 +23,7 @@ if (abrirCarrinho) {
     carrinhoOverlay.classList.add('ativo');
     document.body.style.overflow = 'hidden';
 
-    if (!getDadosUsuario() || !getToken()) {
+    if (!getDadosUsuario()) {
       var rodape = document.getElementById('carrinhoRodape');
       if (rodape) rodape.style.display = 'none';
       document.getElementById('produtoCarrinho').innerHTML =
@@ -70,7 +66,7 @@ function finalizarPedido() {
 
   const usuario = getDadosUsuario();
 
-  if (!usuario || !getToken()) {
+  if (!usuario) {
     window.location.href = '/site/pages/login/index.html?redirect=checkout';
     return;
   }

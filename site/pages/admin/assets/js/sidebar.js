@@ -43,7 +43,7 @@ function initSidebar() {
   /* Logout */
   if (btnLogout) {
     btnLogout.addEventListener('click', function () {
-      localStorage.removeItem('csp_admin_token');
+      fetch( (window.API_BASE_URL || 'http://localhost:3333') + '/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(function () {});
       localStorage.removeItem('csp_admin_user');
       window.location.href = '/site/pages/login/index.html';
     });

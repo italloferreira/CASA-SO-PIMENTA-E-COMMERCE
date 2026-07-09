@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
@@ -44,8 +45,11 @@ app.use(cors({
     } else {
       callback(new Error('Origem não permitida pelo CORS.'));
     }
-  }
+  },
+  credentials: true
 }));
+
+app.use(cookieParser());
 
 app.use(express.json());
 

@@ -4,27 +4,21 @@ var API_BASE = window.API_BASE_URL || 'http://localhost:3333';
 
 function apiRequest(method, path, body, isFormData) {
   const url = API_BASE + path;
-  const token = localStorage.getItem('csp_admin_token');
 
-  const options = { method };
-
-  if (token) {
-    options.headers = { 'Authorization': 'Bearer ' + token };
-  }
+  const options = { method, credentials: 'include' };
 
   if (body) {
     if (isFormData) {
       options.body = body;
     } else {
-      options.headers = options.headers || {};
-      options.headers['Content-Type'] = 'application/json';
+      options.headers = { 'Content-Type': 'application/json' };
       options.body = JSON.stringify(body);
     }
   }
 
   return fetch(url, options).then(function (res) {
     if (res.status === 401) {
-      localStorage.removeItem('csp_admin_token');
+      localStorage.removeItem('csp_admin_user');
       window.location.href = '/site/pages/admin/index.html';
       throw new Error('Sessão expirada. Faça login novamente.');
     }

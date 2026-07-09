@@ -1,10 +1,10 @@
 export function protectRoute() {
-  const token = localStorage.getItem('csp_admin_token');
-  if (!token) {
+  const userData = localStorage.getItem('csp_admin_user');
+  if (!userData) {
     window.location.href = '/site/pages/login/index.html';
     return null;
   }
-  const user = JSON.parse(localStorage.getItem('csp_admin_user') || '{}');
+  const user = JSON.parse(userData);
   const headerName = document.getElementById('headerUserName');
   const sidebarName = document.getElementById('sidebarUserName');
   const headerAvatar = document.getElementById('headerAvatar');
@@ -14,7 +14,7 @@ export function protectRoute() {
   if (sidebarName) sidebarName.textContent = nome;
   if (headerAvatar) headerAvatar.textContent = nome.charAt(0).toUpperCase();
   if (sidebarAvatar) sidebarAvatar.textContent = nome.charAt(0).toUpperCase();
-  return token;
+  return true;
 }
 
 export function showToast(message, type) {

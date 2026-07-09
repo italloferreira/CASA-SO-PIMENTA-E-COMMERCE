@@ -13,10 +13,6 @@ var deliveryType = 'delivery';
 var shippingData = null;
 var cupomAplicado = null;
 
-function getToken() {
-  return localStorage.getItem('csp_admin_token');
-}
-
 function getUsuario() {
   var data = localStorage.getItem('csp_admin_user');
   return data ? JSON.parse(data) : null;
@@ -84,7 +80,7 @@ function mostrarLoading(show) {
 }
 
 (function () {
-  if (!getToken() || !getUsuario()) {
+  if (!getUsuario()) {
     window.location.href = '/site/pages/login/index.html?redirect=checkout';
     return;
   }
@@ -98,7 +94,7 @@ function carregarPerfil() {
   }
 
   fetch(API + '/api/auth/profile', {
-    headers: { 'Authorization': 'Bearer ' + getToken() }
+    credentials: 'include'
   })
     .then(function (r) { return r.json(); })
     .then(function (perfil) {
@@ -128,7 +124,7 @@ function preencherEntrega(perfil) {
 }
 
 window.sairDaConta = function () {
-  localStorage.removeItem('csp_admin_token');
+  fetch(API + '/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(function () {});
   localStorage.removeItem('csp_admin_user');
   window.location.href = '/site/pages/login/index.html?redirect=checkout';
 };
@@ -171,7 +167,7 @@ window.salvarDadosPerfil = function () {
 
   fetch(API + '/api/auth/profile', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+    headers: { 'Content-Type': 'application/json' }, credentials: 'include',
     body: JSON.stringify({ name: nome, phone: telefone })
   })
     .then(function (r) { return r.json(); })
@@ -309,7 +305,7 @@ function calcularFreteDaAPI(cep) {
 
   fetch(API + '/api/orders/calculate-shipping', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+    headers: { 'Content-Type': 'application/json' }, credentials: 'include',
     body: JSON.stringify({
       cep: cep,
       items: carrinho.map(function (i) { return { product_id: i.tipo === 'kit' ? null : Number(i.id), kit_id: i.tipo === 'kit' ? Number(i.id) : null, quantity: i.quantidade }; })
@@ -381,7 +377,7 @@ window.aplicarCupom = function () {
 
   fetch(API + '/api/coupons/validate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+    headers: { 'Content-Type': 'application/json' }, credentials: 'include',
     body: JSON.stringify({ code: codigo, subtotal: subtotal })
   })
     .then(function (r) { return r.json(); })
@@ -743,7 +739,7 @@ function criarPedidoEProcessarPagamento() {
 
   fetch(API + '/api/orders', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+    headers: { 'Content-Type': 'application/json' }, credentials: 'include',
     body: JSON.stringify(payload)
   })
     .then(function (r) { return r.json(); })
@@ -775,7 +771,7 @@ window.enviarPagamentoCartao = async function (dados) {
   try {
     var res = await fetch(API + '/api/payments/process-card', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ orderId: pedidoCriado.id, ...dados })
     });
     var data = await res.json();
@@ -806,7 +802,7 @@ async function enviarPagamentoPix() {
   try {
     var res = await fetch(API + '/api/payments/process-pix', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({
         orderId: pedidoCriado.id,
         email: document.getElementById('inputEmail').value.trim(),
@@ -856,7 +852,7 @@ function iniciarPollingPix(paymentId) {
   pixPollingInterval = setInterval(async function () {
     try {
       var res = await fetch(API + '/api/payments/status/' + paymentId, {
-        headers: { 'Authorization': 'Bearer ' + getToken() }
+        credentials: 'include'
       });
       var data = await res.json();
 
@@ -1094,7 +1090,7 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
 
   fetch(API + '/api/orders', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+    headers: { 'Content-Type': 'application/json' }, credentials: 'include',
     body: JSON.stringify(payload)
   })
     .then(function (r) { return r.json(); })

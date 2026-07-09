@@ -77,6 +77,13 @@ export async function login(req, res) {
     }
   );
 
+  res.cookie('csp_admin_token', token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  });
+
   res.json({
     token,
     user: {
@@ -91,6 +98,15 @@ export async function login(req, res) {
       role: user.role
     }
   });
+}
+
+export async function logout(req, res) {
+  res.clearCookie('csp_admin_token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none'
+  });
+  res.json({ message: 'Sessão encerrada.' });
 }
 
 export async function getProfile(req, res) {
