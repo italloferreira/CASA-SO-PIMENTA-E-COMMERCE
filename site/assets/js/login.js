@@ -24,6 +24,11 @@ function mostrarErro(secaoId, mensagem) {
   erroEl.textContent = mensagem;
 }
 
+window.fecharModalSucesso = function () {
+  document.getElementById("modalSucesso").classList.remove("ativo");
+  toggleForm();
+};
+
 function limparErros() {
   document.querySelectorAll(".erro-msg").forEach(el => el.textContent = "");
 }
@@ -113,12 +118,11 @@ document.addEventListener("DOMContentLoaded", function () {
       return res.json();
     })
     .then(function () {
-      mostrarErro("cadastro", "Conta criada com sucesso! Faça login.");
       document.getElementById("nome").value = "";
       document.getElementById("cadEmail").value = "";
       document.getElementById("cadSenha").value = "";
       document.getElementById("confirmarSenha").value = "";
-      setTimeout(function () { toggleForm(); }, 1500);
+      document.getElementById("modalSucesso").classList.add("ativo");
     })
     .catch(function (err) {
       mostrarErro("cadastro", err.message);

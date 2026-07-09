@@ -63,6 +63,13 @@ document.addEventListener('DOMContentLoaded', function () {
     renderizarProdutos(filtered);
   }
 
+  var inputPesquisa = document.querySelector('.pesquisa');
+  if (inputPesquisa) {
+    inputPesquisa.addEventListener('input', function () {
+      filterProducts(this.value);
+    });
+  }
+
   const cacheSalvo = localStorage.getItem(chaveCache);
   const tempoSalvo = localStorage.getItem(chaveTempo);
 
@@ -87,11 +94,4 @@ document.addEventListener('DOMContentLoaded', function () {
     .catch(function () {
       produtosSection.innerHTML = '<p>Não foi possível carregar os produtos.</p>';
     });
-
-  var inputPesquisa = document.querySelector('.pesquisa');
-  if (inputPesquisa) {
-    inputPesquisa.addEventListener('input', function () {
-      filterProducts(this.value);
-    });
-  }
 });

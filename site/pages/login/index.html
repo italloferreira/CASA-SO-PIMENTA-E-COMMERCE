@@ -61,11 +61,11 @@
                         <input type="password" id="loginSenha" placeholder="Digite sua senha">
                     </div>
 
-                    <div class="extra">
+                    <button class="btn">Entrar</button>
+
+                    <div class="extra" style="margin-top: 12px;">
                         <a href="#" onclick="mostrarForgot(event)" style="font-size:14px;color:#c53b22;">Esqueci minha senha</a>
                     </div>
-
-                    <button class="btn">Entrar</button>
 
                     <div class="extra">
                         <p>Não tem conta?</p>
@@ -147,6 +147,15 @@
 
         <p>© Copyright Casa Só Pimenta BH - 2026 - Todos os direitos reservados</p>
     </footer>
+
+    <div class="modal-overlay" id="modalSucesso">
+      <div class="modal-conteudo">
+        <div class="modal-icone">&#10003;</div>
+        <h2>Conta criada com sucesso!</h2>
+        <p>Você já pode fazer login e começar a comprar.</p>
+        <button class="modal-btn" onclick="fecharModalSucesso()">Ir para o login</button>
+      </div>
+    </div>
 
     <div class="carrinho-overlay" id="carrinhoOverlay"></div>
 

@@ -1234,6 +1234,75 @@ footer p{
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
+/* Modal de sucesso */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.3s ease;
+}
+
+.modal-overlay.ativo {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-conteudo {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: fade 0.3s ease;
+}
+
+.modal-icone {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #4CAF50;
+  color: white;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.modal-conteudo h2 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.modal-conteudo p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.modal-btn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 8px;
+  background: #860000;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.modal-btn:hover {
+  background: #b90000;
+}
+
 /* Mensagem de erro Firebase */
 .erro-msg {
   color: #c53b22;
