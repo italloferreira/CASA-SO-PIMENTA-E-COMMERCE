@@ -7,13 +7,15 @@ import {
   searchProducts,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getProductsStatus
 } from '../controllers/productController.js';
 
 const router = Router();
 
 router.get('/', optionalAuth, listProducts);
 router.get('/search', searchProducts);
+router.get('/status', getProductsStatus);
 router.get('/:id', getProductById);
 router.post('/', authMiddleware, adminMiddleware, createProduct);
 router.put('/:id', authMiddleware, adminMiddleware, updateProduct);

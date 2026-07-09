@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', function () {
   var sentinel = null;
   var observer = null;
 
+  function estaDisponivel(produto) {
+    return produto.stock > 0 && produto.is_active !== 0;
+  }
+
   function cartaoHtml(produto) {
     var venda = produto.compare_price || produto.price;
     var valorFormatado = Number(venda).toFixed(2).replace('.', ',');
@@ -20,15 +24,18 @@ document.addEventListener('DOMContentLoaded', function () {
       ? '<span style="text-decoration:line-through;color:#999;font-size:12px;">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</span><br><strong style="color:#c53b22;">R$ ' + valorFormatado + '</strong>'
       : 'R$ ' + valorFormatado;
 
-    return '<div class="cartao">' +
+    var disponivel = estaDisponivel(produto);
+
+    return '<div class="cartao' + (disponivel ? '' : ' indisponivel') + '">' +
+      (disponivel ? '' : '<div class="overlay-indisponivel"><span>Indisponível</span></div>') +
       '<img src="' + imgSrc + '" alt="' + produto.name + '" loading="lazy">' +
       '<h3>' + produto.name + '</h3>' +
       '<p>' + precoHtml + '</p>' +
       '<div>' +
-        '<button onclick=\'addCarrinho(' + JSON.stringify({ id: produto.id, nome: produto.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'>' +
+        '<button' + (disponivel ? ' onclick=\'addCarrinho(' + JSON.stringify({ id: produto.id, nome: produto.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'' : ' disabled') + '>' +
           '<img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho">' +
         '</button>' +
-        '<button onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + produto.id + '&categoria=' + categoria + '\'">Ver produto</button>' +
+        '<button' + (disponivel ? ' onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + produto.id + '&categoria=' + categoria + '\'"' : ' disabled') + '>Ver produto</button>' +
       '</div>' +
     '</div>';
   }

@@ -688,9 +688,18 @@ window.confirmarPedido = function () {
   criarPedidoEProcessarPagamento();
 };
 
-function criarPedidoEProcessarPagamento() {
+function getItensDisponiveis() {
   var carrinho = getCarrinho();
-  var subtotal = calcularSubtotal();
+  if (typeof window.estaDisponivel !== 'function') return carrinho;
+  return carrinho.filter(function (item) { return window.estaDisponivel(item); });
+}
+
+function criarPedidoEProcessarPagamento() {
+  var carrinho = getItensDisponiveis();
+  if (carrinho.length === 0) { alert('Todos os itens do carrinho estão indisponíveis no momento.'); return; }
+  var itensRemovidos = getCarrinho().length - carrinho.length;
+  var subtotal = 0;
+  carrinho.forEach(function (item) { subtotal += Number(item.valor) * item.quantidade; });
   var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
   var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
   var total = subtotal + boxPrice + freteValor;
@@ -736,6 +745,18 @@ function criarPedidoEProcessarPagamento() {
   };
 
   mostrarLoading(true);
+
+  if (itensRemovidos > 0) {
+    var aviso = document.getElementById('checkoutAvisoIndisponivel');
+    if (!aviso) {
+      aviso = document.createElement('div');
+      aviso.id = 'checkoutAvisoIndisponivel';
+      aviso.style.cssText = 'background:#fff3cd;color:#856404;padding:12px;border-radius:6px;margin-bottom:16px;font-size:14px;';
+      var form = document.getElementById('checkoutForm');
+      if (form) form.insertBefore(aviso, form.firstChild);
+    }
+    aviso.textContent = itensRemovidos + ' produto(s) indisponível(is) foi/foram removido(s) do pedido.';
+  }
 
   fetch(API + '/api/orders', {
     method: 'POST',
@@ -1041,8 +1062,11 @@ function iniciarCardForm() {
 }
 
 function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
-  var carrinho = getCarrinho();
-  var subtotal = calcularSubtotal();
+  var carrinho = getItensDisponiveis();
+  if (carrinho.length === 0) { alert('Todos os itens do carrinho estão indisponíveis no momento.'); return; }
+  var itensRemovidos = getCarrinho().length - carrinho.length;
+  var subtotal = 0;
+  carrinho.forEach(function (item) { subtotal += Number(item.valor) * item.quantidade; });
   var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
   var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
   var total = subtotal + boxPrice + freteValor;
@@ -1087,6 +1111,18 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
   };
 
   mostrarLoading(true);
+
+  if (itensRemovidos > 0) {
+    var aviso = document.getElementById('checkoutAvisoIndisponivel');
+    if (!aviso) {
+      aviso = document.createElement('div');
+      aviso.id = 'checkoutAvisoIndisponivel';
+      aviso.style.cssText = 'background:#fff3cd;color:#856404;padding:12px;border-radius:6px;margin-bottom:16px;font-size:14px;';
+      var form = document.getElementById('checkoutForm');
+      if (form) form.insertBefore(aviso, form.firstChild);
+    }
+    aviso.textContent = itensRemovidos + ' produto(s) indisponível(is) foi/foram removido(s) do pedido.';
+  }
 
   fetch(API + '/api/orders', {
     method: 'POST',
@@ -1137,6 +1173,9 @@ document.addEventListener('DOMContentLoaded', function () {
   carregarPerfil();
   atualizarResumo();
   inicializarMercadoPago();
+  if (typeof window.carregarDisponibilidade === 'function') {
+    window.carregarDisponibilidade();
+  }
 
   var cpfInput = document.getElementById('inputCpf');
   if (cpfInput) {

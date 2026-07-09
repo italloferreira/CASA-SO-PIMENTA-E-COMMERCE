@@ -1,5 +1,36 @@
 /* carrinho.js — carrinho local + checkout via API */
 
+var API = window.API_BASE_URL || 'http://localhost:3333';
+
+window.disponibilidadeCache = {};
+
+window.carregarDisponibilidade = function (callback) {
+  var carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+  var ids = carrinho.filter(function (i) { return i.tipo !== 'kit'; }).map(function (i) { return i.id; });
+
+  if (ids.length === 0) {
+    if (callback) callback();
+    return;
+  }
+
+  fetch(API + '/api/products/status?ids=' + ids.join(','))
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      window.disponibilidadeCache = data;
+      if (callback) callback();
+    })
+    .catch(function () {
+      if (callback) callback();
+    });
+};
+
+function estaDisponivel(item) {
+  if (item.tipo === 'kit') return true;
+  var status = window.disponibilidadeCache[String(item.id)];
+  if (!status) return true;
+  return status.stock > 0 && status.is_active !== 0;
+}
+
 function getDadosUsuario() {
   var data = localStorage.getItem('csp_admin_user');
   return data ? JSON.parse(data) : null;
@@ -35,6 +66,7 @@ if (abrirCarrinho) {
       var rodape = document.getElementById('carrinhoRodape');
       if (rodape) rodape.style.display = '';
       renderizarCarrinho();
+      carregarDisponibilidade(function () { renderizarCarrinho(); });
     }
   });
 }
@@ -149,9 +181,11 @@ window.renderizarCarrinho = function () {
 
     const valorFormatado = valor.toFixed(2).replace('.', ',');
     const subtotal = subtotalNumero.toFixed(2).replace('.', ',');
+    const disponivel = estaDisponivel(item);
 
     produtoCarrinho.innerHTML += `
-      <div class="item-carrinho">
+      <div class="item-carrinho${disponivel ? '' : ' item-carrinho-indisponivel'}">
+        ${disponivel ? '' : '<div class="overlay-indisponivel-carrinho"><span>Indisponível</span></div>'}
         <div class="item-carrinho-img">
           <img src="${item.img}" alt="${item.nome}">
         </div>
@@ -159,9 +193,9 @@ window.renderizarCarrinho = function () {
           <h3>${item.nome}</h3>
           <p>R$ ${valorFormatado}</p>
           <div class="controle-qtd">
-            <button onclick="diminuirQuantidade('${item.id}')">-</button>
+            <button onclick="diminuirQuantidade('${item.id}')"${disponivel ? '' : ' disabled'}>-</button>
             <span>${item.quantidade}</span>
-            <button onclick="aumentarQuantidade('${item.id}')">+</button>
+            <button onclick="aumentarQuantidade('${item.id}')"${disponivel ? '' : ' disabled'}>+</button>
           </div>
           <p>Subtotal: R$ ${subtotal}</p>
           <button onclick="removerDoCarrinho('${item.id}')">
@@ -194,6 +228,7 @@ window.atualizarBadgeCarrinho = function () {
 document.addEventListener('DOMContentLoaded', function () {
   renderizarCarrinho();
   atualizarBadgeCarrinho();
+  carregarDisponibilidade(function () { renderizarCarrinho(); });
 
   const btnFinalizar = document.getElementById('btnFinalizarPedido');
   if (btnFinalizar) {

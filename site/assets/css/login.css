@@ -1234,6 +1234,37 @@ footer p{
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
+/* Produto indisponível no carrinho */
+.item-carrinho-indisponivel {
+    position: relative;
+}
+
+.item-carrinho-indisponivel .overlay-indisponivel-carrinho {
+    position: absolute;
+    inset: 0;
+    background: rgba(180, 180, 180, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    border-radius: inherit;
+}
+
+.item-carrinho-indisponivel .overlay-indisponivel-carrinho span {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.item-carrinho-indisponivel .controle-qtd button {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* Modal de sucesso */
 .modal-overlay {
   position: fixed;

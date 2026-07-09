@@ -6,6 +6,10 @@ function precoVenda(prod) {
   return prod.compare_price || prod.price;
 }
 
+function estaDisponivel(prod) {
+  return prod.stock > 0 && prod.is_active !== 0;
+}
+
 function renderProductCard(prod) {
   var imgSrc = imgUrl(prod.image_url);
   var venda = precoVenda(prod);
@@ -13,13 +17,16 @@ function renderProductCard(prod) {
     ? '<p style="text-decoration:line-through;color:#999;font-size:14px;">R$ ' + formatPrice(prod.price) + '</p><h3 style="color:#c53b22;">R$ ' + formatPrice(venda) + '</h3>'
     : '<p>R$</p><h3>' + formatPrice(venda) + '</h3>';
 
-  return '<div class="cartao">' +
-    '<img class="cartao-img" src="' + imgSrc + '" alt="' + prod.name + '" onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + prod.id + '\'" style="cursor:pointer;">' +
+  var disponivel = estaDisponivel(prod);
+
+  return '<div class="cartao' + (disponivel ? '' : ' indisponivel') + '">' +
+    (disponivel ? '' : '<div class="overlay-indisponivel"><span>Indisponível</span></div>') +
+    '<img class="cartao-img" src="' + imgSrc + '" alt="' + prod.name + '" style="cursor:pointer;">' +
     '<h1 class="cartao-h1">' + prod.name + '</h1>' +
     '<div class="cartao-valor">' + precoHtml + '</div>' +
     '<div class="conteiner-botões-kit">' +
-      '<button class="add-carrinho-botao" onclick=\'addCarrinho(' + JSON.stringify({ id: prod.id, nome: prod.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
-      '<button class="ver-mais-botao" onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + prod.id + '\'">Ver mais</button>' +
+      '<button class="add-carrinho-botao"' + (disponivel ? ' onclick=\'addCarrinho(' + JSON.stringify({ id: prod.id, nome: prod.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'' : ' disabled') + '><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
+      '<button class="ver-mais-botao"' + (disponivel ? ' onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + prod.id + '\'"' : ' disabled') + '>Ver mais</button>' +
     '</div>' +
     '</div>';
 }
