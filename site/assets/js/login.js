@@ -66,6 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return res.json();
     })
     .then(function (data) {
+      data.user.token = data.token;
       localStorage.setItem("csp_admin_user", JSON.stringify(data.user));
       if (data.user.role === "admin") {
         window.location.href = "/site/pages/admin/index.html";

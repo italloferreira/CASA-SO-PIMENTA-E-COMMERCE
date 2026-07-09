@@ -95,7 +95,8 @@ export async function login(req, res) {
       address: user.address,
       city: user.city,
       state: user.state,
-      role: user.role
+      role: user.role,
+      token
     }
   });
 }

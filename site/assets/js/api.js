@@ -2,6 +2,18 @@
 
 var API_BASE = window.API_BASE_URL || 'http://localhost:3333';
 
+function getAuthHeaders() {
+  var headers = {};
+  var userData = localStorage.getItem('csp_admin_user');
+  if (userData) {
+    var user = JSON.parse(userData);
+    if (user.token) {
+      headers['Authorization'] = 'Bearer ' + user.token;
+    }
+  }
+  return headers;
+}
+
 function apiRequest(method, path, body, isFormData) {
   const url = API_BASE + path;
 
@@ -14,6 +26,12 @@ function apiRequest(method, path, body, isFormData) {
       options.headers = { 'Content-Type': 'application/json' };
       options.body = JSON.stringify(body);
     }
+  }
+
+  var authHeaders = getAuthHeaders();
+  if (authHeaders['Authorization']) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = authHeaders['Authorization'];
   }
 
   return fetch(url, options).then(function (res) {
@@ -43,4 +61,4 @@ function imageUrl(path) {
   return API_BASE + path;
 }
 
-export { API_BASE, apiRequest, imageUrl };
+export { API_BASE, apiRequest, imageUrl, getAuthHeaders };

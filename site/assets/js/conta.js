@@ -1,7 +1,15 @@
 var API_BASE = window.API_BASE_URL || 'http://localhost:3333';
 
 function getAuthHeaders() {
-  return { 'Content-Type': 'application/json' };
+  var headers = { 'Content-Type': 'application/json' };
+  var userData = localStorage.getItem('csp_admin_user');
+  if (userData) {
+    var user = JSON.parse(userData);
+    if (user.token) {
+      headers['Authorization'] = 'Bearer ' + user.token;
+    }
+  }
+  return headers;
 }
 
 export async function getUserProfile() {
