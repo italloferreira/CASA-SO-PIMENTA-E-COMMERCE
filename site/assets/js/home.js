@@ -2,12 +2,14 @@ function formatPrice(val) {
   return Number(val).toFixed(2).replace('.', ',');
 }
 
+var escH = window.escapeHtml || function (s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') : ''; };
+
 function precoVenda(prod) {
   return prod.compare_price || prod.price;
 }
 
 function estaDisponivel(prod) {
-  return prod.stock > 0 && prod.is_active !== 0;
+  return !!prod.stock && prod.is_active !== 0;
 }
 
 function renderProductCard(prod) {
@@ -21,8 +23,8 @@ function renderProductCard(prod) {
 
   return '<div class="cartao' + (disponivel ? '' : ' indisponivel') + '">' +
     (disponivel ? '' : '<div class="overlay-indisponivel"><span>Indisponível</span></div>') +
-    '<img class="cartao-img" src="' + imgSrc + '" alt="' + prod.name + '" style="cursor:pointer;">' +
-    '<h1 class="cartao-h1">' + prod.name + '</h1>' +
+    '<img class="cartao-img" src="' + imgSrc + '" alt="' + escH(prod.name) + '" style="cursor:pointer;">' +
+    '<h1 class="cartao-h1">' + escH(prod.name) + '</h1>' +
     '<div class="cartao-valor">' + precoHtml + '</div>' +
     '<div class="conteiner-botões-kit">' +
       '<button class="add-carrinho-botao"' + (disponivel ? ' onclick=\'addCarrinho(' + JSON.stringify({ id: prod.id, nome: prod.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'' : ' disabled') + '><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
@@ -80,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       banners.forEach(function (banner, index) {
-        slidesContainer.innerHTML += '<div class="slide"><img src="' + imgUrl(banner.image_url) + '" alt="' + (banner.title || 'Slide ' + (index + 1)) + '"></div>';
+        slidesContainer.innerHTML += '<div class="slide"><img src="' + imgUrl(banner.image_url) + '" alt="' + escH(banner.title || 'Slide ' + (index + 1)) + '"></div>';
       });
 
       totalSlides = banners.length;
@@ -92,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
       slideAtual++;
       if (slideAtual >= totalSlides) slideAtual = 0;
       atualizarCarrossel();
+      resetarAutoPlay();
     });
 
     btnAnterior.addEventListener('click', function () {
@@ -99,7 +102,36 @@ document.addEventListener('DOMContentLoaded', function () {
       slideAtual--;
       if (slideAtual < 0) slideAtual = totalSlides - 1;
       atualizarCarrossel();
+      resetarAutoPlay();
     });
+
+    var autoPlayInterval = null;
+
+    function iniciarAutoPlay() {
+      if (autoPlayInterval) clearInterval(autoPlayInterval);
+      autoPlayInterval = setInterval(function () {
+        if (totalSlides <= 1) return;
+        slideAtual++;
+        if (slideAtual >= totalSlides) slideAtual = 0;
+        atualizarCarrossel();
+      }, 5000);
+    }
+
+    function resetarAutoPlay() {
+      iniciarAutoPlay();
+    }
+
+    var slidesWrapper = slidesContainer.parentElement;
+    if (slidesWrapper) {
+      slidesWrapper.addEventListener('mouseenter', function () {
+        if (autoPlayInterval) clearInterval(autoPlayInterval);
+      });
+      slidesWrapper.addEventListener('mouseleave', function () {
+        iniciarAutoPlay();
+      });
+    }
+
+    iniciarAutoPlay();
   }
 
   /* ===== PRODUTOS EM DESTAQUE (LAZY) ===== */
@@ -153,13 +185,13 @@ document.addEventListener('DOMContentLoaded', function () {
       var produtosHtml = '';
       if (kit.items && kit.items.length > 0) {
         produtosHtml = '<div class="cartao-produtos"><h1>Ingredientes</h1><ul>' +
-          kit.items.map(function (item) { return '<li>' + (item.custom_name || 'Item') + '</li>'; }).join('') +
+          kit.items.map(function (item) { return '<li>' + escH(item.custom_name || 'Item') + '</li>'; }).join('') +
           '</ul></div>';
       }
 
       cartoesSection.innerHTML += '<div class="cartao">' +
-        '<img class="cartao-img" src="' + imgSrc + '" alt="' + kit.name + '">' +
-        '<h1 class="cartao-h1">' + kit.name + '</h1>' +
+        '<img class="cartao-img" src="' + imgSrc + '" alt="' + escH(kit.name) + '">' +
+        '<h1 class="cartao-h1">' + escH(kit.name) + '</h1>' +
         '<div class="cartao-valor"><p>R$</p><h3>' + valorFormatado + '</h3></div>' +
         produtosHtml +
         '<div class = "conteiner-botões-kit">' +

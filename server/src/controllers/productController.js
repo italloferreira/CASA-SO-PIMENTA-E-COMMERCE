@@ -112,7 +112,7 @@ export async function createProduct(req, res) {
     ingredients || null,
     Number(price),
     compare_price ? Number(compare_price) : null,
-    Number(stock || 0),
+    stock === true || stock === 1 || stock === '1' || stock === 'true',
     Number(weight || 0),
     image_url || null,
     is_active !== false ? 1 : 0,
@@ -168,7 +168,7 @@ export async function updateProduct(req, res) {
     ingredients || null,
     Number(price),
     compare_price ? Number(compare_price) : null,
-    Number(stock || 0),
+    stock === true || stock === 1 || stock === '1' || stock === 'true',
     Number(weight || 0),
     image_url || null,
     is_active ? 1 : 0,
@@ -264,7 +264,7 @@ export async function getProductsStatus(req, res) {
 
   var statusMap = {};
   result.rows.forEach(function (row) {
-    statusMap[String(row.id)] = { stock: row.stock, is_active: row.is_active };
+    statusMap[String(row.id)] = { stock: !!row.stock, is_active: row.is_active };
   });
 
   res.json(statusMap);

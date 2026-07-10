@@ -12,6 +12,9 @@ var pixPollingInterval = null;
 var deliveryType = 'delivery';
 var shippingData = null;
 var cupomAplicado = null;
+var isSubmitting = false;
+
+var escHtml = window.escapeHtml || function (s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') : ''; };
 
 function getAuthHeaders() {
   var headers = {};
@@ -325,7 +328,7 @@ function calcularFreteDaAPI(cep) {
     headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()), credentials: 'include',
     body: JSON.stringify({
       cep: cep,
-      items: carrinho.map(function (i) { return { product_id: i.tipo === 'kit' ? null : Number(i.id), kit_id: i.tipo === 'kit' ? Number(i.id) : null, quantity: i.quantidade }; })
+      cart: carrinho.map(function (i) { return { product_id: i.tipo === 'kit' ? null : Number(i.id), kit_id: i.tipo === 'kit' ? Number(i.id) : null, quantity: i.quantidade }; })
     })
   })
     .then(function (r) { return r.json(); })
@@ -597,9 +600,9 @@ window.atualizarResumo = function () {
     var sub = Number(item.valor) * item.quantidade;
     container.innerHTML +=
       '<div class="resumo-item">' +
-        '<img class="resumo-item-img" src="' + item.img + '" alt="' + item.nome + '">' +
+        '<img class="resumo-item-img" src="' + escHtml(item.img) + '" alt="' + escHtml(item.nome) + '">' +
         '<div class="resumo-item-info">' +
-          '<div class="resumo-item-nome">' + item.nome + '</div>' +
+          '<div class="resumo-item-nome">' + escHtml(item.nome) + '</div>' +
           '<div class="resumo-item-qtd">Qtd: ' + item.quantidade + '</div>' +
         '</div>' +
         '<div class="resumo-item-subtotal">' + formatarPreco(sub) + '</div>' +
@@ -691,11 +694,31 @@ function getTotalFinal() {
 }
 
 window.confirmarPedido = function () {
+  if (isSubmitting) return;
+
   var consent = document.getElementById('consentLGPD');
   if (!consent || !consent.checked) {
     alert('Voc\u00ea precisa concordar com os Termos de Uso e a Pol\u00edtica de Privacidade para finalizar a compra.');
     if (consent) consent.focus();
     return;
+  }
+
+  var carrinho = getCarrinho();
+  if (carrinho.length === 0) { alert('Seu carrinho est\u00e1 vazio.'); return; }
+
+  var itensDisponiveis = getItensDisponiveis();
+  if (itensDisponiveis.length === 0) {
+    alert('Todos os itens do carrinho est\u00e3o indispon\u00edveis no momento.');
+    return;
+  }
+
+  if (itensDisponiveis.length < carrinho.length) {
+    var removidos = carrinho.filter(function (item) {
+      return !itensDisponiveis.some(function (d) { return d.id == item.id; });
+    });
+    var nomes = removidos.map(function (i) { return i.nome; }).join(', ');
+    var continuar = confirm('Os seguintes itens foram removidos por estarem indispon\u00edveis:\n\n' + nomes + '\n\nDeseja continuar com os itens dispon\u00edveis?');
+    if (!continuar) return;
   }
 
   if (metodoPagamento === 'cartao' && cardForm) {
@@ -706,15 +729,12 @@ window.confirmarPedido = function () {
   var valido = validarEtapa3();
   if (!valido) return;
 
-  var carrinho = getCarrinho();
-  if (carrinho.length === 0) { alert('Seu carrinho est\u00e1 vazio.'); return; }
-
   criarPedidoEProcessarPagamento();
 };
 
 function getItensDisponiveis() {
   var carrinho = getCarrinho();
-  if (typeof window.estaDisponivel !== 'function') return carrinho;
+  if (typeof window.estaDisponivel !== 'function') return [];
   return carrinho.filter(function (item) { return window.estaDisponivel(item); });
 }
 
@@ -771,6 +791,7 @@ function criarPedidoEProcessarPagamento() {
   };
 
   mostrarLoading(true);
+  isSubmitting = true;
 
   if (itensRemovidos > 0) {
     var aviso = document.getElementById('checkoutAvisoIndisponivel');
@@ -797,6 +818,7 @@ function criarPedidoEProcessarPagamento() {
     })
     .catch(function (err) {
       mostrarLoading(false);
+      isSubmitting = false;
       alert(err.message || 'Erro ao processar pedido. Tente novamente.');
     });
 }
@@ -834,13 +856,16 @@ window.enviarPagamentoCartao = async function (dados) {
       mostrarTelaConfirmacao({ metodo: 'cartao', pedidoId: pedidoCriado.id, total: dados.amount, status: data.statusDetail || data.status });
     } else if (data.status === 'in_process' || data.status === 'pending') {
       mostrarLoading(false);
+      isSubmitting = false;
       mostrarErroInline('Pagamento em an\u00e1lise. Voc\u00ea receber\u00e1 um e-mail de confirma\u00e7\u00e3o.');
     } else {
       mostrarLoading(false);
+      isSubmitting = false;
       mostrarErroInline(traduzirErroMP(data.statusDetail) || 'Pagamento recusado. Tente novamente.');
     }
   } catch (e) {
     mostrarLoading(false);
+    isSubmitting = false;
     mostrarErroInline(e.message || 'Erro ao processar pagamento. Tente novamente.');
   }
 };
@@ -862,8 +887,6 @@ async function enviarPagamentoPix() {
     if (!res.ok) throw new Error(data.message || 'Erro ao gerar PIX.');
 
     mostrarLoading(false);
-    localStorage.removeItem('carrinho');
-    if (window.atualizarBadgeCarrinho) window.atualizarBadgeCarrinho();
 
     document.getElementById('checkoutForm').style.display = 'none';
     var confirmacao = document.getElementById('checkoutConfirmacao');
@@ -913,6 +936,8 @@ function iniciarPollingPix(paymentId) {
       if (data.status === 'approved' || data.status === 'processed') {
         clearInterval(pixPollingInterval);
         pixPollingInterval = null;
+        localStorage.removeItem('carrinho');
+        if (window.atualizarBadgeCarrinho) window.atualizarBadgeCarrinho();
         document.getElementById('confirmacaoPagamento').textContent = 'PIX - Pago';
         var icon = document.querySelector('.confirmacao-icon');
         if (icon) icon.innerHTML = '\u2705';
@@ -1077,6 +1102,7 @@ function iniciarCardForm() {
         }
 
         if (!cpf || !validarCPF(cpf)) {
+          mostrarLoading(false);
           mostrarErro('Cpf', 'Informe um CPF v\u00e1lido.');
           return;
         }
@@ -1154,6 +1180,7 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
   };
 
   mostrarLoading(true);
+  isSubmitting = true;
 
   if (itensRemovidos > 0) {
     var aviso = document.getElementById('checkoutAvisoIndisponivel');
@@ -1189,6 +1216,7 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
     })
     .catch(function (err) {
       mostrarLoading(false);
+      isSubmitting = false;
       mostrarErroInline(err.message || 'Erro ao criar pedido. Tente novamente.');
     });
 }

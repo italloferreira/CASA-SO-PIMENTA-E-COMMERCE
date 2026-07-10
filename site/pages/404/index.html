@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página não encontrada | Casa Só Pimenta</title>
+    <link rel="stylesheet" href="/site/assets/css/legal.css">
+    <style>
+        .erro-404 {
+            text-align: center;
+            padding: 80px 20px;
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .erro-404 h1 {
+            font-size: 72px;
+            color: #c53b22;
+            margin: 0;
+        }
+        .erro-404 p {
+            font-size: 18px;
+            color: #555;
+            margin: 16px 0 32px;
+        }
+        .erro-404 a {
+            display: inline-block;
+            background: #c53b22;
+            color: #fff;
+            padding: 12px 32px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .erro-404 a:hover {
+            background: #a8301c;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="/site/pages/index.html" class="logo-section"><img src="/site/imgs/logo.jpeg" alt=""></a>
+        <section class="categoria-section">
+            <ul class="menu-principal">
+                <li><a href="/site/pages/index.html">Home</a></li>
+                <li><a href="/site/pages/produtos/pimentas/index.html">Pimentas</a></li>
+                <li class="dropdown">
+                    <button class="dropdown-btn">
+                        Produtos naturais
+                        <img src="/site/imgs/icones/seta-baixo.png" alt="">
+                    </button>
+                    <ul class="submenu">
+                        <li><a href="/site/pages/produtos/produtosNaturais/farinhas/index.html">Farinhas</a></li>
+                        <li><a href="/site/pages/produtos/produtosNaturais/castanhas/index.html">Castanhas</a></li>
+                    </ul>
+                </li>
+                <li><a href="/site/pages/produtos/temperos/index.html">Temperos</a></li>
+                <li><a href="/site/pages/produtos/outro/index.html">Outros</a></li>
+            </ul>
+        </section>
+        <section class="icons-section">
+            <a href="#" id="abrirCarrinho">
+                <div class="carrinho-container">
+                    <img src="/site/imgs/icones/carrinho.png" alt="Carrinho">
+                    <span class="badge-carrinho" id="badgeCarrinho" style="display:none;">0</span>
+                </div>
+            </a>
+            <a href="/site/pages/login/index.html"><img src="/site/imgs/icones/usuario.png" alt="Entrar"></a>
+        </section>
+    </header>
+
+    <main>
+        <div class="erro-404">
+            <h1>404</h1>
+            <p>Oops! A página que você procura não foi encontrada.</p>
+            <a href="/site/pages/index.html">Voltar à página inicial</a>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-conteudo">
+            <div class="footer-coluna">
+                <h4>Institucional</h4>
+                <ul>
+                    <li><a href="/site/pages/sobre/index.html">Quem somos</a></li>
+                    <li><a href="/site/pages/troca-e-devolucao/index.html">Troca e Devoluções</a></li>
+                    <li><a href="/site/pages/privacidade/index.html">Privacidade</a></li>
+                    <li><a href="/site/pages/termos/index.html">Termos de uso</a></li>
+                </ul>
+            </div>
+            <div class="footer-coluna">
+                <h4>Contato</h4>
+                <ul>
+                    <li><a href="https://www.google.com/maps/search/Avenida+Augusto+de+Lima,+744+M4+113,+117+-+Centro,+Belo+Horizonte+-+MG,+30190-922" target="_blank" rel="noopener noreferrer">Onde estamos?</a></li>
+                    <li><a href="#">Faça parte do time</a></li>
+                    <li class="footer-horarios" data-setting="store_hours" data-setting-fallback="Seg a Sab: 08h-18h | Dom: 08h-13h"></li>
+                    <li class="footer-endereco" data-setting="store_address" data-setting-fallback="Avenida Augusto de Lima, 744 M4 113, 117 - Centro, Belo Horizonte - MG, 30190-922"></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-copy">
+            <p>&copy; 2025 Casa Só Pimenta. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <div class="carrinho-overlay" id="carrinhoOverlay"></div>
+    <nav class="campo-carrinho" id="campoCarrinho">
+        <button class="fechar-carrinho" id="fecharCarrinho">✕</button>
+        <h2>Meu Carrinho</h2>
+        <div id="produtoCarrinho"></div>
+        <div class="carrinho-rodape" id="carrinhoRodape">
+            <p id="totalCarrinho">R$ 0,00</p>
+            <button id="btnFinalizarPedido">Finalizar Pedido</button>
+        </div>
+    </nav>
+
+    <script src="/site/assets/js/carrinho.js"></script>
+</body>
+
+</html>

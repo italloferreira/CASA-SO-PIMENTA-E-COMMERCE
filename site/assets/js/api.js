@@ -37,7 +37,10 @@ function apiRequest(method, path, body, isFormData) {
   return fetch(url, options).then(function (res) {
     if (res.status === 401) {
       localStorage.removeItem('csp_admin_user');
-      window.location.href = '/site/pages/admin/index.html';
+      var isAdminPage = window.location.pathname.indexOf('/admin/') !== -1;
+      window.location.href = isAdminPage
+        ? '/site/pages/admin/index.html'
+        : '/site/pages/login/index.html';
       throw new Error('Sessão expirada. Faça login novamente.');
     }
 

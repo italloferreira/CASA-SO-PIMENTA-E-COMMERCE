@@ -48,7 +48,7 @@ function renderKits() {
       '<td data-label="Imagem">' + img + '</td>' +
       '<td data-label="Nome"><strong>' + k.name + '</strong></td>' +
       '<td data-label="Preço">R$ ' + price + '</td>' +
-      '<td data-label="Estoque">' + k.stock + '</td>' +
+      '<td data-label="Estoque">' + (k.stock ? '<span class="badge badge-success">Sim</span>' : '<span class="badge badge-danger">Não</span>') + '</td>' +
       '<td data-label="Status">' + badge + '</td>' +
       '<td data-label="Ações">' +
         '<button class="btn btn-sm btn-secondary" onclick="window.editKit(' + k.id + ')">✎</button> ' +
@@ -82,7 +82,7 @@ function openDrawer(kit) {
     document.getElementById('kitId').value = kit.id;
     document.getElementById('kitName').value = kit.name || '';
     document.getElementById('kitPrice').value = kit.price || '';
-    document.getElementById('kitStock').value = kit.stock || 0;
+    document.getElementById('kitStock').checked = !!kit.stock;
     document.getElementById('kitDescription').value = kit.description || '';
     document.getElementById('kitActive').checked = kit.is_active !== false;
     if (kit.image_url) {
@@ -104,7 +104,7 @@ function openDrawer(kit) {
     document.getElementById('kitImageUrl').value = '';
     document.getElementById('kitImagePreview').style.display = 'none';
     document.getElementById('kitActive').checked = true;
-    document.getElementById('kitStock').value = 0;
+    document.getElementById('kitStock').checked = false;
     kitItems = [];
     renderKitItems();
   }
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var payload = {
       name: document.getElementById('kitName').value.trim(),
       price: Number(document.getElementById('kitPrice').value),
-      stock: Number(document.getElementById('kitStock').value),
+      stock: document.getElementById('kitStock').checked,
       description: document.getElementById('kitDescription').value.trim(),
       image_url: document.getElementById('kitImageUrl').value || null,
       active: document.getElementById('kitActive').checked

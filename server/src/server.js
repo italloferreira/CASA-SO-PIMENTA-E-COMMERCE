@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import morgan from 'morgan';
 import dotenv from 'dotenv';
 import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
@@ -51,7 +52,9 @@ app.use(cors({
 
 app.use(cookieParser());
 
-app.use(express.json());
+app.use(morgan('short'));
+
+app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/categories', categoryRoutes);
 
@@ -84,9 +87,15 @@ app.get('/', (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error('Erro:', err.message);
-  res.status(err.status || 500).json({
-    message: err.message || 'Erro interno do servidor.'
-  });
+  if (process.env.NODE_ENV === 'production') {
+    res.status(err.status || 500).json({
+      message: 'Erro interno do servidor.'
+    });
+  } else {
+    res.status(err.status || 500).json({
+      message: err.message || 'Erro interno do servidor.'
+    });
+  }
 });
 
 async function start() {

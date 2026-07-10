@@ -1,5 +1,7 @@
 /* detalhe.js — página de detalhe do produto */
 
+var escHtml = window.escapeHtml || function (s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') : ''; };
+
 document.addEventListener('DOMContentLoaded', function () {
   const params = new URLSearchParams(window.location.search);
   const produtoId = params.get('id');
@@ -26,33 +28,31 @@ document.addEventListener('DOMContentLoaded', function () {
     container.innerHTML = `
       <div class="produto-detalhe-card">
         <div class="produto-detalhe-img">
-          <img src="${imgSrc}" alt="${produto.name}">
+          <img src="${imgSrc}" alt="${escHtml(produto.name)}">
         </div>
 
         <div class="produto-detalhe-info">
-          <span class="produto-categoria">${produto.category_name || categoria}</span>
-          <h1>${produto.name}</h1>
+          <span class="produto-categoria">${escHtml(produto.category_name || categoria)}</span>
+          <h1>${escHtml(produto.name)}</h1>
 
           ${produto.compare_price ? '<p class="produto-preco-antigo">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</p>' : ''}
           <p class="produto-preco">R$ ${valorFormatado}</p>
 
-          ${produto.stock !== null && produto.stock !== undefined ? `
           <div class="produto-estoque">
             <h3>Estoque</h3>
-            <p class="${Number(produto.stock) > 0 ? 'estoque-disponivel' : 'estoque-indisponivel'}">${Number(produto.stock) > 0 ? 'Disponível' : 'Indisponível'}</p>
+            <p class="${produto.stock ? 'estoque-disponivel' : 'estoque-indisponivel'}">${produto.stock ? 'Disponível' : 'Indisponível'}</p>
           </div>
-          ` : ''}
 
           <div class="produto-descricao">
             <h3>Descrição</h3>
-            <p>${produto.description || 'Produto natural de alta qualidade, selecionado com cuidado pela Casa Só Pimenta.'}</p>
+            <p>${escHtml(produto.description || 'Produto natural de alta qualidade, selecionado com cuidado pela Casa Só Pimenta.')}</p>
           </div>
 
           ${ingredientes.length > 0 ? `
           <div class="produto-ingredientes">
             <h3>Ingredientes</h3>
             <ul>
-              ${ingredientes.map(function (ing) { return '<li>' + ing + '</li>'; }).join('')}
+              ${ingredientes.map(function (ing) { return '<li>' + escHtml(ing) + '</li>'; }).join('')}
             </ul>
           </div>
           ` : ''}
@@ -64,9 +64,9 @@ document.addEventListener('DOMContentLoaded', function () {
               <button onclick="incrementarQtd()">+</button>
             </div>
 
-            <button class="btn-add-carrinho" onclick="adicionarAoCarrinhoDetalhe()">
+            <button class="btn-add-carrinho" onclick="adicionarAoCarrinhoDetalhe()" ${!produto.stock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
               <img src="/site/imgs/icones/carrinho.png" alt="Carrinho">
-              Adicionar ao carrinho
+              ${produto.stock ? 'Adicionar ao carrinho' : 'Indisponível'}
             </button>
           </div>
 
@@ -79,7 +79,8 @@ document.addEventListener('DOMContentLoaded', function () {
       id: produto.id,
       nome: produto.name,
       valor: produto.compare_price || produto.price,
-      img: imgSrc
+      img: imgSrc,
+      estoque: !!produto.stock
     };
   }
 
@@ -124,7 +125,7 @@ window.decrementarQtd = function () {
 
 window.adicionarAoCarrinhoDetalhe = function () {
   const produto = window._produtoAtual;
-  if (!produto) return;
+  if (!produto || produto.estoque <= 0) return;
 
   const qtd = Number(document.getElementById('qtdSelecionada').textContent);
 
@@ -139,7 +140,8 @@ window.adicionarAoCarrinhoDetalhe = function () {
       nome: produto.nome,
       valor: produto.valor,
       img: produto.img,
-      quantidade: qtd
+      quantidade: qtd,
+      tipo: produto.tipo || 'produto'
     });
   }
 

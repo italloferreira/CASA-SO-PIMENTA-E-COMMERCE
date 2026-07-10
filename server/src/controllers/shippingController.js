@@ -8,6 +8,7 @@ const MELHOR_ENVIO_API = process.env.MELHOR_ENVIO_ENV === 'production'
 
 const ORIGIN_CEP = (process.env.ORIGIN_CEP || '').replace(/\D/g, '');
 const CACHE_DURATION_MS = 15 * 60 * 1000;
+const CACHE_MAX_SIZE = 500;
 
 const freightCache = new Map();
 
@@ -26,6 +27,10 @@ function getFromCache(cep) {
 }
 
 function setCache(cep, data) {
+  if (freightCache.size >= CACHE_MAX_SIZE) {
+    const oldestKey = freightCache.keys().next().value;
+    freightCache.delete(oldestKey);
+  }
   const key = getCacheKey(cep);
   freightCache.set(key, { data, timestamp: Date.now() });
 }

@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
+  var escHtml = window.escapeHtml || function (s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') : ''; };
   const params = new URLSearchParams(window.location.search);
   const kitId = params.get('id');
 
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (kit.items && kit.items.length > 0) {
       itensHtml = '<div class="produto-ingredientes"><h3>Itens do Kit</h3><ul>' +
         kit.items.map(function (item) {
-          return '<li>' + (item.custom_name || 'Item') + (item.quantity ? ' (' + item.quantity + (item.unit || '') + ')' : '') + '</li>';
+          return '<li>' + escHtml(item.custom_name || 'Item') + (item.quantity ? ' (' + item.quantity + escHtml(item.unit || '') + ')' : '') + '</li>';
         }).join('') +
         '</ul></div>';
     }
@@ -27,25 +28,23 @@ document.addEventListener('DOMContentLoaded', function () {
     container.innerHTML = `
       <div class="produto-detalhe-card">
         <div class="produto-detalhe-img">
-          <img src="${imgSrc}" alt="${kit.name}">
+          <img src="${imgSrc}" alt="${escHtml(kit.name)}">
         </div>
 
         <div class="produto-detalhe-info">
           <span class="produto-categoria">Kit</span>
-          <h1>${kit.name}</h1>
+          <h1>${escHtml(kit.name)}</h1>
 
           <p class="produto-preco">R$ ${valorFormatado}</p>
 
-          ${kit.stock !== null && kit.stock !== undefined ? `
           <div class="produto-estoque">
             <h3>Estoque</h3>
-            <p class="${Number(kit.stock) > 0 ? 'estoque-disponivel' : 'estoque-indisponivel'}">${Number(kit.stock) > 0 ? 'Disponível' : 'Indisponível'}</p>
+            <p class="${kit.stock ? 'estoque-disponivel' : 'estoque-indisponivel'}">${kit.stock ? 'Disponível' : 'Indisponível'}</p>
           </div>
-          ` : ''}
 
           <div class="produto-descricao">
             <h3>Descrição</h3>
-            <p>${kit.description || 'Kit natural de alta qualidade, selecionado com cuidado pela Casa Só Pimenta.'}</p>
+            <p>${escHtml(kit.description || 'Kit natural de alta qualidade, selecionado com cuidado pela Casa Só Pimenta.')}</p>
           </div>
 
           ${itensHtml}
@@ -57,9 +56,9 @@ document.addEventListener('DOMContentLoaded', function () {
               <button onclick="incrementarQtd()">+</button>
             </div>
 
-            <button class="btn-add-carrinho" onclick="adicionarAoCarrinhoDetalhe()">
+            <button class="btn-add-carrinho" onclick="adicionarAoCarrinhoDetalhe()" ${!kit.stock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
               <img src="/site/imgs/icones/carrinho.png" alt="Carrinho">
-              Adicionar ao carrinho
+              ${kit.stock ? 'Adicionar ao carrinho' : 'Indisponível'}
             </button>
           </div>
 
@@ -72,7 +71,9 @@ document.addEventListener('DOMContentLoaded', function () {
       id: kit.id,
       nome: kit.name,
       valor: kit.price,
-      img: imgSrc
+      img: imgSrc,
+      tipo: 'kit',
+      estoque: !!kit.stock
     };
   }
 

@@ -5,7 +5,7 @@ protectRoute();
 
 const METRICS = [
   { key: 'produtos', icon: '▦', label: 'Produtos cadastrados', color: 'var(--color-primary)', link: '/site/pages/admin/produtos/index.html' },
-  { key: 'estoqueBaixo', icon: '⚠', label: 'Estoque crítico (< 5)', color: 'var(--color-warning)', link: '/site/pages/admin/produtos/index.html' },
+  { key: 'estoqueBaixo', icon: '⚠', label: 'Produtos sem estoque', color: 'var(--color-warning)', link: '/site/pages/admin/produtos/index.html' },
   { key: 'pedidosPendentes', icon: '≡', label: 'Aguardando confirmação', color: 'var(--color-danger)', link: '/site/pages/admin/pedidos/index.html' },
   { key: 'pedidosHoje', icon: '◷', label: 'Pedidos do dia', color: 'var(--color-info)', link: '/site/pages/admin/pedidos/index.html' },
   { key: 'faturamento', icon: 'R$', label: 'Receita do mês', color: 'var(--color-success)', link: '/site/pages/admin/pedidos/index.html' },
@@ -72,7 +72,7 @@ function renderLowStock(products) {
   if (!container) return;
 
   if (products.length === 0) {
-    container.innerHTML = '<div class="table-container"><p style="padding:20px;text-align:center;color:var(--color-text-muted);">Nenhum produto com estoque crítico.</p></div>';
+    container.innerHTML = '<div class="table-container"><p style="padding:20px;text-align:center;color:var(--color-text-muted);">Nenhum produto sem estoque.</p></div>';
     return;
   }
 
@@ -80,7 +80,7 @@ function renderLowStock(products) {
   products.forEach(function (p) {
     html += '<tr>' +
       '<td data-label="Nome">' + p.name + '</td>' +
-      '<td data-label="Estoque"><span class="badge badge-danger">' + p.stock + '</span></td>' +
+      '<td data-label="Estoque"><span class="badge badge-danger">Sem estoque</span></td>' +
       '<td data-label="Ações"><a href="/site/pages/admin/produtos/index.html" class="btn btn-sm btn-secondary">Editar</a></td>' +
       '</tr>';
   });

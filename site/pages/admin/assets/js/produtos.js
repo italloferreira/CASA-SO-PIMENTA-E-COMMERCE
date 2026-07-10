@@ -58,7 +58,7 @@ function renderTable(products) {
       '<td data-label="Imagem">' + img + '</td>' +
       '<td data-label="Nome"><strong>' + p.name + '</strong>' + (p.category_name ? '<br><small>' + p.category_name + '</small>' : '') + '</td>' +
       '<td data-label="Preço">R$ ' + price + '<br>' + compare + '</td>' +
-      '<td data-label="Estoque">' + p.stock + '</td>' +
+      '<td data-label="Estoque">' + (p.stock ? '<span class="badge badge-success">Sim</span>' : '<span class="badge badge-danger">Não</span>') + '</td>' +
       '<td data-label="Status">' + activeBadge + ' ' + featuredBadge + '</td>' +
       '<td data-label="Ações">' +
         '<button class="btn btn-sm btn-secondary" onclick="window.editProduct(' + p.id + ')">✎</button> ' +
@@ -125,7 +125,7 @@ function openDrawer(product) {
     document.getElementById('prodCategory').value = product.category_id || '';
     document.getElementById('prodPrice').value = product.price || '';
     document.getElementById('prodComparePrice').value = product.compare_price || '';
-    document.getElementById('prodStock').value = product.stock || 0;
+    document.getElementById('prodStock').checked = !!product.stock;
     document.getElementById('prodDescription').value = product.description || '';
     document.getElementById('prodIngredients').value = product.ingredients || '';
     document.getElementById('prodActive').checked = product.is_active !== false;
@@ -146,7 +146,7 @@ function openDrawer(product) {
     document.getElementById('prodImagePreview').style.display = 'none';
     document.getElementById('prodActive').checked = true;
     document.getElementById('prodFeatured').checked = false;
-    document.getElementById('prodStock').value = 0;
+    document.getElementById('prodStock').checked = false;
   }
 }
 
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
       category_id: Number(document.getElementById('prodCategory').value),
       price: Number(document.getElementById('prodPrice').value),
       compare_price: document.getElementById('prodComparePrice').value ? Number(document.getElementById('prodComparePrice').value) : null,
-      stock: Number(document.getElementById('prodStock').value),
+      stock: document.getElementById('prodStock').checked,
       description: document.getElementById('prodDescription').value.trim(),
       ingredients: document.getElementById('prodIngredients').value.trim(),
       image_url: document.getElementById('prodImageUrl').value || null,

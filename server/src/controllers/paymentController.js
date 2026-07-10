@@ -54,9 +54,9 @@ function getCardType(paymentMethodId) {
 }
 
 export async function processCard(req, res) {
-  const { orderId, token, installments, paymentMethodId, email, cpf, amount } = req.body;
+  const { orderId, token, installments, paymentMethodId, email, cpf } = req.body;
 
-  if (!orderId || !token || !installments || !email || !cpf || !amount) {
+  if (!orderId || !token || !installments || !email || !cpf) {
     return res.status(400).json({ message: 'Dados incompletos para pagamento com cartão.' });
   }
 
@@ -67,10 +67,14 @@ export async function processCard(req, res) {
       return res.status(404).json({ message: 'Pedido não encontrado.' });
     }
 
+    if (order.user_id && req.user && order.user_id !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Acesso negado. Este pedido não pertence ao seu usuário.' });
+    }
+
     const payment = getPaymentInstance();
     const result = await payment.create({
       body: {
-        transaction_amount: Number(amount),
+        transaction_amount: Number(order.total),
         token,
         installments: parseInt(installments),
         payment_method_id: paymentMethodId || undefined,
@@ -122,9 +126,9 @@ export async function processCard(req, res) {
 }
 
 export async function processPix(req, res) {
-  const { orderId, email, cpf, amount } = req.body;
+  const { orderId, email, cpf } = req.body;
 
-  if (!orderId || !email || !cpf || !amount) {
+  if (!orderId || !email || !cpf) {
     return res.status(400).json({ message: 'Dados incompletos para pagamento PIX.' });
   }
 
@@ -135,15 +139,26 @@ export async function processPix(req, res) {
       return res.status(404).json({ message: 'Pedido não encontrado.' });
     }
 
+    if (order.user_id && req.user && order.user_id !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Acesso negado. Este pedido não pertence ao seu usuário.' });
+    }
+
+    const pixSetting = await pool.query("SELECT value FROM settings WHERE key = 'pix_discount_percent'");
+    const pixDiscountPercent = Number(pixSetting.rows[0]?.value) || 0;
+    const orderTotal = Number(order.total);
+    const amount = pixDiscountPercent > 0
+      ? orderTotal * (1 - pixDiscountPercent / 100)
+      : orderTotal;
+
     const result = await createOrder({
       type: 'online',
       processing_mode: 'automatic',
-      total_amount: String(Number(amount).toFixed(2)),
+      total_amount: String(amount.toFixed(2)),
       external_reference: String(orderId),
       payer: { email },
       transactions: {
         payments: [{
-          amount: String(Number(amount).toFixed(2)),
+          amount: String(amount.toFixed(2)),
           payment_method: {
             id: 'pix',
             type: 'bank_transfer'
@@ -200,8 +215,11 @@ export async function handleWebhook(req, res) {
         }
         throw err;
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      console.error('Webhook: MP_WEBHOOK_SECRET não configurado em produção');
+      return res.status(500).json({ error: 'Webhook não configurado' });
     } else {
-      console.warn('Webhook: MP_WEBHOOK_SECRET não configurado, validação ignorada');
+      console.warn('Webhook: MP_WEBHOOK_SECRET não configurado, validação ignorada (dev)');
     }
 
     const body = req.body;

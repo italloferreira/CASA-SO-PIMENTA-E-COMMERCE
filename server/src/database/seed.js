@@ -11,22 +11,31 @@ export async function seedDatabase() {
     ['Kits', 'kits']
   ];
 
-  const adminExists = await pool.query(`
-    SELECT id FROM users WHERE email = $1
-  `, ['admin@casasopimenta.com']);
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
 
-  if (adminExists.rows.length === 0) {
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+  if (adminEmail && adminPassword) {
+    const adminExists = await pool.query(`
+      SELECT id FROM users WHERE email = $1
+    `, [adminEmail]);
 
-    await pool.query(`
-      INSERT INTO users (name, email, password, role)
-      VALUES ($1, $2, $3, $4)
-    `, [
-      'Administrador',
-      'admin@casasopimenta.com',
-      hashedPassword,
-      'admin'
-    ]);
+    if (adminExists.rows.length === 0) {
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+      await pool.query(`
+        INSERT INTO users (name, email, password, role)
+        VALUES ($1, $2, $3, $4)
+      `, [
+        'Administrador',
+        adminEmail,
+        hashedPassword,
+        'admin'
+      ]);
+
+      console.log('Admin criado com sucesso:', adminEmail);
+    }
+  } else {
+    console.log('ADMIN_EMAIL/ADMIN_PASSWORD não definidos no .env. Seed de admin ignorado.');
   }
 
   for (const category of categories) {

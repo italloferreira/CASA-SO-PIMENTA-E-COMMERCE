@@ -96,7 +96,7 @@ export async function createKit(req, res) {
     finalSlug,
     description || null,
     Number(price),
-    stock !== undefined ? Number(stock) : 0,
+    stock === true || stock === 1 || stock === '1' || stock === 'true',
     image_url || null,
     finalActive ? 1 : 0,
     is_featured ? 1 : 0
@@ -147,7 +147,7 @@ export async function updateKit(req, res) {
     slug || '',
     description || null,
     Number(price),
-    stock !== undefined ? Number(stock) : 0,
+    stock === true || stock === 1 || stock === '1' || stock === 'true',
     image_url || null,
     finalActive ? 1 : 0,
     is_featured ? 1 : 0,
@@ -205,6 +205,32 @@ export async function deleteKitItems(req, res) {
   res.json({
     message: 'Itens do kit removidos com sucesso.'
   });
+}
+
+export async function getKitsStatus(req, res) {
+  const { ids } = req.query;
+
+  if (!ids) {
+    return res.json({});
+  }
+
+  const idList = ids.split(',').map(Number).filter(function (n) { return !isNaN(n) && n > 0; });
+
+  if (idList.length === 0) {
+    return res.json({});
+  }
+
+  const placeholders = idList.map(function (_, i) { return '$' + (i + 1); }).join(',');
+  const result = await pool.query(`
+    SELECT id, stock, is_active FROM kits WHERE id IN (${placeholders})
+  `, idList);
+
+  var statusMap = {};
+  result.rows.forEach(function (row) {
+    statusMap[String(row.id)] = { stock: !!row.stock, is_active: row.is_active };
+  });
+
+  res.json(statusMap);
 }
 
 export async function deleteKit(req, res) {

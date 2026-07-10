@@ -14,6 +14,12 @@ export async function register(req, res) {
     });
   }
 
+  if (password.length < 6) {
+    return res.status(400).json({
+      message: 'A senha deve ter no mínimo 6 caracteres.'
+    });
+  }
+
   const userExists = await pool.query(`
     SELECT id FROM users WHERE email = $1
   `, [email]);
@@ -43,8 +49,23 @@ export async function register(req, res) {
   });
 }
 
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 15;
+
 export async function login(req, res) {
   const { email, password } = req.body;
+
+  const attemptsResult = await pool.query(`
+    SELECT COUNT(*) as attempts FROM login_attempts
+    WHERE email = $1 AND attempted_at > NOW() - INTERVAL '${LOCKOUT_MINUTES} minutes'
+  `, [email]);
+  const attempts = Number(attemptsResult.rows[0]?.attempts) || 0;
+
+  if (attempts >= MAX_LOGIN_ATTEMPTS) {
+    return res.status(423).json({
+      message: 'Conta bloqueada temporariamente. Tente novamente em 15 minutos.'
+    });
+  }
 
   const result = await pool.query(`
     SELECT * FROM users WHERE email = $1
@@ -53,6 +74,7 @@ export async function login(req, res) {
   const user = result.rows[0];
 
   if (!user) {
+    await pool.query(`INSERT INTO login_attempts (email) VALUES ($1)`, [email]);
     return res.status(401).json({
       message: 'Email ou senha inválidos.'
     });
@@ -61,10 +83,13 @@ export async function login(req, res) {
   const passwordIsValid = await bcrypt.compare(password, user.password);
 
   if (!passwordIsValid) {
+    await pool.query(`INSERT INTO login_attempts (email) VALUES ($1)`, [email]);
     return res.status(401).json({
       message: 'Email ou senha inválidos.'
     });
   }
+
+  await pool.query(`DELETE FROM login_attempts WHERE email = $1`, [email]);
 
   const token = jwt.sign(
     {
@@ -80,7 +105,7 @@ export async function login(req, res) {
   res.cookie('csp_admin_token', token, {
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000
   });
 
@@ -105,7 +130,7 @@ export async function logout(req, res) {
   res.clearCookie('csp_admin_token', {
     httpOnly: true,
     secure: true,
-    sameSite: 'none'
+    sameSite: 'lax'
   });
   res.json({ message: 'Sessão encerrada.' });
 }
@@ -189,6 +214,15 @@ export async function forgotPassword(req, res) {
     return res.status(200).json({ message: 'Se o email existir, você receberá um link de recuperação.' });
   }
 
+  try {
+    await pool.query(`
+      DELETE FROM password_resets
+      WHERE user_id = $1 AND (used = 1 OR expires_at < NOW())
+    `, [user.id]);
+  } catch (err) {
+    console.error('Erro ao limpar tokens antigos:', err.message);
+  }
+
   const token = crypto.randomBytes(32).toString('hex');
 
   try {
@@ -208,7 +242,7 @@ export async function forgotPassword(req, res) {
     try {
       await sgMail.send({
         to: email,
-        from: process.env.SENDGRID_FROM || '"Casa Só Pimenta" <noreply@casasopimenta.com>',
+        from: process.env.SENDGRID_FROM || '"Casa Só Pimenta" <casasopimenta@gmail.com>',
         subject: 'Recuperação de senha - Casa Só Pimenta',
         html: forgotPasswordEmail(user.name, resetLink)
       });

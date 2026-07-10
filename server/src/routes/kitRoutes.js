@@ -4,6 +4,7 @@ import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.j
 import {
   listKits,
   getKitById,
+  getKitsStatus,
   createKit,
   updateKit,
   addKitItem,
@@ -13,6 +14,7 @@ import {
 
 const router = Router();
 
+router.get('/status', getKitsStatus);
 router.get('/', listKits);
 router.get('/:id', getKitById);
 router.post('/', authMiddleware, adminMiddleware, createKit);

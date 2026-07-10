@@ -6,7 +6,7 @@ import { canTransition, isValidStatusForType } from '../config/orderStatusMachin
 import crypto from 'crypto';
 
 function generatePickupCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(crypto.randomInt(100000, 999999));
 }
 
 export async function createOrder(req, res) {
@@ -44,116 +44,161 @@ export async function createOrder(req, res) {
   let subtotal = 0;
   const orderItems = [];
 
-  for (const item of items) {
-    let product = null;
-    let kit = null;
-
-    if (item.product_id) {
-      const productResult = await pool.query(`
-        SELECT * FROM products
-        WHERE id = $1 AND is_active = 1
-      `, [item.product_id]);
-
-      product = productResult.rows[0];
-
-      if (!product) {
-        return res.status(400).json({
-          message: `Produto ${item.product_id} não encontrado.`
-        });
-      }
-
-      const salePrice = product.compare_price ? Number(product.compare_price) : Number(product.price);
-      const total = salePrice * item.quantity;
-      subtotal += total;
-
-      orderItems.push({
-        product_id: product.id,
-        kit_id: null,
-        item_name: product.name,
-        unit_price: salePrice,
-        quantity: item.quantity,
-        total
-      });
-    }
-
-    if (item.kit_id) {
-      const kitResult = await pool.query(`
-        SELECT * FROM kits
-        WHERE id = $1 AND is_active = 1
-      `, [item.kit_id]);
-
-      kit = kitResult.rows[0];
-
-      if (!kit) {
-        return res.status(400).json({
-          message: `Kit ${item.kit_id} não encontrado.`
-        });
-      }
-
-      const total = Number(kit.price) * item.quantity;
-      subtotal += total;
-
-      orderItems.push({
-        product_id: null,
-        kit_id: kit.id,
-        item_name: kit.name,
-        unit_price: Number(kit.price),
-        quantity: item.quantity,
-        total
-      });
-    }
-  }
-
-  const deliveryFeeValue = Number(delivery_fee || 0);
-  let total = subtotal + deliveryFeeValue;
-  let couponData = null;
-  let couponDiscount = 0;
-
-  if (coupon_code) {
-    const couponResult = await pool.query('SELECT * FROM coupons WHERE code = $1', [coupon_code.toUpperCase()]);
-    const coupon = couponResult.rows[0];
-
-    if (!coupon) {
-      return res.status(400).json({ success: false, message: 'Cupom não encontrado.' });
-    }
-
-    if (!coupon.is_active) {
-      return res.status(400).json({ success: false, message: 'Este cupom está inativo.' });
-    }
-
-    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-      return res.status(400).json({ success: false, message: 'Este cupom expirou.' });
-    }
-
-    if (coupon.max_uses && coupon.times_used >= coupon.max_uses) {
-      return res.status(400).json({ success: false, message: 'Este cupom atingiu o limite de usos.' });
-    }
-
-    if (coupon.min_order_amount && subtotal < Number(coupon.min_order_amount)) {
-      return res.status(400).json({
-        success: false,
-        message: `Pedido mínimo de ${Number(coupon.min_order_amount).toFixed(2).replace('.', ',')} para usar este cupom.`
-      });
-    }
-
-    if (coupon.discount_type === 'fixed') {
-      couponDiscount = Number(coupon.discount_value);
-      if (couponDiscount > subtotal) couponDiscount = subtotal;
-    } else if (coupon.discount_type === 'percentage') {
-      couponDiscount = (Number(coupon.discount_value) / 100) * subtotal;
-    }
-
-    couponDiscount = Math.round(couponDiscount * 100) / 100;
-    total = total - couponDiscount;
-    if (total < 0) total = 0;
-
-    couponData = { id: coupon.id, code: coupon.code, discount: couponDiscount };
-  }
-
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
+
+  for (const item of items) {
+    let product = null;
+    let kit = null;
+
+    if (!item.product_id && !item.kit_id) {
+      await client.query('ROLLBACK');
+      client.release();
+      return res.status(400).json({
+        message: 'Cada item deve ter product_id ou kit_id.'
+      });
+    }
+
+    if (item.product_id) {
+        const productResult = await client.query(`
+          SELECT * FROM products
+          WHERE id = $1 AND is_active = 1
+          FOR UPDATE
+        `, [item.product_id]);
+
+        product = productResult.rows[0];
+
+        if (!product) {
+          await client.query('ROLLBACK');
+          client.release();
+          return res.status(400).json({
+            message: `Produto ${item.product_id} não encontrado.`
+          });
+        }
+
+        if (!product.stock) {
+          await client.query('ROLLBACK');
+          client.release();
+          return res.status(400).json({
+            message: `O produto "${product.name}" está fora de estoque.`
+          });
+        }
+
+        const salePrice = product.compare_price ? Number(product.compare_price) : Number(product.price);
+        const total = salePrice * item.quantity;
+        subtotal += total;
+
+        orderItems.push({
+          product_id: product.id,
+          kit_id: null,
+          item_name: product.name,
+          unit_price: salePrice,
+          quantity: item.quantity,
+          total
+        });
+      }
+
+      if (item.kit_id) {
+        const kitResult = await client.query(`
+          SELECT * FROM kits
+          WHERE id = $1 AND is_active = 1
+          FOR UPDATE
+        `, [item.kit_id]);
+
+        kit = kitResult.rows[0];
+
+        if (!kit) {
+          await client.query('ROLLBACK');
+          client.release();
+          return res.status(400).json({
+            message: `Kit ${item.kit_id} não encontrado.`
+          });
+        }
+
+        if (!kit.stock) {
+          await client.query('ROLLBACK');
+          client.release();
+          return res.status(400).json({
+            message: `O kit "${kit.name}" está fora de estoque.`
+          });
+        }
+
+        const total = Number(kit.price) * item.quantity;
+        subtotal += total;
+
+        orderItems.push({
+          product_id: null,
+          kit_id: kit.id,
+          item_name: kit.name,
+          unit_price: Number(kit.price),
+          quantity: item.quantity,
+          total
+        });
+      }
+    }
+
+    const deliveryFeeValue = delivery_type === 'pickup' || delivery_type === 'negotiate'
+      ? 0
+      : Math.max(0, Number(delivery_fee || 0));
+    const boxAmountValue = delivery_type === 'pickup' || delivery_type === 'negotiate'
+      ? 0
+      : Math.max(0, Number(box_amount || 0));
+    let total = subtotal + deliveryFeeValue + boxAmountValue;
+    let couponData = null;
+    let couponDiscount = 0;
+
+    if (coupon_code) {
+      const couponResult = await client.query('SELECT * FROM coupons WHERE code = $1 FOR UPDATE', [coupon_code.toUpperCase()]);
+      const coupon = couponResult.rows[0];
+
+      if (!coupon) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res.status(400).json({ success: false, message: 'Cupom não encontrado.' });
+      }
+
+      if (!coupon.is_active) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res.status(400).json({ success: false, message: 'Este cupom está inativo.' });
+      }
+
+      if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res.status(400).json({ success: false, message: 'Este cupom expirou.' });
+      }
+
+      if (coupon.max_uses && coupon.times_used >= coupon.max_uses) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res.status(400).json({ success: false, message: 'Este cupom atingiu o limite de usos.' });
+      }
+
+      if (coupon.min_order_amount && subtotal < Number(coupon.min_order_amount)) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res.status(400).json({
+          success: false,
+          message: `Pedido mínimo de ${Number(coupon.min_order_amount).toFixed(2).replace('.', ',')} para usar este cupom.`
+        });
+      }
+
+      if (coupon.discount_type === 'fixed') {
+        couponDiscount = Number(coupon.discount_value);
+        if (couponDiscount > subtotal) couponDiscount = subtotal;
+      } else if (coupon.discount_type === 'percentage') {
+        couponDiscount = (Number(coupon.discount_value) / 100) * subtotal;
+      }
+
+      couponDiscount = Math.round(couponDiscount * 100) / 100;
+      total = total - couponDiscount;
+      if (total < 0) total = 0;
+
+      couponData = { id: coupon.id, code: coupon.code, discount: couponDiscount };
+    }
 
     const orderResult = await client.query(`
       INSERT INTO orders (
@@ -216,6 +261,7 @@ export async function createOrder(req, res) {
         orderItem.quantity,
         orderItem.total
       ]);
+
     }
 
     if (couponData) {
@@ -306,7 +352,7 @@ export async function createOrder(req, res) {
 }
 
 export async function listOrders(req, res) {
-  const { delivery_type, status } = req.query;
+  const { delivery_type, status, limit, offset } = req.query;
   let query = 'SELECT * FROM orders';
   const params = [];
   const conditions = [];
@@ -326,6 +372,14 @@ export async function listOrders(req, res) {
   }
 
   query += ' ORDER BY created_at DESC';
+
+  const limitVal = Math.min(Math.max(parseInt(limit) || 100, 1), 500);
+  const offsetVal = Math.max(parseInt(offset) || 0, 0);
+
+  params.push(limitVal);
+  query += ` LIMIT $${params.length}`;
+  params.push(offsetVal);
+  query += ` OFFSET $${params.length}`;
 
   const result = await pool.query(query, params);
   res.json(result.rows);
@@ -349,26 +403,36 @@ export async function getOrderById(req, res) {
 export async function getMyOrders(req, res) {
   const userId = req.user.id;
 
-  const orderResult = await pool.query(`
-    SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC
+  const ordersResult = await pool.query(`
+    SELECT o.*,
+      COALESCE(
+        json_agg(
+          CASE WHEN oi.id IS NOT NULL THEN
+            json_build_object(
+              'id', oi.id, 'order_id', oi.order_id, 'product_id', oi.product_id,
+              'kit_id', oi.kit_id, 'item_name', oi.item_name, 'unit_price', oi.unit_price,
+              'quantity', oi.quantity, 'total', oi.total
+            )
+          END
+        ) FILTER (WHERE oi.id IS NOT NULL),
+        '[]'
+      ) as items
+    FROM orders o
+    LEFT JOIN order_items oi ON oi.order_id = o.id
+    WHERE o.user_id = $1
+    GROUP BY o.id
+    ORDER BY o.created_at DESC
   `, [userId]);
 
-  const orders = [];
-
-  for (const row of orderResult.rows) {
-    const itemsResult = await pool.query('SELECT * FROM order_items WHERE order_id = $1', [row.id]);
-    orders.push({ ...row, items: itemsResult.rows });
-  }
-
   const pickupCodes = {};
-  for (const order of orders) {
+  for (const order of ordersResult.rows) {
     if (order.delivery_type === 'pickup' && order.pickup_code) {
       pickupCodes[order.id] = order.pickup_code;
     }
     delete order.pickup_code;
   }
 
-  res.json({ orders, pickupCodes });
+  res.json({ orders: ordersResult.rows, pickupCodes });
 }
 
 export async function updateOrderStatus(req, res) {

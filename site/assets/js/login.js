@@ -68,8 +68,12 @@ document.addEventListener("DOMContentLoaded", function () {
     .then(function (data) {
       data.user.token = data.token;
       localStorage.setItem("csp_admin_user", JSON.stringify(data.user));
+      var params = new URLSearchParams(window.location.search);
+      var redirect = params.get('redirect');
       if (data.user.role === "admin") {
         window.location.href = "/site/pages/admin/index.html";
+      } else if (redirect === 'checkout') {
+        window.location.href = "/site/pages/checkout/index.html";
       } else {
         window.location.href = "/site/pages/index.html";
       }

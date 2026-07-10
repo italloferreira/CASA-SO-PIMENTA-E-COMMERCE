@@ -4,31 +4,58 @@ var API = window.API_BASE_URL || 'http://localhost:3333';
 
 window.disponibilidadeCache = {};
 
+window.escapeHtml = function (str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 window.carregarDisponibilidade = function (callback) {
   var carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
-  var ids = carrinho.filter(function (i) { return i.tipo !== 'kit'; }).map(function (i) { return i.id; });
+  var productIds = carrinho.filter(function (i) { return i.tipo !== 'kit'; }).map(function (i) { return i.id; });
+  var kitIds = carrinho.filter(function (i) { return i.tipo === 'kit'; }).map(function (i) { return i.id; });
 
-  if (ids.length === 0) {
-    if (callback) callback();
-    return;
+  var pending = 0;
+  function done() {
+    pending--;
+    if (pending <= 0 && callback) callback();
   }
 
-  fetch(API + '/api/products/status?ids=' + ids.join(','))
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      window.disponibilidadeCache = data;
-      if (callback) callback();
-    })
-    .catch(function () {
-      if (callback) callback();
-    });
+  if (productIds.length > 0) {
+    pending++;
+    fetch(API + '/api/products/status?ids=' + productIds.join(','))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        window.disponibilidadeCache = Object.assign(window.disponibilidadeCache, data);
+        done();
+      })
+      .catch(function () { done(); });
+  }
+
+  if (kitIds.length > 0) {
+    pending++;
+    fetch(API + '/api/kits/status?ids=' + kitIds.join(','))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        window.disponibilidadeCache = Object.assign(window.disponibilidadeCache, data);
+        done();
+      })
+      .catch(function () { done(); });
+  }
+
+  if (pending === 0) {
+    if (callback) callback();
+  }
 };
 
 function estaDisponivel(item) {
-  if (item.tipo === 'kit') return true;
   var status = window.disponibilidadeCache[String(item.id)];
   if (!status) return true;
-  return status.stock > 0 && status.is_active !== 0;
+  return !!status.stock && status.is_active !== 0;
 }
 
 function getDadosUsuario() {
@@ -94,6 +121,18 @@ function finalizarPedido() {
   if (carrinho.length === 0) {
     alert('Seu carrinho está vazio.');
     return;
+  }
+
+  var itensIndisponiveis = carrinho.filter(function (item) { return !estaDisponivel(item); });
+  if (itensIndisponiveis.length > 0) {
+    var nomes = itensIndisponiveis.map(function (i) { return i.nome; }).join(', ');
+    var continuar = confirm('Os seguintes itens estão indisponíveis e serão removidos do pedido:\n\n' + nomes + '\n\nDeseja continuar?');
+    if (!continuar) return;
+
+    var carrinhoFiltrado = carrinho.filter(function (item) { return estaDisponivel(item); });
+    salvarCarrinho(carrinhoFiltrado);
+    renderizarCarrinho();
+    atualizarBadgeCarrinho();
   }
 
   const usuario = getDadosUsuario();
@@ -177,20 +216,23 @@ window.renderizarCarrinho = function () {
   carrinho.forEach(function (item) {
     const valor = Number(item.valor);
     const subtotalNumero = valor * item.quantidade;
-    totalGeral += subtotalNumero;
+    const disponivel = estaDisponivel(item);
+
+    if (disponivel) {
+      totalGeral += subtotalNumero;
+    }
 
     const valorFormatado = valor.toFixed(2).replace('.', ',');
     const subtotal = subtotalNumero.toFixed(2).replace('.', ',');
-    const disponivel = estaDisponivel(item);
 
     produtoCarrinho.innerHTML += `
       <div class="item-carrinho${disponivel ? '' : ' item-carrinho-indisponivel'}">
         ${disponivel ? '' : '<div class="overlay-indisponivel-carrinho"><span>Indisponível</span></div>'}
         <div class="item-carrinho-img">
-          <img src="${item.img}" alt="${item.nome}">
+          <img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.nome)}">
         </div>
         <div class="item-carrinho-info">
-          <h3>${item.nome}</h3>
+          <h3>${escapeHtml(item.nome)}</h3>
           <p>R$ ${valorFormatado}</p>
           <div class="controle-qtd">
             <button onclick="diminuirQuantidade('${item.id}')"${disponivel ? '' : ' disabled'}>-</button>

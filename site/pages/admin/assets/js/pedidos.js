@@ -8,12 +8,14 @@ let currentPage = 1;
 const PER_PAGE = 10;
 
 const STATUS_MAP = {
-  pending: 'Pendente', confirmed: 'Confirmado', shipped: 'Enviado',
-  delivered: 'Entregue', cancelled: 'Cancelado'
+  pending: 'Pendente', confirmed: 'Confirmado', preparing: 'Preparando',
+  shipped: 'Enviado', ready_for_pickup: 'Pronto para retirada',
+  delivered: 'Entregue', withdrawn: 'Retirado', cancelled: 'Cancelado'
 };
 const BADGE_CLASS = {
-  pending: 'badge-warning', confirmed: 'badge-info', shipped: 'badge-info',
-  delivered: 'badge-success', cancelled: 'badge-danger'
+  pending: 'badge-warning', confirmed: 'badge-info', preparing: 'badge-info',
+  shipped: 'badge-info', ready_for_pickup: 'badge-info',
+  delivered: 'badge-success', withdrawn: 'badge-success', cancelled: 'badge-danger'
 };
 
 /* --- Load --- */
@@ -60,7 +62,7 @@ function renderOrders() {
   var rows = pageItems.map(function (o) {
     var total = Number(o.total).toFixed(2).replace('.', ',');
     var data = new Date(o.created_at).toLocaleDateString('pt-BR');
-    var whatsappLink = o.whatsapp ? 'https://wa.me/55' + o.whatsapp.replace(/\D/g, '') : '';
+    var whatsappLink = o.customer_phone ? 'https://wa.me/55' + o.customer_phone.replace(/\D/g, '') : '';
 
     return '<tr>' +
       '<td data-label="#ID"><strong>#' + o.id + '</strong></td>' +
@@ -100,7 +102,7 @@ function renderOrders() {
       var orderId = Number(this.dataset.orderId);
       var newStatus = this.value;
       try {
-        await apiRequest('PATCH', '/api/orders/' + orderId, { status: newStatus });
+        await apiRequest('PATCH', '/api/orders/' + orderId + '/status', { status: newStatus });
         showToast('Status do pedido #' + orderId + ' atualizado para ' + STATUS_MAP[newStatus] + '!');
         var order = allOrders.find(function (o) { return o.id === orderId; });
         if (order) order.status = newStatus;
@@ -123,15 +125,15 @@ window.openDetail = function (orderId) {
 
   var total = Number(o.total).toFixed(2).replace('.', ',');
   var data = new Date(o.created_at).toLocaleString('pt-BR');
-  var whatsappLink = o.whatsapp ? 'https://wa.me/55' + o.whatsapp.replace(/\D/g, '') : '';
+  var whatsappLink = o.customer_phone ? 'https://wa.me/55' + o.customer_phone.replace(/\D/g, '') : '';
 
   var itemsHtml = '';
   if (o.items && o.items.length > 0) {
     itemsHtml = '<div style="margin-top:16px;"><h4 style="margin-bottom:8px;">Itens</h4>';
     o.items.forEach(function (item) {
-      var itemPrice = Number(item.price).toFixed(2).replace('.', ',');
+      var itemPrice = Number(item.unit_price || item.price || 0).toFixed(2).replace('.', ',');
       itemsHtml += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--color-border);font-size:var(--font-size-sm);">' +
-        '<span>' + item.product_name + ' x' + item.quantity + '</span>' +
+        '<span>' + (item.item_name || item.product_name || 'Item') + ' x' + item.quantity + '</span>' +
         '<span>R$ ' + itemPrice + '</span>' +
         '</div>';
     });
@@ -142,7 +144,7 @@ window.openDetail = function (orderId) {
     '<div style="display:grid;gap:12px;">' +
       '<div><strong>Cliente:</strong> ' + o.customer_name + '</div>' +
       '<div><strong>E-mail:</strong> ' + o.customer_email + '</div>' +
-      '<div><strong>Telefone:</strong> ' + (o.whatsapp || '—') + ' ' +
+      '<div><strong>Telefone:</strong> ' + (o.customer_phone || '—') + ' ' +
         (whatsappLink ? '<a href="' + whatsappLink + '" target="_blank" class="btn btn-sm btn-secondary" style="background:#25D366;color:#fff;">Conversar no WhatsApp</a>' : '') +
       '</div>' +
       '<div><strong>Endereço:</strong><br>' + (o.address || '—') + '</div>' +
@@ -163,7 +165,7 @@ window.openDetail = function (orderId) {
   document.getElementById('detailStatusBtn').addEventListener('click', async function () {
     var newStatus = document.getElementById('detailStatusSelect').value;
     try {
-      await apiRequest('PATCH', '/api/orders/' + o.id, { status: newStatus });
+      await apiRequest('PATCH', '/api/orders/' + o.id + '/status', { status: newStatus });
       o.status = newStatus;
       showToast('Status atualizado!');
       renderOrders();

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var observer = null;
 
   function estaDisponivel(produto) {
-    return produto.stock > 0 && produto.is_active !== 0;
+    return !!produto.stock && produto.is_active !== 0;
   }
 
   function cartaoHtml(produto) {
@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     return '<div class="cartao' + (disponivel ? '' : ' indisponivel') + '">' +
       (disponivel ? '' : '<div class="overlay-indisponivel"><span>Indisponível</span></div>') +
-      '<img src="' + imgSrc + '" alt="' + produto.name + '" loading="lazy">' +
-      '<h3>' + produto.name + '</h3>' +
+      '<img src="' + imgSrc + '" alt="' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '" loading="lazy">' +
+      '<h3>' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '</h3>' +
       '<p>' + precoHtml + '</p>' +
       '<div>' +
         '<button' + (disponivel ? ' onclick=\'addCarrinho(' + JSON.stringify({ id: produto.id, nome: produto.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'' : ' disabled') + '>' +
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
           produtosSection.innerHTML = '<p>Não foi possível carregar os produtos.</p>';
         }
         loading = false;
-        allLoaded = true;
+        atualizarSentinel();
       });
   }
 
@@ -111,7 +111,22 @@ document.addEventListener('DOMContentLoaded', function () {
       return p.name.toLowerCase().indexOf(lower) !== -1
         || (p.description && p.description.toLowerCase().indexOf(lower) !== -1);
     });
-    renderizarProdutos(filtered);
+    if (filtered.length > 0) {
+      renderizarProdutos(filtered);
+    } else {
+      fetch(API_BASE + '/api/products/search?q=' + encodeURIComponent(term.trim()))
+        .then(function (r) { return r.json(); })
+        .then(function (results) {
+          if (results.length > 0) {
+            renderizarProdutos(results);
+          } else {
+            renderizarProdutos([]);
+          }
+        })
+        .catch(function () {
+          renderizarProdutos([]);
+        });
+    }
   }
 
   var inputPesquisa = document.querySelector('.pesquisa');

@@ -5,6 +5,10 @@ export function protectRoute() {
     return null;
   }
   const user = JSON.parse(userData);
+  if (user.role !== 'admin') {
+    window.location.href = '/site/pages/index.html';
+    return null;
+  }
   const headerName = document.getElementById('headerUserName');
   const sidebarName = document.getElementById('sidebarUserName');
   const headerAvatar = document.getElementById('headerAvatar');

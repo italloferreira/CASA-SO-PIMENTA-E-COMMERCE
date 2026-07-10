@@ -21,7 +21,7 @@ export async function createTables() {
       ingredients TEXT,
       price NUMERIC(10,2) NOT NULL,
       compare_price NUMERIC(10,2),
-      stock INTEGER NOT NULL DEFAULT 0,
+      stock BOOLEAN NOT NULL DEFAULT false,
       image_url TEXT,
       is_active SMALLINT NOT NULL DEFAULT 1,
       is_featured SMALLINT NOT NULL DEFAULT 0,
@@ -48,7 +48,7 @@ export async function createTables() {
       slug TEXT NOT NULL UNIQUE,
       description TEXT,
       price NUMERIC(10,2) NOT NULL,
-      stock INTEGER NOT NULL DEFAULT 0,
+      stock BOOLEAN NOT NULL DEFAULT false,
       image_url TEXT,
       is_active SMALLINT NOT NULL DEFAULT 1,
       is_featured SMALLINT NOT NULL DEFAULT 0,
@@ -143,7 +143,7 @@ export async function createTables() {
   `);
 
   await pool.query(`
-    ALTER TABLE kits ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE kits ADD COLUMN IF NOT EXISTS stock BOOLEAN NOT NULL DEFAULT false;
   `);
 
   await pool.query(`
@@ -247,9 +247,9 @@ export async function createTables() {
       ('store_name', 'Casa Só Pimenta'),
       ('store_description', ''),
       ('store_logo', '/site/imgs/logo.jpeg'),
-      ('contact_email', ''),
-      ('contact_phone', ''),
-      ('contact_address', 'Rua Exemplo, 123 - Centro'),
+      ('contact_email', 'casasopimenta@gmail.com'),
+      ('contact_phone', '(31) 98314-3902'),
+      ('contact_address', 'Avenida Augusto de Lima, 744 M4 113, 117 - Centro, Belo Horizonte - MG, 30190-922'),
       ('social_instagram', 'casasopimenta'),
       ('social_facebook', 'casasopimenta'),
       ('payment_methods', 'PIX,Cartão de Crédito'),
@@ -257,7 +257,7 @@ export async function createTables() {
       ('pix_key_type', 'CPF'),
       ('pix_recipient_name', ''),
       ('free_shipping_from', ''),
-      ('store_hours', 'Seg a Sex: 08h-18h | Sáb: 08h-12h'),
+      ('store_hours', 'Seg a Sab: 08h-18h | Dom: 08h-13h'),
       ('pix_discount_percent', '5'),
       ('social_tiktok', 'casa.so.pimenta')
     ON CONFLICT (key) DO NOTHING;
@@ -290,4 +290,19 @@ export async function createTables() {
   await pool.query(`
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_discount NUMERIC(10,2) NOT NULL DEFAULT 0;
   `);
+
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS login_attempts (
+        id SERIAL PRIMARY KEY,
+        email TEXT NOT NULL,
+        attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email, attempted_at);
+    `);
+  } catch (err) {
+    console.error('Aviso: tabela login_attempts já existe ou não pôde ser criada:', err.message);
+  }
 }

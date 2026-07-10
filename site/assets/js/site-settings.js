@@ -53,7 +53,7 @@ function applySettings(settings) {
   if (settings.contact_address) {
     var addressEl = document.getElementById('storeAddress');
     if (addressEl) {
-      addressEl.innerHTML = settings.contact_address.replace(/\n/g, '<br>');
+      addressEl.textContent = settings.contact_address;
     }
   }
 
