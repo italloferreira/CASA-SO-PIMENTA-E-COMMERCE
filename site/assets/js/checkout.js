@@ -1225,6 +1225,19 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('deliveryRadioDelivery').textContent = '\u25C9';
   document.getElementById('deliveryRadioNegotiate').textContent = '\u25CB';
 
+  document.getElementById('negotiateWhatsappBtn').addEventListener('click', function (e) {
+    var phone = (window.siteSettings && window.siteSettings.contact_phone) || '';
+    var nums = phone.replace(/\D/g, '');
+    if (nums.length >= 10) {
+      if (!nums.startsWith('55')) nums = '55' + nums;
+      var msg = encodeURIComponent('Ol\u00e1! Gostaria de saber mais sobre o frete.');
+      this.href = 'https://wa.me/' + nums + '?text=' + msg;
+    } else {
+      e.preventDefault();
+      alert('N\u00famero de WhatsApp n\u00e3o configurado. Entre em contato pelo telefone cadastrado.');
+    }
+  });
+
   carregarPerfil();
   atualizarResumo();
   inicializarMercadoPago();
