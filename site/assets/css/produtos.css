@@ -233,7 +233,7 @@ input[type="search"]::-webkit-search-cancel-button {
 .cartao.indisponivel .overlay-indisponivel {
     position: absolute;
     inset: 0;
-    background: rgba(180, 180, 180, 0.45);
+    background: rgba(162, 162, 162, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
