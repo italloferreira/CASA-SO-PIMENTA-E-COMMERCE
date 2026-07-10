@@ -285,12 +285,17 @@ window.selecionarTipoEntrega = function (tipo) {
 
   document.getElementById('deliveryRadioDelivery').textContent = tipo === 'delivery' ? '\u25C9' : '\u25CB';
   document.getElementById('deliveryRadioPickup').textContent = tipo === 'pickup' ? '\u25C9' : '\u25CB';
+  document.getElementById('deliveryRadioNegotiate').textContent = tipo === 'negotiate' ? '\u25C9' : '\u25CB';
 
-  document.getElementById('deliveryAddressFields').style.display = tipo === 'delivery' ? '' : 'none';
+  var showAddress = tipo === 'delivery' || tipo === 'negotiate';
+  document.getElementById('deliveryAddressFields').style.display = showAddress ? '' : 'none';
   document.getElementById('pickupInfo').style.display = tipo === 'pickup' ? '' : 'none';
+  document.getElementById('negotiateInfo').style.display = tipo === 'negotiate' ? '' : 'none';
 
   if (tipo === 'pickup') {
     freteSelecionado = { tipo: 'retirada', valor: 0 };
+  } else if (tipo === 'negotiate') {
+    freteSelecionado = { tipo: 'negociar', valor: 0 };
   } else {
     var cep = document.getElementById('inputCep').value.replace(/\D/g, '');
     if (cep.length === 8) {
@@ -463,7 +468,7 @@ function validarEtapa2() {
   if (!cidade) { mostrarErro('Cidade', 'Cidade \u00e9 obrigat\u00f3ria.'); valido = false; }
   if (!estado || estado.length !== 2) { mostrarErro('Estado', 'Estado \u00e9 obrigat\u00f3rio (ex: MG).'); valido = false; }
 
-  if (!freteSelecionado) {
+  if (deliveryType !== 'negotiate' && !freteSelecionado) {
     var erroFrete = document.querySelector('.frete-opcoes');
     var msg = document.createElement('span');
     msg.className = 'campo-erro';
@@ -615,13 +620,13 @@ window.atualizarResumo = function () {
 
   var resumoFrete = document.getElementById('resumoFrete');
   if (freteSelecionado) {
-    if (freteSelecionado.tipo === 'retirada') {
+    if (freteSelecionado.tipo === 'retirada' || freteSelecionado.tipo === 'negociar') {
       resumoFrete.textContent = 'Gr\u00e1tis';
     } else {
       resumoFrete.textContent = formatarPreco(freteValor);
     }
   } else {
-    resumoFrete.textContent = deliveryType === 'pickup' ? 'Gr\u00e1tis' : '\u2014 Selecione o CEP';
+    resumoFrete.textContent = deliveryType === 'pickup' || deliveryType === 'negotiate' ? 'Gr\u00e1tis' : '\u2014 Selecione o CEP';
   }
 
   var descontoLinha = document.getElementById('resumoDescontoLinha');
@@ -730,17 +735,18 @@ function criarPedidoEProcessarPagamento() {
     };
   });
 
+  var isDeliverable = deliveryType === 'delivery' || deliveryType === 'negotiate';
   var payload = {
     customer_name: document.getElementById('inputNome').value.trim(),
     customer_email: document.getElementById('inputEmail').value.trim(),
     customer_phone: document.getElementById('inputTelefone').value.trim(),
-    cep: deliveryType === 'delivery' ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
-    address: deliveryType === 'delivery' ? montarEnderecoCompleto() : '',
-    number: deliveryType === 'delivery' ? document.getElementById('inputNumero').value.trim() : '',
-    neighborhood: deliveryType === 'delivery' ? document.getElementById('inputBairro').value.trim() : '',
-    complement: deliveryType === 'delivery' ? document.getElementById('inputComplemento').value.trim() : '',
-    city: deliveryType === 'delivery' ? document.getElementById('inputCidade').value.trim() : '',
-    state: deliveryType === 'delivery' ? document.getElementById('inputEstado').value.trim() : '',
+    cep: isDeliverable ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
+    address: isDeliverable ? montarEnderecoCompleto() : '',
+    number: isDeliverable ? document.getElementById('inputNumero').value.trim() : '',
+    neighborhood: isDeliverable ? document.getElementById('inputBairro').value.trim() : '',
+    complement: isDeliverable ? document.getElementById('inputComplemento').value.trim() : '',
+    city: isDeliverable ? document.getElementById('inputCidade').value.trim() : '',
+    state: isDeliverable ? document.getElementById('inputEstado').value.trim() : '',
     delivery_type: deliveryType,
     subtotal: subtotal,
     delivery_fee: freteValor,
@@ -753,7 +759,9 @@ function criarPedidoEProcessarPagamento() {
     coupon_code: cupomAplicado ? cupomAplicado.code : null,
     notes: deliveryType === 'delivery'
       ? 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Frete: ' + (freteSelecionado ? freteSelecionado.name + ' (' + freteSelecionado.service + ')' : '\u2014') + ' | BOX: ' + (freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '\u2014') + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
-      : 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Retirada na loja' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : ''),
+      : deliveryType === 'negotiate'
+        ? 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Combinar frete com vendedor' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
+        : 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Retirada na loja' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : ''),
     items: items
   };
 
@@ -862,7 +870,9 @@ async function enviarPagamentoPix() {
     document.getElementById('confirmacaoPagamento').textContent = 'PIX - Aguardando pagamento';
     document.getElementById('confirmacaoEntrega').textContent = deliveryType === 'pickup'
       ? 'Retirada na loja'
-      : montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim();
+      : deliveryType === 'negotiate'
+        ? 'Combinar frete com vendedor — ' + montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim()
+        : montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim();
     document.getElementById('confirmacaoTotal').textContent = formatarPreco(getTotalFinal());
     document.getElementById('confirmacaoPix').style.display = '';
 
@@ -871,6 +881,10 @@ async function enviarPagamentoPix() {
     }
     if (data.qrCode) {
       document.getElementById('pixCopiaCola').value = data.qrCode;
+    }
+
+    if (deliveryType === 'negotiate') {
+      mostrarWhatsAppConfirmacao();
     }
 
     iniciarPollingPix(data.paymentId);
@@ -928,7 +942,13 @@ function mostrarTelaConfirmacao(dados) {
   document.getElementById('confirmacaoTotal').textContent = formatarPreco(dados.total || getTotalFinal());
   document.getElementById('confirmacaoEntrega').textContent = deliveryType === 'pickup'
     ? 'Retirada na loja'
-    : montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim();
+    : deliveryType === 'negotiate'
+      ? 'Combinar frete com vendedor — ' + montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim()
+      : montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim();
+
+  if (deliveryType === 'negotiate') {
+    mostrarWhatsAppConfirmacao();
+  }
 
   if (dados.metodo === 'cartao') {
     document.getElementById('confirmacaoPagamento').textContent = 'Cart\u00e3o de Cr\u00e9dito - Pago';
@@ -1099,17 +1119,18 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
     };
   });
 
+  var isDeliverable = deliveryType === 'delivery' || deliveryType === 'negotiate';
   var payload = {
     customer_name: document.getElementById('inputNome').value.trim(),
     customer_email: email,
     customer_phone: document.getElementById('inputTelefone').value.trim(),
-    cep: deliveryType === 'delivery' ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
-    address: deliveryType === 'delivery' ? montarEnderecoCompleto() : '',
-    number: deliveryType === 'delivery' ? document.getElementById('inputNumero').value.trim() : '',
-    neighborhood: deliveryType === 'delivery' ? document.getElementById('inputBairro').value.trim() : '',
-    complement: deliveryType === 'delivery' ? document.getElementById('inputComplemento').value.trim() : '',
-    city: deliveryType === 'delivery' ? document.getElementById('inputCidade').value.trim() : '',
-    state: deliveryType === 'delivery' ? document.getElementById('inputEstado').value.trim() : '',
+    cep: isDeliverable ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
+    address: isDeliverable ? montarEnderecoCompleto() : '',
+    number: isDeliverable ? document.getElementById('inputNumero').value.trim() : '',
+    neighborhood: isDeliverable ? document.getElementById('inputBairro').value.trim() : '',
+    complement: isDeliverable ? document.getElementById('inputComplemento').value.trim() : '',
+    city: isDeliverable ? document.getElementById('inputCidade').value.trim() : '',
+    state: isDeliverable ? document.getElementById('inputEstado').value.trim() : '',
     delivery_type: deliveryType,
     subtotal: subtotal,
     delivery_fee: freteValor,
@@ -1122,7 +1143,9 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
     coupon_code: cupomAplicado ? cupomAplicado.code : null,
     notes: deliveryType === 'delivery'
       ? 'M\u00e9todo: CARTAO | Frete: ' + (freteSelecionado ? freteSelecionado.name + ' (' + freteSelecionado.service + ')' : '\u2014') + ' | BOX: ' + (freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '\u2014') + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
-      : 'M\u00e9todo: CARTAO | Retirada na loja' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : ''),
+      : deliveryType === 'negotiate'
+        ? 'M\u00e9todo: CARTAO | Combinar frete com vendedor' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
+        : 'M\u00e9todo: CARTAO | Retirada na loja' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : ''),
     items: items
   };
 
@@ -1166,6 +1189,21 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
     });
 }
 
+function mostrarWhatsAppConfirmacao() {
+  document.getElementById('confirmacaoWhatsApp').style.display = '';
+  document.getElementById('whatsappPedidoId').textContent = pedidoCriado ? pedidoCriado.id : '';
+
+  var phone = (window.siteSettings && window.siteSettings.contact_phone) || '';
+  var nums = phone.replace(/\D/g, '');
+  if (nums.length >= 10) {
+    if (!nums.startsWith('55')) nums = '55' + nums;
+    var msg = encodeURIComponent('Ol\u00e1! Meu pedido #' + (pedidoCriado ? pedidoCriado.id : '') + ' foi confirmado. Gostaria de combinar a entrega.');
+    document.getElementById('whatsappLink').href = 'https://wa.me/' + nums + '?text=' + msg;
+  } else {
+    document.getElementById('whatsappLink').href = '#';
+  }
+}
+
 window.copiarChavePix = function () {
   var input = document.getElementById('pixCopiaCola');
   if (!input || !input.value) return;
@@ -1185,6 +1223,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.querySelector('.delivery-option[data-delivery="delivery"]').classList.add('selecionado');
   document.getElementById('deliveryRadioDelivery').textContent = '\u25C9';
+  document.getElementById('deliveryRadioNegotiate').textContent = '\u25CB';
 
   carregarPerfil();
   atualizarResumo();

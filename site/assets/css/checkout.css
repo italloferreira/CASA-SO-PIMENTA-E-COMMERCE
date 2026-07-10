@@ -1309,3 +1309,36 @@ footer p { font-size: 15px; }
 .cupom-status.loading {
   color: #888;
 }
+
+/* ===== WHATSAPP CARD ===== */
+.confirmacao-whatsapp {
+  margin-bottom: 24px;
+}
+.whatsapp-card {
+  background: #e8f5e9;
+  border: 2px solid #25d366;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
+}
+.whatsapp-card h3 {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+.btn-whatsapp {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 14px 32px;
+  background: #25d366;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  font-family: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.btn-whatsapp:hover {
+  background: #1da851;
+}
