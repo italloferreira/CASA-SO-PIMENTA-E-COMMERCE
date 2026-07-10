@@ -92,6 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const email = document.getElementById("cadEmail").value.trim();
     const senha = document.getElementById("cadSenha").value;
     const confirmar = document.getElementById("confirmarSenha").value;
+    const consent = document.getElementById("consentLGPDCadastro");
 
     if (!nome || !email || !senha || !confirmar) {
       mostrarErro("cadastro", "Preencha todos os campos.");
@@ -100,6 +101,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (senha !== confirmar) {
       mostrarErro("cadastro", "As senhas não conferem.");
+      return;
+    }
+
+    if (!consent || !consent.checked) {
+      mostrarErro("cadastro", "Você precisa concordar com os Termos de Uso e a Política de Privacidade.");
       return;
     }
 

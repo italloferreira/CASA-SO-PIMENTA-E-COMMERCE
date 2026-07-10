@@ -691,6 +691,13 @@ function getTotalFinal() {
 }
 
 window.confirmarPedido = function () {
+  var consent = document.getElementById('consentLGPD');
+  if (!consent || !consent.checked) {
+    alert('Voc\u00ea precisa concordar com os Termos de Uso e a Pol\u00edtica de Privacidade para finalizar a compra.');
+    if (consent) consent.focus();
+    return;
+  }
+
   if (metodoPagamento === 'cartao' && cardForm) {
     cardForm.submit();
     return;

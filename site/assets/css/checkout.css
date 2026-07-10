@@ -996,11 +996,33 @@ main {
   to { transform: rotate(360deg); }
 }
 
-.termos-texto {
-  font-size: 11px;
-  color: #aaa;
-  text-align: center;
-  margin-top: 12px;
+.consent-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #555;
+  cursor: pointer;
+}
+
+.consent-checkbox input[type="checkbox"] {
+  margin-top: 2px;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: #c0392b;
+  flex-shrink: 0;
+}
+
+.consent-checkbox a {
+  color: #c0392b;
+  text-decoration: underline;
+}
+
+.consent-checkbox a:hover {
+  color: #860000;
 }
 
 /* ===== CONFIRMAÇÃO ===== */

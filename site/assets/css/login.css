@@ -222,6 +222,35 @@ main {
     outline: none;
 }
 
+.consent-checkbox-lgpd {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 10px 0 16px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #555;
+    cursor: pointer;
+}
+
+.consent-checkbox-lgpd input[type="checkbox"] {
+    margin-top: 2px;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: #860000;
+    flex-shrink: 0;
+}
+
+.consent-checkbox-lgpd a {
+    color: #860000;
+    text-decoration: underline;
+}
+
+.consent-checkbox-lgpd a:hover {
+    color: #b90000;
+}
+
 /* BOTÃO */
 .btn {
     width: 100%;
@@ -838,6 +867,35 @@ main {
 .campo input:focus {
     border-color: #860000;
     outline: none;
+}
+
+.consent-checkbox-lgpd {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 10px 0 16px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #555;
+    cursor: pointer;
+}
+
+.consent-checkbox-lgpd input[type="checkbox"] {
+    margin-top: 2px;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: #860000;
+    flex-shrink: 0;
+}
+
+.consent-checkbox-lgpd a {
+    color: #860000;
+    text-decoration: underline;
+}
+
+.consent-checkbox-lgpd a:hover {
+    color: #b90000;
 }
 
 /* BOTÃO */
