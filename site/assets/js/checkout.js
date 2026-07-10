@@ -287,8 +287,7 @@ window.selecionarTipoEntrega = function (tipo) {
   document.getElementById('deliveryRadioPickup').textContent = tipo === 'pickup' ? '\u25C9' : '\u25CB';
   document.getElementById('deliveryRadioNegotiate').textContent = tipo === 'negotiate' ? '\u25C9' : '\u25CB';
 
-  var showAddress = tipo === 'delivery' || tipo === 'negotiate';
-  document.getElementById('deliveryAddressFields').style.display = showAddress ? '' : 'none';
+  document.getElementById('deliveryAddressFields').style.display = tipo === 'delivery' ? '' : 'none';
   document.getElementById('pickupInfo').style.display = tipo === 'pickup' ? '' : 'none';
   document.getElementById('negotiateInfo').style.display = tipo === 'negotiate' ? '' : 'none';
 
@@ -452,7 +451,7 @@ function validarEtapa2() {
   limparErros();
   var valido = true;
 
-  if (deliveryType === 'pickup') {
+  if (deliveryType === 'pickup' || deliveryType === 'negotiate') {
     return true;
   }
 
@@ -468,7 +467,7 @@ function validarEtapa2() {
   if (!cidade) { mostrarErro('Cidade', 'Cidade \u00e9 obrigat\u00f3ria.'); valido = false; }
   if (!estado || estado.length !== 2) { mostrarErro('Estado', 'Estado \u00e9 obrigat\u00f3rio (ex: MG).'); valido = false; }
 
-  if (deliveryType !== 'negotiate' && !freteSelecionado) {
+  if (!freteSelecionado) {
     var erroFrete = document.querySelector('.frete-opcoes');
     var msg = document.createElement('span');
     msg.className = 'campo-erro';
@@ -735,18 +734,17 @@ function criarPedidoEProcessarPagamento() {
     };
   });
 
-  var isDeliverable = deliveryType === 'delivery' || deliveryType === 'negotiate';
   var payload = {
     customer_name: document.getElementById('inputNome').value.trim(),
     customer_email: document.getElementById('inputEmail').value.trim(),
     customer_phone: document.getElementById('inputTelefone').value.trim(),
-    cep: isDeliverable ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
-    address: isDeliverable ? montarEnderecoCompleto() : '',
-    number: isDeliverable ? document.getElementById('inputNumero').value.trim() : '',
-    neighborhood: isDeliverable ? document.getElementById('inputBairro').value.trim() : '',
-    complement: isDeliverable ? document.getElementById('inputComplemento').value.trim() : '',
-    city: isDeliverable ? document.getElementById('inputCidade').value.trim() : '',
-    state: isDeliverable ? document.getElementById('inputEstado').value.trim() : '',
+    cep: deliveryType === 'delivery' ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
+    address: deliveryType === 'delivery' ? montarEnderecoCompleto() : '',
+    number: deliveryType === 'delivery' ? document.getElementById('inputNumero').value.trim() : '',
+    neighborhood: deliveryType === 'delivery' ? document.getElementById('inputBairro').value.trim() : '',
+    complement: deliveryType === 'delivery' ? document.getElementById('inputComplemento').value.trim() : '',
+    city: deliveryType === 'delivery' ? document.getElementById('inputCidade').value.trim() : '',
+    state: deliveryType === 'delivery' ? document.getElementById('inputEstado').value.trim() : '',
     delivery_type: deliveryType,
     subtotal: subtotal,
     delivery_fee: freteValor,
@@ -871,7 +869,7 @@ async function enviarPagamentoPix() {
     document.getElementById('confirmacaoEntrega').textContent = deliveryType === 'pickup'
       ? 'Retirada na loja'
       : deliveryType === 'negotiate'
-        ? 'Combinar frete com vendedor — ' + montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim()
+        ? 'Combinar frete com vendedor'
         : montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim();
     document.getElementById('confirmacaoTotal').textContent = formatarPreco(getTotalFinal());
     document.getElementById('confirmacaoPix').style.display = '';
@@ -943,7 +941,7 @@ function mostrarTelaConfirmacao(dados) {
   document.getElementById('confirmacaoEntrega').textContent = deliveryType === 'pickup'
     ? 'Retirada na loja'
     : deliveryType === 'negotiate'
-      ? 'Combinar frete com vendedor — ' + montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim()
+      ? 'Combinar frete com vendedor'
       : montarEnderecoCompleto() + ', ' + document.getElementById('inputCidade').value.trim() + '/' + document.getElementById('inputEstado').value.trim();
 
   if (deliveryType === 'negotiate') {
@@ -1119,18 +1117,17 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
     };
   });
 
-  var isDeliverable = deliveryType === 'delivery' || deliveryType === 'negotiate';
   var payload = {
     customer_name: document.getElementById('inputNome').value.trim(),
     customer_email: email,
     customer_phone: document.getElementById('inputTelefone').value.trim(),
-    cep: isDeliverable ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
-    address: isDeliverable ? montarEnderecoCompleto() : '',
-    number: isDeliverable ? document.getElementById('inputNumero').value.trim() : '',
-    neighborhood: isDeliverable ? document.getElementById('inputBairro').value.trim() : '',
-    complement: isDeliverable ? document.getElementById('inputComplemento').value.trim() : '',
-    city: isDeliverable ? document.getElementById('inputCidade').value.trim() : '',
-    state: isDeliverable ? document.getElementById('inputEstado').value.trim() : '',
+    cep: deliveryType === 'delivery' ? document.getElementById('inputCep').value.replace(/\D/g, '') : '',
+    address: deliveryType === 'delivery' ? montarEnderecoCompleto() : '',
+    number: deliveryType === 'delivery' ? document.getElementById('inputNumero').value.trim() : '',
+    neighborhood: deliveryType === 'delivery' ? document.getElementById('inputBairro').value.trim() : '',
+    complement: deliveryType === 'delivery' ? document.getElementById('inputComplemento').value.trim() : '',
+    city: deliveryType === 'delivery' ? document.getElementById('inputCidade').value.trim() : '',
+    state: deliveryType === 'delivery' ? document.getElementById('inputEstado').value.trim() : '',
     delivery_type: deliveryType,
     subtotal: subtotal,
     delivery_fee: freteValor,
