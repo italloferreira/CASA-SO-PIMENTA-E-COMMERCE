@@ -60,8 +60,12 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .then(function (res) {
       if (!res.ok) {
-        if (res.status === 401) throw new Error("E-mail ou senha incorretos.");
-        throw new Error("Servidor indisponível. Tente novamente.");
+        return res.json().then(function (data) {
+          if (res.status === 401) throw new Error(data.message || "E-mail ou senha incorretos.");
+          if (res.status === 423) throw new Error(data.message || "Conta bloqueada temporariamente. Tente novamente mais tarde.");
+          if (res.status === 429) throw new Error(data.message || "Muitas tentativas. Aguarde um momento.");
+          throw new Error(data.message || "Erro ao fazer login. Tente novamente.");
+        });
       }
       return res.json();
     })
