@@ -55,13 +55,18 @@ const LOCKOUT_MINUTES = 15;
 export async function login(req, res) {
   const { email, password } = req.body;
 
+  console.log('[LOGIN] Tentativa para email:', email);
+
   const attemptsResult = await pool.query(`
     SELECT COUNT(*) as attempts FROM login_attempts
     WHERE email = $1 AND attempted_at > NOW() - INTERVAL '${LOCKOUT_MINUTES} minutes'
   `, [email]);
   const attempts = Number(attemptsResult.rows[0]?.attempts) || 0;
 
+  console.log('[LOGIN] Tentativas recentes:', attempts);
+
   if (attempts >= MAX_LOGIN_ATTEMPTS) {
+    console.log('[LOGIN] Bloqueado por rate limit de tentativas');
     return res.status(423).json({
       message: 'Conta bloqueada temporariamente. Tente novamente em 15 minutos.'
     });
@@ -74,20 +79,32 @@ export async function login(req, res) {
   const user = result.rows[0];
 
   if (!user) {
+    console.log('[LOGIN] Usuario nao encontrado no banco');
     await pool.query(`INSERT INTO login_attempts (email) VALUES ($1)`, [email]);
     return res.status(401).json({
       message: 'Email ou senha inválidos.'
     });
   }
+
+  console.log('[LOGIN] Usuario encontrado. role:', user.role, '| hash prefix:', user.password.substring(0, 7));
 
   const passwordIsValid = await bcrypt.compare(password, user.password);
 
+  console.log('[LOGIN] bcrypt.compare resultado:', passwordIsValid);
+
   if (!passwordIsValid) {
+    console.log('[LOGIN] Senha incorreta. Hash armazenado:', user.password.substring(0, 20) + '...');
+
+    const testHash = await bcrypt.hash(password, 10);
+    console.log('[LOGIN] Hash da senha enviada:', testHash.substring(0, 20) + '...');
+
     await pool.query(`INSERT INTO login_attempts (email) VALUES ($1)`, [email]);
     return res.status(401).json({
       message: 'Email ou senha inválidos.'
     });
   }
+
+  console.log('[LOGIN] Login bem-sucedido para:', email);
 
   await pool.query(`DELETE FROM login_attempts WHERE email = $1`, [email]);
 

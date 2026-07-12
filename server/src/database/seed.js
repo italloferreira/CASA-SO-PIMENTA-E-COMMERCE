@@ -19,9 +19,9 @@ export async function seedDatabase() {
       SELECT id, role FROM users WHERE email = $1
     `, [adminEmail]);
 
-    if (adminExists.rows.length === 0) {
-      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
+    if (adminExists.rows.length === 0) {
       await pool.query(`
         INSERT INTO users (name, email, password, role)
         VALUES ($1, $2, $3, $4)
@@ -33,15 +33,15 @@ export async function seedDatabase() {
       ]);
 
       console.log('Admin criado com sucesso:', adminEmail);
-    } else if (adminExists.rows[0].role !== 'admin') {
-      const hashedPassword = await bcrypt.hash(adminPassword, 10);
-
+    } else {
       await pool.query(`
-        UPDATE users SET password = $1, role = $2, updated_at = CURRENT_TIMESTAMP
-        WHERE email = $3
-      `, [hashedPassword, 'admin', adminEmail]);
+        UPDATE users SET password = $1, role = 'admin', updated_at = CURRENT_TIMESTAMP
+        WHERE email = $2
+      `, [hashedPassword, adminEmail]);
 
-      console.log('Admin atualizado (role + senha):', adminEmail);
+      await pool.query(`DELETE FROM login_attempts WHERE email = $1`, [adminEmail]);
+
+      console.log('Admin senha/role resetados:', adminEmail);
     }
   } else {
     console.log('ADMIN_EMAIL/ADMIN_PASSWORD não definidos no .env. Seed de admin ignorado.');
