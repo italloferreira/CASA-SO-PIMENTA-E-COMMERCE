@@ -58,6 +58,8 @@ function estaDisponivel(item) {
   return !!status.stock && status.is_active !== 0;
 }
 
+window.estaDisponivel = estaDisponivel;
+
 function getDadosUsuario() {
   var data = localStorage.getItem('csp_admin_user');
   return data ? JSON.parse(data) : null;
