@@ -838,10 +838,15 @@ function processarPagamentoMetodo() {
 window.enviarPagamentoCartao = async function (dados) {
   mostrarLoading(true);
   try {
+    var deviceId = '';
+    try { deviceId = mp.getDeviceId(); } catch (e) {}
+    var regDate = dados.registration_date || '';
+    var body = Object.assign({ orderId: pedidoCriado.id, device_id: deviceId }, dados);
+    if (regDate) body.registration_date = regDate;
     var res = await fetch(API + '/api/payments/process-card', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()), credentials: 'include',
-      body: JSON.stringify({ orderId: pedidoCriado.id, ...dados })
+      body: JSON.stringify(body)
     });
     var data = await res.json();
 
@@ -1115,7 +1120,8 @@ function iniciarCardForm() {
             issuerId: formData.issuerId,
             email: email,
             cpf: cpf,
-            amount: getTotalFinal()
+            amount: getTotalFinal(),
+            registration_date: dadosPerfil && dadosPerfil.created_at ? dadosPerfil.created_at : ''
           });
         } else {
           criarPedidoESubmeterCartao(formData, email, cpf, pmId);
@@ -1211,7 +1217,8 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
         issuerId: formData.issuerId,
         email: email,
         cpf: cpf,
-        amount: total
+        amount: total,
+        registration_date: dadosPerfil && dadosPerfil.created_at ? dadosPerfil.created_at : ''
       });
     })
     .catch(function (err) {

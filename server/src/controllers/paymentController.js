@@ -54,7 +54,7 @@ function getCardType(paymentMethodId) {
 }
 
 export async function processCard(req, res) {
-  const { orderId, token, installments, paymentMethodId, email, cpf } = req.body;
+  const { orderId, token, installments, paymentMethodId, email, cpf, device_id, registration_date } = req.body;
 
   if (!orderId || !token || !installments || !email || !cpf) {
     return res.status(400).json({ message: 'Dados incompletos para pagamento com cartão.' });
@@ -71,23 +71,58 @@ export async function processCard(req, res) {
       return res.status(403).json({ message: 'Acesso negado. Este pedido não pertence ao seu usuário.' });
     }
 
+    const orderItems = await pool.query(
+      'SELECT name, unit_price, quantity FROM order_items WHERE order_id = $1',
+      [orderId]
+    );
+
+    const additionalInfo = {
+      shipments: {
+        receivers_address: {
+          zip_code: order.cep || '',
+          city_name: order.city || '',
+          state_name: order.state || ''
+        }
+      },
+      items: orderItems.rows.map(function (item) {
+        return {
+          title: item.name,
+          unit_price: Number(item.unit_price),
+          quantity: item.quantity,
+          category_id: 'MLB11878'
+        };
+      })
+    };
+
+    if (registration_date) {
+      additionalInfo.payer = {
+        registration_date: registration_date
+      };
+    }
+
+    const paymentBody = {
+      transaction_amount: Number(order.total),
+      token,
+      installments: parseInt(installments),
+      payment_method_id: paymentMethodId || undefined,
+      statement_descriptor: 'CASA SO PIMENTA',
+      payer: {
+        email,
+        identification: {
+          type: 'CPF',
+          number: cpf.replace(/\D/g, '')
+        }
+      },
+      additional_info: additionalInfo,
+      external_reference: String(orderId)
+    };
+
+    if (device_id) {
+      paymentBody.device_id = device_id;
+    }
+
     const payment = getPaymentInstance();
-    const result = await payment.create({
-      body: {
-        transaction_amount: Number(order.total),
-        token,
-        installments: parseInt(installments),
-        payment_method_id: paymentMethodId || undefined,
-        payer: {
-          email,
-          identification: {
-            type: 'CPF',
-            number: cpf.replace(/\D/g, '')
-          }
-        },
-        external_reference: String(orderId)
-      }
-    });
+    const result = await payment.create({ body: paymentBody });
 
     const mpPaymentStatus = result.status;
     const mpStatusDetail = result.status_detail;
