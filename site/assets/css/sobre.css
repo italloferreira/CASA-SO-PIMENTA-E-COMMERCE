@@ -1,8 +1,10 @@
+@import url('variaveis.css');
+
 *{
     box-sizing: border-box;
     border: 0;
     margin: 0;
-    font-family:'Courier New', Courier, monospace;
+    font-family: var(--font-principal);
 }
 
 body{
@@ -10,8 +12,8 @@ body{
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    background: #faf8f5;
-    color: #111;
+    background: var(--cor-off-white);
+    color: var(--cor-preto);
 }
 
 /*header*/
@@ -62,12 +64,12 @@ header{
 
 .categoria-section a{
     text-decoration: none;
-    color: black;
+    color: var(--cor-preto);
     transition: 0.5s;
 }
 
 .categoria-section a:hover{
-    color: red;
+    color: var(--cor-vermelho-primario);
     transition: 0.5s;
 }
 
@@ -83,12 +85,12 @@ header{
     align-items: center;
     gap: 6px;
     font: inherit;
-    color: black;
+    color: var(--cor-preto);
     transition: 0.5s;
 }
 
 .dropdown-btn:hover{
-    color: red;
+    color: var(--cor-vermelho-primario);
     transition: 0.5s;
 }
 
@@ -103,7 +105,7 @@ header{
     top: 100%;
     left: 0;
     min-width: 150px;
-    background: white;
+    background: var(--cor-branco);
     list-style: none;
     padding: 10px 0;
     margin: 8px 0 0 0;
@@ -118,7 +120,7 @@ header{
 }
 
 .submenu li:hover{
-    background: #f5f5f5;
+    background: var(--cor-cinza-hover);
 }
 
 .dropdown.ativo .submenu{
@@ -139,7 +141,7 @@ header{
 }
 
 .usuario-section{
-    color: black;
+    color: var(--cor-preto);
     width: 20%;
     height: 100%;
 
@@ -154,7 +156,7 @@ header{
 }
 
 .usuario-section:hover{
-    color: red;
+    color: var(--cor-vermelho-primario);
     transition: 0.5s;
 }
 
@@ -181,7 +183,7 @@ main{
     font-size: 14px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: #c0392b;
+    color: var(--cor-vermelho-primario);
     margin-bottom: 18px;
     font-weight: bold;
 }
@@ -198,7 +200,7 @@ main{
     margin: 0 auto;
     font-size: 18px;
     line-height: 1.7;
-    color: #444;
+    color: var(--cor-cinza-texto-secundario);
 }
 
 .timeline{
@@ -215,7 +217,7 @@ main{
     transform: translateX(-50%);
     width: 4px;
     height: 100%;
-    background: linear-gradient(to bottom, #111, #c0392b, #111);
+    background: linear-gradient(to bottom, var(--cor-preto), var(--cor-vermelho-primario), var(--cor-preto));
     border-radius: 999px;
 }
 
@@ -236,18 +238,18 @@ main{
 .ponto{
     width: 24px;
     height: 24px;
-    background: #111;
-    border: 5px solid #fff;
+    background: var(--cor-preto);
+    border: 5px solid var(--cor-branco);
     border-radius: 50%;
     justify-self: center;
     z-index: 2;
-    box-shadow: 0 0 0 6px rgba(192, 57, 43, 0.16);
+    box-shadow: 0 0 0 6px rgba(166, 43, 38, 0.16);
     position: relative;
 }
 
 .card-marco{
     width: 82%;
-    background: #fff;
+    background: var(--cor-branco);
     padding: 28px;
     border-radius: 18px;
     box-shadow: 0 18px 35px rgba(0, 0, 0, 0.08);
@@ -275,7 +277,7 @@ main{
     transform: translateY(-50%);
     width: 52px;
     height: 2px;
-    background: #111;
+    background: var(--cor-preto);
 }
 
 .marco.direita .card-marco::before{
@@ -286,7 +288,7 @@ main{
     transform: translateY(-50%);
     width: 52px;
     height: 2px;
-    background: #111;
+    background: var(--cor-preto);
 }
 
 .ano{
@@ -297,8 +299,8 @@ main{
     height: 34px;
     padding: 0 14px;
     border-radius: 999px;
-    background: #111;
-    color: #fff;
+    background: var(--cor-preto);
+    color: var(--cor-branco);
     font-size: 14px;
     margin-bottom: 16px;
     font-weight: bold;
@@ -323,21 +325,21 @@ main{
 .card-marco p{
     font-size: 16px;
     line-height: 1.7;
-    color: #444;
+    color: var(--cor-cinza-texto-secundario);
 }
 
 .destaque{
-    background: linear-gradient(135deg, #111 0%, #1f1f1f 100%);
+    background: linear-gradient(135deg, var(--cor-preto) 0%, var(--cor-preto-hover) 100%);
 }
 
 .destaque .ano{
-    background: #c0392b;
-    color: #fff;
+    background: var(--cor-vermelho-primario);
+    color: var(--cor-branco);
 }
 
 .destaque h2,
 .destaque p{
-    color: #fff;
+    color: var(--cor-branco);
 }
 
 .destaque .marco-imagem{
@@ -347,7 +349,7 @@ main{
 /*footer*/
 
 footer{
-    background-color: rgb(197, 197, 197);
+    background-color: var(--cor-footer-fundo);
     width: 100%;
     height: 40vh;
 
@@ -377,7 +379,7 @@ footer{
     align-items: center;
 
     list-style-type: none;
-    color: black;
+    color: var(--cor-footer-texto);
     text-decoration: none;
 
 }
@@ -394,7 +396,7 @@ footer{
     width: 7%;
     height: 50%;
 
-    border: 2px solid white;
+    border: 2px solid var(--cor-footer-texto);
 
     display: flex;
     justify-content: center;
@@ -408,6 +410,7 @@ footer{
 
 footer p{
     font-size: 15px;
+    color: var(--cor-footer-texto);
 }
 
 
@@ -445,7 +448,7 @@ footer p{
     width: 400px;
     max-width: 90%;
     height: 100vh;
-    background: white;
+    background: var(--cor-branco);
 
     box-shadow: -2px 0 12px rgba(0, 0, 0, 0.12);
 
@@ -474,7 +477,7 @@ footer p{
     min-height: 80px;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid var(--cor-cinza-borda);
 }
 
 /* botão fechar */
@@ -518,7 +521,7 @@ footer p{
     display: flex;
     gap: 15px;
     padding: 15px 0;
-    border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid var(--cor-cinza-borda);
 }
 
 .item-carrinho-img {
@@ -557,7 +560,7 @@ footer p{
 }
 
 .item-carrinho-info button:hover{
-    background-color: #e5e5e5;
+    background-color: var(--cor-cinza-borda);
     transition: 0.5s;
 }
 
@@ -583,14 +586,14 @@ footer p{
 }
 .carrinho-login-aviso p {
   font-size: 18px;
-  color: #333;
+  color: var(--cor-preto);
   margin: 0;
 }
 .btn-carrinho-login {
   display: inline-block;
   padding: 12px 32px;
-  background: #000;
-  color: #fff;
+  background: var(--cor-preto);
+  color: var(--cor-branco);
   text-decoration: none;
   border-radius: 8px;
   font-size: 16px;
@@ -598,7 +601,7 @@ footer p{
   transition: 0.3s;
 }
 .btn-carrinho-login:hover {
-  background: #333;
+  background: var(--cor-cinza-texto-secundario);
 }
 
 .controle-qtd {
@@ -614,7 +617,7 @@ footer p{
     border: none;
     background: transparent;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    color: black;
+    color: var(--cor-preto);
     border-radius: 6px;
     cursor: pointer;
 }
@@ -628,8 +631,8 @@ footer p{
 .carrinho-rodape {
     width: 100%;
     padding: 20px;
-    border-top: 1px solid #e5e5e5;
-    background: white;
+    border-top: 1px solid var(--cor-cinza-borda);
+    background: var(--cor-branco);
 }
 
 .total-carrinho {
@@ -646,14 +649,14 @@ footer p{
     border: none;
     background: transparent;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    color: black;
+    color: var(--cor-preto);
     border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
 }
 
 .btn-finalizar-pedido:hover {
-    background-color: rgb(235, 235, 235);
+    background-color: var(--cor-cinza-hover);
     transition: 0.5s;
 }
 
@@ -670,8 +673,8 @@ footer p{
     top: -5px;
     right: -8px;
 
-    background: #c53b22;
-    color: white;
+    background: var(--cor-vermelho-primario);
+    color: var(--cor-branco);
 
     font-size: 12px;
     font-weight: bold;

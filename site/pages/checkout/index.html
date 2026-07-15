@@ -80,26 +80,26 @@
             <p>Escaneie o QR Code abaixo para pagar</p>
           </div>
           <div class="pix-copia-cola">
-            <input type="text" id="pixCopiaCola" readonly style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:12px;margin-bottom:8px;">
+            <input type="text" id="pixCopiaCola" readonly style="width:100%;padding:8px;border:1px solid var(--cor-cinza-borda);border-radius:4px;font-size:12px;margin-bottom:8px;">
             <button class="btn-copiar" onclick="copiarChavePix()">Copiar código</button>
           </div>
-          <p style="margin-top:12px;font-size:13px;color:#666;">Após o pagamento, a confirmação é automática.</p>
+          <p style="margin-top:12px;font-size:13px;color:var(--cor-cinza-texto-secundario);">Após o pagamento, a confirmação é automática.</p>
         </div>
 
         <div class="confirmacao-cartao" id="confirmacaoCartao" style="display:none;">
           <p style="margin-bottom:8px;">Pagamento aprovado via cartão de crédito.</p>
-          <p id="confirmacaoCartaoDetalhes" style="font-size:14px;color:#555;"></p>
+          <p id="confirmacaoCartaoDetalhes" style="font-size:14px;color:var(--cor-cinza-texto-secundario);"></p>
         </div>
 
         <div class="confirmacao-whatsapp" id="confirmacaoWhatsApp" style="display:none;">
           <div class="whatsapp-card">
             <h3>📱 Combine a entrega pelo WhatsApp</h3>
-            <p style="margin-top:8px;font-size:14px;color:#555;">
+            <p style="margin-top:8px;font-size:14px;color:var(--cor-cinza-texto-secundario);">
               Você escolheu <strong>combinar o frete com o vendedor</strong>.
               Entre em contato pelo WhatsApp para acertar os detalhes da entrega.
               Tenha em mãos o número do pedido <strong>#<span id="whatsappPedidoId"></span></strong>.
             </p>
-            <p style="margin-top:4px;font-size:13px;color:#888;">
+            <p style="margin-top:4px;font-size:13px;color:var(--cor-cinza-texto-secundario);">
               ⚡ Apenas para <strong>Belo Horizonte</strong> — O pagamento do frete é feito direto com o vendedor.
             </p>
             <a id="whatsappLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
@@ -259,21 +259,21 @@
                   <div class="frete-opcoes" id="freteOpcoes" style="display:none;">
                     <h3>Opções de frete</h3>
                     <div id="freteLista"></div>
-                    <div id="freteLoading" style="display:none;padding:12px;text-align:center;color:#888;">Calculando frete...</div>
-                    <div id="freteErro" style="display:none;padding:12px;text-align:center;color:#860000;"></div>
+                    <div id="freteLoading" style="display:none;padding:12px;text-align:center;color:var(--cor-cinza-texto-secundario);">Calculando frete...</div>
+                    <div id="freteErro" style="display:none;padding:12px;text-align:center;color:var(--cor-vermelho-primario);"></div>
                   </div>
                 </div>
 
                 <div id="pickupInfo" style="display:none;">
                   <div class="pickup-card">
                     <h3>📍 Retirada na loja</h3>
-                    <p id="storeAddress" data-setting="contact_address" data-setting-fallback="Avenida Augusto de Lima, 744 M4 113, 117 - Centro, Belo Horizonte - MG, 30190-922" style="margin-top:8px;font-size:14px;color:#555;">
+                    <p id="storeAddress" data-setting="contact_address" data-setting-fallback="Avenida Augusto de Lima, 744 M4 113, 117 - Centro, Belo Horizonte - MG, 30190-922" style="margin-top:8px;font-size:14px;color:var(--cor-cinza-texto-secundario);">
                       Avenida Augusto de Lima, 744 M4 113, 117 - Centro, Belo Horizonte - MG, 30190-922
                     </p>
-                    <p id="storeHours" data-setting="store_hours" data-setting-fallback="Seg a Sab: 08h-18h | Dom: 08h-13h" style="margin-top:4px;font-size:13px;color:#888;">
+                    <p id="storeHours" data-setting="store_hours" data-setting-fallback="Seg a Sab: 08h-18h | Dom: 08h-13h" style="margin-top:4px;font-size:13px;color:var(--cor-cinza-texto-secundario);">
                       Seg a Sab: 08h-18h | Dom: 08h-13h
                     </p>
-                    <p style="margin-top:8px;font-size:13px;color:#2d6a4f;">
+                    <p style="margin-top:8px;font-size:13px;color:var(--cor-verde-primario);">
                       ✅ Frete grátis — Sem custo de entrega
                     </p>
                   </div>
@@ -282,12 +282,12 @@
                 <div id="negotiateInfo" style="display:none;">
                   <div class="pickup-card">
                     <h3>📦 Combinar frete com o vendedor</h3>
-                    <p style="margin-top:8px;font-size:14px;color:#555;">
+                    <p style="margin-top:8px;font-size:14px;color:var(--cor-cinza-texto-secundario);">
                       Disponível apenas para entregas em <strong>Belo Horizonte</strong>.
                       Após finalizar a compra, entre em contato pelo WhatsApp para combinar a entrega.
                       O valor do frete será acertado diretamente com o vendedor.
                     </p>
-                    <p style="margin-top:12px;font-size:13px;color:#2d6a4f;">
+                    <p style="margin-top:12px;font-size:13px;color:var(--cor-verde-primario);">
                       ✅ Frete grátis no pedido — O frete é combinado à parte com o vendedor
                     </p>
                     <a id="negotiateWhatsappBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn-whatsapp" style="margin-top:16px;display:inline-block;">
@@ -426,12 +426,12 @@
                 </div>
                 <div class="resumo-linha" id="resumoDescontoLinha" style="display:none;">
                   <span>Desconto PIX (-5%)</span>
-                  <span id="resumoDesconto" style="color:#2d6a4f;">- R$ 0,00</span>
+                  <span id="resumoDesconto" style="color:var(--cor-verde-primario);">- R$ 0,00</span>
                 </div>
                 <div class="resumo-divisor"></div>
                 <div class="resumo-linha" id="resumoCupomLinha" style="display:none;">
                   <span>Cupom</span>
-                  <span id="resumoCupom" style="color:#2d6a4f;">- R$ 0,00</span>
+                  <span id="resumoCupom" style="color:var(--cor-verde-primario);">- R$ 0,00</span>
                 </div>
                 <div class="resumo-divisor"></div>
                 <div class="resumo-linha resumo-total">

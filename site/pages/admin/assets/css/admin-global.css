@@ -1,44 +1,4 @@
-:root {
-  --color-primary: #8B2E00;
-  --color-primary-light: #C94A1E;
-  --color-primary-hover: #7A2800;
-  --color-accent: #E8783A;
-  --color-bg: #F7F5F2;
-  --color-surface: #FFFFFF;
-  --color-surface-alt: #F0EDE8;
-  --color-border: #E2DDD8;
-  --color-border-strong: #C8C0B8;
-  --color-text-primary: #1A1714;
-  --color-text-secondary: #6B6460;
-  --color-text-muted: #9E9590;
-  --color-text-inverse: #FFFFFF;
-  --color-success: #2D7A4F;
-  --color-success-bg: #EBF7F1;
-  --color-warning: #A05C00;
-  --color-warning-bg: #FEF3E2;
-  --color-danger: #C0392B;
-  --color-danger-bg: #FDEDEC;
-  --color-info: #1A5C8A;
-  --color-info-bg: #EAF2FB;
-  --sidebar-width: 260px;
-  --sidebar-collapsed: 72px;
-  --header-height: 64px;
-  --border-radius-sm: 6px;
-  --border-radius-md: 10px;
-  --border-radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
-  --font-main: 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Courier New', monospace;
-  --font-size-xs: 11px;
-  --font-size-sm: 13px;
-  --font-size-base: 15px;
-  --font-size-lg: 17px;
-  --font-size-xl: 20px;
-  --font-size-2xl: 24px;
-  --font-size-3xl: 30px;
-}
+@import url('../../../../assets/css/variaveis.css');
 
 *, *::before, *::after {
   box-sizing: border-box;

@@ -155,8 +155,8 @@ window.toggleEditarDados = function () {
       document.getElementById(id).style.background = '';
       document.getElementById(id).style.color = '';
     } else {
-      document.getElementById(id).style.background = '#f5f5f5';
-      document.getElementById(id).style.color = '#888';
+      document.getElementById(id).style.background = 'var(--cor-cinza-hover)';
+      document.getElementById(id).style.color = 'var(--cor-cinza-texto-secundario)';
     }
   });
   document.getElementById('btnEditarDados').style.display = editandoDados ? 'none' : '';
@@ -257,10 +257,10 @@ window.buscarCEP = function (auto) {
   fetch('https://viacep.com.br/ws/' + cep + '/json/')
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      if (data.erro) { infoEl.textContent = 'CEP n\u00e3o encontrado.'; infoEl.style.color = '#860000'; return; }
+      if (data.erro) { infoEl.textContent = 'CEP n\u00e3o encontrado.'; infoEl.style.color = 'var(--cor-vermelho-primario)'; return; }
 
       infoEl.textContent = (data.logradouro || '') + ', ' + (data.bairro || '') + ' \u2014 ' + (data.localidade || '') + '/' + (data.uf || '');
-      infoEl.style.color = '#555';
+      infoEl.style.color = 'var(--cor-cinza-texto-secundario)';
 
       document.getElementById('inputEndereco').value = data.logradouro || '';
       document.getElementById('inputBairro').value = data.bairro || '';
@@ -274,7 +274,7 @@ window.buscarCEP = function (auto) {
         calcularFreteDaAPI(cep);
       }
     })
-    .catch(function () { infoEl.textContent = 'Erro ao buscar CEP. Tente novamente.'; infoEl.style.color = '#860000'; })
+    .catch(function () { infoEl.textContent = 'Erro ao buscar CEP. Tente novamente.'; infoEl.style.color = 'var(--cor-vermelho-primario)'; })
     .finally(function () { buscandoCep = false; document.getElementById('btnBuscarCep').disabled = false; });
 };
 

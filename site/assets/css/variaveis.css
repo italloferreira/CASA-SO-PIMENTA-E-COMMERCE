@@ -1,0 +1,96 @@
+/* ============================================
+   Casa Só Pimenta — Design Tokens
+   Paleta unificada (loja pública + admin)
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&display=swap');
+
+:root {
+  /* ── Vermelho (primário) ── */
+  --cor-vermelho-primario: #A62B26;
+  --cor-vermelho-hover: #7E211D;
+  --cor-vermelho-fundo-claro: #FBEAE8;
+
+  /* ── Verde (sucesso/preço) ── */
+  --cor-verde-primario: #4F7942;
+  --cor-verde-hover: #33502E;
+  --cor-verde-fundo-claro: #EAF2E6;
+
+  /* ── Preto ── */
+  --cor-preto: #111111;
+
+  /* ── Branco e neutros ── */
+  --cor-branco: #FFFFFF;
+  --cor-off-white: #F7F4F0;
+  --cor-cinza-borda: #E4DFDA;
+  --cor-cinza-hover: #F0EDE8;
+  --cor-cinza-texto-secundario: #6B6660;
+
+  /* ── Footer ── */
+  --cor-footer-fundo: #111111;
+  --cor-footer-texto: #FFFFFF;
+
+  /* ── WhatsApp (exceção) ── */
+  --cor-whatsapp: #25D366;
+  --cor-whatsapp-hover: #1DA851;
+
+  /* ── Tipografia ── */
+  --font-principal: 'Poppins', sans-serif;
+  --font-marca: 'Playfair Display', serif;
+
+  /* ── Tamanhos de fonte ── */
+  --fs-titulo-hero: clamp(28px, 4vw, 48px);
+  --fs-titulo-secao: 28px;
+  --fs-titulo-card: 18px;
+  --fs-corpo: 15px;
+  --fs-label: 12px;
+  --fs-botao: 15px;
+
+  /* ── Admin: manter variáveis legadas que o admin já usa ── */
+  --color-primary: var(--cor-vermelho-primario);
+  --color-primary-light: var(--cor-vermelho-primario);
+  --color-primary-hover: var(--cor-vermelho-hover);
+  --color-accent: var(--cor-vermelho-primario);
+  --color-bg: var(--cor-off-white);
+  --color-surface: var(--cor-branco);
+  --color-surface-alt: var(--cor-cinza-hover);
+  --color-border: var(--cor-cinza-borda);
+  --color-border-strong: var(--cor-cinza-borda);
+  --color-text-primary: var(--cor-preto);
+  --color-text-secondary: var(--cor-cinza-texto-secundario);
+  --color-text-muted: var(--cor-cinza-texto-secundario);
+  --color-text-inverse: var(--cor-branco);
+  --color-success: var(--cor-verde-primario);
+  --color-success-bg: var(--cor-verde-fundo-claro);
+  --color-warning: var(--cor-vermelho-primario);
+  --color-warning-bg: var(--cor-vermelho-fundo-claro);
+  --color-danger: var(--cor-vermelho-primario);
+  --color-danger-bg: var(--cor-vermelho-fundo-claro);
+  --color-info: var(--cor-preto);
+  --color-info-bg: var(--cor-cinza-hover);
+
+  /* ── Admin: layout tokens (mantidos) ── */
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 72px;
+  --header-height: 64px;
+  --border-radius-sm: 6px;
+  --border-radius-md: 10px;
+  --border-radius-lg: 16px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
+
+  /* ── Admin: fonte (agora Poppins) ── */
+  --font-main: 'Poppins', sans-serif;
+  --font-mono: 'Poppins', sans-serif;
+
+  /* ── Admin: tamanhos de fonte ── */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+}

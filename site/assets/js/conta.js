@@ -51,7 +51,7 @@ async function buscarCEP(cep) {
 
     if (data.erro) {
       infoEl.textContent = 'CEP não encontrado.';
-      infoEl.style.color = '#c53b22';
+      infoEl.style.color = 'var(--cor-vermelho-primario)';
     } else {
       var endereco = data.logradouro || '';
       var bairro = data.bairro || '';
@@ -59,7 +59,7 @@ async function buscarCEP(cep) {
       var estado = data.uf || '';
 
       infoEl.textContent = (endereco ? endereco + ', ' : '') + (bairro ? bairro + ' — ' : '') + cidade + '/' + estado;
-      infoEl.style.color = '#555';
+      infoEl.style.color = 'var(--cor-cinza-texto-secundario)';
 
       if (document.getElementById('endereco')) document.getElementById('endereco').value = endereco;
       if (document.getElementById('bairro')) document.getElementById('bairro').value = bairro;
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!novoNome) {
       msgEl.textContent = 'O nome não pode ficar vazio.';
-      msgEl.style.color = '#c53b22';
+      msgEl.style.color = 'var(--cor-vermelho-primario)';
       return;
     }
 
@@ -165,14 +165,14 @@ document.addEventListener('DOMContentLoaded', function () {
           localStorage.setItem('csp_admin_user', JSON.stringify(data.user));
           document.getElementById('nomeUsuario').textContent = novoNome;
           msgEl.textContent = '✓ Dados salvos com sucesso!';
-          msgEl.style.color = '#2e7d32';
+          msgEl.style.color = 'var(--cor-verde-primario)';
         } else {
           throw new Error(data.message || 'Erro ao salvar.');
         }
       })
       .catch(function () {
         msgEl.textContent = 'Erro ao salvar. Tente novamente.';
-        msgEl.style.color = '#c53b22';
+        msgEl.style.color = 'var(--cor-vermelho-primario)';
       })
       .finally(function () {
         self.textContent = 'Salvar alterações';

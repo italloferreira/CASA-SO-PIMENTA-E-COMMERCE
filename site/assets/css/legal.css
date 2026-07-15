@@ -1,8 +1,10 @@
+@import url('variaveis.css');
+
 *{
     box-sizing: border-box;
     border: 0;
     margin: 0;
-    font-family:'Courier New', Courier, monospace;
+    font-family: var(--font-principal);
 }
 
 body{
@@ -10,8 +12,8 @@ body{
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    background: #faf8f5;
-    color: #111;
+    background: var(--cor-off-white);
+    color: var(--cor-preto);
 }
 
 /*header*/
@@ -62,12 +64,12 @@ header{
 
 .categoria-section a{
     text-decoration: none;
-    color: black;
+    color: var(--cor-preto);
     transition: 0.5s;
 }
 
 .categoria-section a:hover{
-    color: red;
+    color: var(--cor-vermelho-primario);
     transition: 0.5s;
 }
 
@@ -83,12 +85,12 @@ header{
     align-items: center;
     gap: 6px;
     font: inherit;
-    color: black;
+    color: var(--cor-preto);
     transition: 0.5s;
 }
 
 .dropdown-btn:hover{
-    color: red;
+    color: var(--cor-vermelho-primario);
     transition: 0.5s;
 }
 
@@ -103,7 +105,7 @@ header{
     top: 100%;
     left: 0;
     min-width: 150px;
-    background: white;
+    background: var(--cor-branco);
     list-style: none;
     padding: 10px 0;
     margin: 8px 0 0 0;
@@ -118,7 +120,7 @@ header{
 }
 
 .submenu li:hover{
-    background: #f5f5f5;
+    background: var(--cor-cinza-hover);
 }
 
 .dropdown.ativo .submenu{
@@ -139,7 +141,7 @@ header{
 }
 
 .usuario-section{
-    color: black;
+    color: var(--cor-preto);
     width: 20%;
     height: 100%;
 
@@ -152,8 +154,7 @@ header{
 }
 
 .usuario-section:hover{
-    color: red;
-    transition: 0.5s;
+    color: var(--cor-vermelho-primario);
 }
 
 .carrinho-wrapper {
@@ -167,8 +168,8 @@ header{
     position: absolute;
     top: -5px;
     right: -8px;
-    background: #c53b22;
-    color: white;
+    background: var(--cor-vermelho-primario);
+    color: var(--cor-branco);
     font-size: 12px;
     font-weight: bold;
     width: 20px;
@@ -207,7 +208,7 @@ main{
     font-size: 14px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: #c0392b;
+    color: var(--cor-vermelho-primario);
     margin-bottom: 18px;
     font-weight: bold;
 }
@@ -220,7 +221,7 @@ main{
 
 .legal-subtitle{
     font-size: 16px;
-    color: #666;
+    color: var(--cor-cinza-texto-secundario);
 }
 
 .legal-section{
@@ -230,15 +231,15 @@ main{
 .legal-section h2{
     font-size: 22px;
     margin-bottom: 16px;
-    color: #c0392b;
+    color: var(--cor-vermelho-primario);
     padding-bottom: 8px;
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid var(--cor-cinza-borda);
 }
 
 .legal-section p{
     font-size: 15px;
     line-height: 1.8;
-    color: #333;
+    color: var(--cor-cinza-texto-secundario);
     margin-bottom: 14px;
 }
 
@@ -249,26 +250,26 @@ main{
 .legal-section li{
     font-size: 15px;
     line-height: 1.8;
-    color: #333;
+    color: var(--cor-cinza-texto-secundario);
     margin-bottom: 6px;
 }
 
 .legal-section strong{
-    color: #111;
+    color: var(--cor-preto);
 }
 
 .legal-section a{
-    color: #c0392b;
+    color: var(--cor-vermelho-primario);
     text-decoration: underline;
 }
 
 .legal-section a:hover{
-    color: #860000;
+    color: var(--cor-vermelho-hover);
 }
 
 .legal-highlight{
-    background: #fff;
-    border-left: 4px solid #c0392b;
+    background: var(--cor-branco);
+    border-left: 4px solid var(--cor-vermelho-primario);
     padding: 18px 22px;
     border-radius: 0 8px 8px 0;
     margin: 20px 0;
@@ -283,16 +284,16 @@ main{
 .legal-update{
     margin-top: 50px;
     padding-top: 20px;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--cor-cinza-borda);
     font-size: 13px;
-    color: #888;
+    color: var(--cor-cinza-texto-secundario);
     text-align: center;
 }
 
 /*footer*/
 
 footer{
-    background-color: rgb(197, 197, 197);
+    background-color: var(--cor-footer-fundo);
     width: 100%;
     height: 40vh;
 
@@ -322,9 +323,8 @@ footer{
     align-items: center;
 
     list-style-type: none;
-    color: black;
+    color: var(--cor-footer-texto);
     text-decoration: none;
-
 }
 
 .pagamentos-section{
@@ -338,9 +338,7 @@ footer{
 .pagamentos-section div{
     width: 7%;
     height: 50%;
-
-    border: 2px solid white;
-
+    border: 2px solid var(--cor-footer-texto);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -353,6 +351,7 @@ footer{
 
 footer p{
     font-size: 15px;
+    color: var(--cor-footer-texto);
 }
 
 /*Carrinho*/
@@ -361,11 +360,9 @@ footer p{
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-
     opacity: 0;
     visibility: hidden;
     transition: 0.3s ease;
-
     z-index: 2;
 }
 
@@ -373,19 +370,14 @@ footer p{
     position: fixed;
     top: 0;
     right: 0;
-
     width: 400px;
     max-width: 90%;
     height: 100vh;
-    background: white;
-
+    background: var(--cor-branco);
     box-shadow: -2px 0 12px rgba(0, 0, 0, 0.12);
-
     transform: translateX(100%);
     transition: transform 0.3s ease;
-
     z-index: 999;
-
     display: flex;
     flex-direction: column;
 }
@@ -404,7 +396,7 @@ footer p{
     min-height: 80px;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid var(--cor-cinza-borda);
 }
 
 .fechar-carrinho {
@@ -445,7 +437,7 @@ footer p{
     display: flex;
     gap: 15px;
     padding: 15px 0;
-    border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid var(--cor-cinza-borda);
 }
 
 .item-carrinho-img {
@@ -484,7 +476,7 @@ footer p{
 }
 
 .item-carrinho-info button:hover{
-    background-color: #e5e5e5;
+    background-color: var(--cor-cinza-borda);
     transition: 0.5s;
 }
 
@@ -510,14 +502,14 @@ footer p{
 }
 .carrinho-login-aviso p {
   font-size: 18px;
-  color: #333;
+  color: var(--cor-preto);
   margin: 0;
 }
 .btn-carrinho-login {
   display: inline-block;
   padding: 12px 32px;
-  background: #000;
-  color: #fff;
+  background: var(--cor-preto);
+  color: var(--cor-branco);
   text-decoration: none;
   border-radius: 8px;
   font-size: 16px;
@@ -525,7 +517,7 @@ footer p{
   transition: 0.3s;
 }
 .btn-carrinho-login:hover {
-  background: #333;
+  background: var(--cor-cinza-texto-secundario);
 }
 
 .controle-qtd {
@@ -541,7 +533,7 @@ footer p{
     border: none;
     background: transparent;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    color: black;
+    color: var(--cor-preto);
     border-radius: 6px;
     cursor: pointer;
 }
@@ -555,8 +547,8 @@ footer p{
 .carrinho-rodape {
     width: 100%;
     padding: 20px;
-    border-top: 1px solid #e5e5e5;
-    background: white;
+    border-top: 1px solid var(--cor-cinza-borda);
+    background: var(--cor-branco);
 }
 
 .total-carrinho {
@@ -573,14 +565,14 @@ footer p{
     border: none;
     background: transparent;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    color: black;
+    color: var(--cor-preto);
     border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
 }
 
 .btn-finalizar-pedido:hover {
-    background-color: rgb(235, 235, 235);
+    background-color: var(--cor-cinza-hover);
     transition: 0.5s;
 }
 
@@ -601,7 +593,7 @@ footer p{
 
 .item-carrinho-indisponivel .overlay-indisponivel-carrinho span {
     background: rgba(0, 0, 0, 0.7);
-    color: white;
+    color: var(--cor-branco);
     padding: 6px 16px;
     border-radius: 20px;
     font-weight: bold;

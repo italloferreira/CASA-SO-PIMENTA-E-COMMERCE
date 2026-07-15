@@ -152,8 +152,8 @@ window.adicionarAoCarrinhoDetalhe = function () {
   const btn = document.querySelector('.btn-add-carrinho');
   const textoOriginal = btn.innerHTML;
   btn.innerHTML = '✓ Adicionado!';
-  btn.style.background = '#2e7d32';
-  btn.style.color = 'white';
+  btn.style.background = 'var(--cor-verde-primario)';
+  btn.style.color = 'var(--cor-branco)';
   setTimeout(function () {
     btn.innerHTML = textoOriginal;
     btn.style.background = '';

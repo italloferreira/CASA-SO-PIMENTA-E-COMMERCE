@@ -48,8 +48,8 @@
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #A93226;
-  border-color: #A93226;
+  background: var(--cor-vermelho-hover);
+  border-color: var(--cor-vermelho-hover);
 }
 
 .btn-sm {
@@ -191,7 +191,7 @@
 
 .file-upload:hover {
   border-color: var(--color-primary);
-  background: var(--color-primary-bg, #F5EDE8);
+  background: var(--cor-vermelho-fundo-claro);
 }
 
 .file-upload.has-preview {

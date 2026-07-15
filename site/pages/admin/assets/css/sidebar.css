@@ -80,7 +80,7 @@ body.sidebar-collapsed .sidebar-toggle {
 }
 
 .nav-item.active {
-  background: var(--color-primary-bg, #F5EDE8);
+  background: var(--cor-vermelho-fundo-claro);
   color: var(--color-primary);
   border-left-color: var(--color-primary);
   font-weight: 600;
