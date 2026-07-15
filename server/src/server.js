@@ -109,6 +109,17 @@ async function start() {
     process.exit(1);
   }
 
+  const isProd = process.env.NODE_ENV === 'production';
+  const mpToken = isProd ? process.env.MP_ACCESS_TOKEN : process.env.MP_ACCESS_TOKEN_TEST;
+  const mpKey = isProd ? process.env.MP_PUBLIC_KEY : process.env.MP_PUBLIC_KEY_TEST;
+  if (!mpToken || !mpKey) {
+    console.error('ERRO: Credenciais Mercado Pago não configuradas (' + (isProd ? 'produção' : 'teste') + ').');
+    process.exit(1);
+  }
+  if (isProd && mpToken === process.env.MP_ACCESS_TOKEN_TEST) {
+    console.warn('AVISO: MP_ACCESS_TOKEN e MP_ACCESS_TOKEN_TEST são idênticos. Configure credenciais de teste separadas.');
+  }
+
   try {
     await createTables();
     await seedDatabase();

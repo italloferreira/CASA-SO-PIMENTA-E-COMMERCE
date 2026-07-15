@@ -31,3 +31,11 @@ export const shippingLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
+
+export const paymentLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 10,
+  message: { message: 'Muitas tentativas de pagamento. Aguarde 5 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});

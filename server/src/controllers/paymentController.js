@@ -78,10 +78,12 @@ export async function processCard(req, res) {
 
     const additionalInfo = {
       shipments: {
-        receivers_address: {
+        receiver_address: {
           zip_code: order.cep || '',
           city_name: order.city || '',
-          state_name: order.state || ''
+          state_name: order.state || '',
+          street_name: order.address || '',
+          street_number: order.number || ''
         }
       },
       items: orderItems.rows.map(function (item) {
@@ -106,6 +108,7 @@ export async function processCard(req, res) {
       installments: parseInt(installments),
       payment_method_id: paymentMethodId || undefined,
       statement_descriptor: 'CASA SO PIMENTA',
+      description: 'Casa So Pimenta - Pedido #' + String(orderId),
       payer: {
         email,
         identification: {
@@ -121,8 +124,16 @@ export async function processCard(req, res) {
       paymentBody.device_id = device_id;
     }
 
+    const notificationUrl = process.env.MP_NOTIFICATION_URL || undefined;
+    if (notificationUrl) {
+      paymentBody.notification_url = notificationUrl;
+    }
+
     const payment = getPaymentInstance();
-    const result = await payment.create({ body: paymentBody });
+    const result = await payment.create({
+      body: paymentBody,
+      requestOptions: { idempotencyKey: 'card-' + String(orderId) + '-' + Date.now() }
+    });
 
     const mpPaymentStatus = result.status;
     const mpStatusDetail = result.status_detail;
@@ -135,6 +146,16 @@ export async function processCard(req, res) {
       orderStatus = 'confirmed';
     } else if (mpPaymentStatus === 'rejected') {
       paymentStatus = 'rejected';
+    } else if (mpPaymentStatus === 'refunded') {
+      paymentStatus = 'refunded';
+      orderStatus = 'cancelled';
+    } else if (mpPaymentStatus === 'charged_back') {
+      paymentStatus = 'chargeback';
+    } else if (mpPaymentStatus === 'cancelled' || mpPaymentStatus === 'expired') {
+      paymentStatus = 'cancelled';
+      orderStatus = 'cancelled';
+    } else if (mpPaymentStatus === 'in_process' || mpPaymentStatus === 'pending') {
+      paymentStatus = 'pending';
     }
 
     const mpPaymentId = result.id ? String(result.id) : null;
@@ -185,7 +206,8 @@ export async function processPix(req, res) {
       ? orderTotal * (1 - pixDiscountPercent / 100)
       : orderTotal;
 
-    const result = await createOrder({
+    const pixNotificationUrl = process.env.MP_NOTIFICATION_URL || undefined;
+    const orderBody = {
       type: 'online',
       processing_mode: 'automatic',
       total_amount: String(amount.toFixed(2)),
@@ -200,7 +222,11 @@ export async function processPix(req, res) {
           }
         }]
       }
-    });
+    };
+    if (pixNotificationUrl) {
+      orderBody.notification_url = pixNotificationUrl;
+    }
+    const result = await createOrder(orderBody);
 
     const payment = result.transactions?.payments?.[0];
     const pmData = payment?.payment_method || {};
@@ -342,16 +368,16 @@ export async function getPaymentStatus(req, res) {
   }
 
   try {
-    const payRes = await fetch(`${MP_API}/payments/${paymentId}`, {
-      headers: { 'Authorization': `Bearer ${getAccessToken()}` }
-    });
-    if (payRes.ok) {
-      const result = await payRes.json();
+    const paymentInstance = getPaymentInstance();
+    try {
+      const result = await paymentInstance.get({ id: paymentId });
       return res.json({
         status: result.status,
         statusDetail: result.status_detail,
         amount: result.transaction_amount
       });
+    } catch (_) {
+      // Not a payment ID, try as order
     }
 
     const ordRes = await fetch(`${MP_API}/orders/${paymentId}`, {
