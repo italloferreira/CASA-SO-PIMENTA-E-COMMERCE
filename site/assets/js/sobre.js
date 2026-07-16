@@ -3,7 +3,7 @@
 const dropdown = document.querySelector('.dropdown');
 const botao = document.querySelector('.dropdown-btn');
 
-if (botao) {
+if (botao && dropdown) {
     botao.addEventListener('click', function () {
         dropdown.classList.toggle('ativo');
     });

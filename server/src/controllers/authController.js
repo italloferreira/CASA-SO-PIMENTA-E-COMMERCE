@@ -63,10 +63,7 @@ export async function login(req, res) {
   `, [email]);
   const attempts = Number(attemptsResult.rows[0]?.attempts) || 0;
 
-  console.log('[LOGIN] Tentativas recentes:', attempts);
-
   if (attempts >= MAX_LOGIN_ATTEMPTS) {
-    console.log('[LOGIN] Bloqueado por rate limit de tentativas');
     return res.status(423).json({
       message: 'Conta bloqueada temporariamente. Tente novamente em 15 minutos.'
     });
@@ -79,25 +76,15 @@ export async function login(req, res) {
   const user = result.rows[0];
 
   if (!user) {
-    console.log('[LOGIN] Usuario nao encontrado no banco');
     await pool.query(`INSERT INTO login_attempts (email) VALUES ($1)`, [email]);
     return res.status(401).json({
       message: 'Email ou senha inválidos.'
     });
   }
 
-  console.log('[LOGIN] Usuario encontrado. role:', user.role, '| hash prefix:', user.password.substring(0, 7));
-
   const passwordIsValid = await bcrypt.compare(password, user.password);
 
-  console.log('[LOGIN] bcrypt.compare resultado:', passwordIsValid);
-
   if (!passwordIsValid) {
-    console.log('[LOGIN] Senha incorreta. Hash armazenado:', user.password.substring(0, 20) + '...');
-
-    const testHash = await bcrypt.hash(password, 10);
-    console.log('[LOGIN] Hash da senha enviada:', testHash.substring(0, 20) + '...');
-
     await pool.query(`INSERT INTO login_attempts (email) VALUES ($1)`, [email]);
     return res.status(401).json({
       message: 'Email ou senha inválidos.'
@@ -311,8 +298,12 @@ export async function resetPassword(req, res) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
-    await pool.query(`UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, [hashedPassword, reset.user_id]);
-    await pool.query(`UPDATE password_resets SET used = 1 WHERE id = $1`, [reset.id]);
+    await pool.query(`
+      UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2
+    `, [hashedPassword, reset.user_id]);
+    await pool.query(`
+      UPDATE password_resets SET used = 1 WHERE id = $1
+    `, [reset.id]);
   } catch (err) {
     console.error('Erro ao redefinir senha:', err.message);
     return res.status(500).json({ message: 'Erro ao redefinir senha. Tente novamente.' });

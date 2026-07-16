@@ -1,75 +1,104 @@
 import { pool } from '../database/connection.js';
 
 export async function listCategories(req, res) {
-  const result = await pool.query(`
-    SELECT * FROM categories
-    WHERE is_active = 1
-    ORDER BY name ASC
-  `);
-
-  res.json(result.rows);
+  try {
+    const result = await pool.query(`
+      SELECT * FROM categories
+      WHERE is_active = 1
+      ORDER BY name ASC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao listar categorias:', err);
+    res.status(500).json({ message: 'Erro ao listar categorias.' });
+  }
 }
 
 export async function createCategory(req, res) {
-  const { name, slug, color } = req.body;
+  try {
+    const { name, slug, color } = req.body;
 
-  if (!name || !slug) {
-    return res.status(400).json({
-      message: 'Nome e slug são obrigatórios.'
+    if (!name || !slug) {
+      return res.status(400).json({
+        message: 'Nome e slug são obrigatórios.'
+      });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO categories (name, slug, color)
+      VALUES ($1, $2, $3)
+      RETURNING id
+    `, [name, slug, color || null]);
+
+    res.status(201).json({
+      id: result.rows[0].id,
+      name,
+      slug,
+      color
     });
+  } catch (err) {
+    console.error('Erro ao criar categoria:', err);
+    res.status(500).json({ message: 'Erro ao criar categoria.' });
   }
-
-  const result = await pool.query(`
-    INSERT INTO categories (name, slug, color)
-    VALUES ($1, $2, $3)
-    RETURNING id
-  `, [name, slug, color || null]);
-
-  res.status(201).json({
-    id: result.rows[0].id,
-    name,
-    slug,
-    color
-  });
 }
 
 export async function updateCategory(req, res) {
-  const { id } = req.params;
-  const { name, slug, color, is_active } = req.body;
+  try {
+    const { id } = req.params;
+    const { name, slug, color, is_active } = req.body;
 
-  const result = await pool.query(`
-    UPDATE categories
-    SET name = $1, slug = $2, color = $3, is_active = $4, updated_at = CURRENT_TIMESTAMP
-    WHERE id = $5
-  `, [name, slug, color || null, is_active ? 1 : 0, id]);
+    const result = await pool.query(`
+      UPDATE categories
+      SET name = COALESCE($1, name),
+          slug = COALESCE($2, slug),
+          color = $3,
+          is_active = $4,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $5
+    `, [
+      name || null,
+      slug || null,
+      color !== undefined ? (color || null) : undefined,
+      is_active !== undefined ? (is_active ? 1 : 0) : undefined,
+      id
+    ]);
 
-  if (result.rowCount === 0) {
-    return res.status(404).json({
-      message: 'Categoria não encontrada.'
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        message: 'Categoria não encontrada.'
+      });
+    }
+
+    res.json({
+      message: 'Categoria atualizada com sucesso.'
     });
+  } catch (err) {
+    console.error('Erro ao atualizar categoria:', err);
+    res.status(500).json({ message: 'Erro ao atualizar categoria.' });
   }
-
-  res.json({
-    message: 'Categoria atualizada com sucesso.'
-  });
 }
 
 export async function deleteCategory(req, res) {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const result = await pool.query(`
-    UPDATE categories
-    SET is_active = 0, updated_at = CURRENT_TIMESTAMP
-    WHERE id = $1
-  `, [id]);
+    const result = await pool.query(`
+      UPDATE categories
+      SET is_active = 0, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `, [id]);
 
-  if (result.rowCount === 0) {
-    return res.status(404).json({
-      message: 'Categoria não encontrada.'
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        message: 'Categoria não encontrada.'
+      });
+    }
+
+    res.json({
+      message: 'Categoria desativada com sucesso.'
     });
+  } catch (err) {
+    console.error('Erro ao desativar categoria:', err);
+    res.status(500).json({ message: 'Erro ao desativar categoria.' });
   }
-
-  res.json({
-    message: 'Categoria desativada com sucesso.'
-  });
 }

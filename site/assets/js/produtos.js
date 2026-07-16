@@ -2,6 +2,19 @@ document.addEventListener('DOMContentLoaded', function () {
   const produtosSection = document.querySelector('.produtos-section');
   if (!produtosSection) return;
 
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.add-carrinho-botao');
+    if (!btn || btn.disabled) return;
+    var data = btn.dataset;
+    addCarrinho({
+      id: data.productId,
+      nome: data.productName,
+      valor: data.productPrice,
+      img: data.productImg,
+      tipo: data.productType
+    });
+  });
+
   const categoria = produtosSection.dataset.categoria;
   const API_BASE = window.API_BASE_URL || 'http://localhost:3333';
 
@@ -32,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '<h3>' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '</h3>' +
       '<p>' + precoHtml + '</p>' +
       '<div>' +
-        '<button' + (disponivel ? ' onclick=\'addCarrinho(' + JSON.stringify({ id: produto.id, nome: produto.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'' : ' disabled') + '>' +
+        '<button' + (disponivel ? ' data-product-id="' + produto.id + '" data-product-name="' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '" data-product-price="' + venda + '" data-product-img="' + imgSrc + '" data-product-type="produto" data-product-categoria="' + categoria + '"' : ' disabled') + '>' +
           '<img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho">' +
         '</button>' +
         '<button' + (disponivel ? ' onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + produto.id + '&categoria=' + categoria + '\'"' : ' disabled') + '>Ver produto</button>' +

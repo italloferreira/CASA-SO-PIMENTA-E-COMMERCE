@@ -15,6 +15,7 @@ function getAuthHeaders() {
 export async function getUserProfile() {
   try {
     var res = await fetch(API_BASE + '/api/auth/profile', {
+      headers: getAuthHeaders(),
       credentials: 'include'
     });
 

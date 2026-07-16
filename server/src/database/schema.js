@@ -305,4 +305,19 @@ export async function createTables() {
   } catch (err) {
     console.error('Aviso: tabela login_attempts já existe ou não pôde ser criada:', err.message);
   }
+
+  try {
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(is_active)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_is_featured ON products(is_featured)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token)`);
+  } catch (err) {
+    console.error('Aviso: Erro ao criar índices:', err.message);
+  }
 }

@@ -1,6 +1,11 @@
 import { protectRoute, showToast } from './admin-auth.js';
 import { API_BASE, apiRequest } from '../../../../assets/js/api.js';
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 protectRoute();
 
 let allOrders = [];
@@ -66,7 +71,7 @@ function renderOrders() {
 
     return '<tr>' +
       '<td data-label="#ID"><strong>#' + o.id + '</strong></td>' +
-      '<td data-label="Cliente">' + o.customer_name + '<br><small style="color:var(--color-text-muted)">' + o.customer_email + '</small></td>' +
+      '<td data-label="Cliente">' + escapeHtml(o.customer_name) + '<br><small style="color:var(--color-text-muted)">' + escapeHtml(o.customer_email) + '</small></td>' +
       '<td data-label="Total">R$ ' + total + '</td>' +
       '<td data-label="Status">' +
         '<select class="form-input order-status-select" data-order-id="' + o.id + '" style="padding:4px 8px;font-size:12px;width:auto;">' +
@@ -133,7 +138,7 @@ window.openDetail = function (orderId) {
     o.items.forEach(function (item) {
       var itemPrice = Number(item.unit_price || item.price || 0).toFixed(2).replace('.', ',');
       itemsHtml += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--color-border);font-size:var(--font-size-sm);">' +
-        '<span>' + (item.item_name || item.product_name || 'Item') + ' x' + item.quantity + '</span>' +
+        '<span>' + escapeHtml(item.item_name || item.product_name || 'Item') + ' x' + item.quantity + '</span>' +
         '<span>R$ ' + itemPrice + '</span>' +
         '</div>';
     });
@@ -142,13 +147,13 @@ window.openDetail = function (orderId) {
 
   document.getElementById('orderDetailBody').innerHTML =
     '<div style="display:grid;gap:12px;">' +
-      '<div><strong>Cliente:</strong> ' + o.customer_name + '</div>' +
-      '<div><strong>E-mail:</strong> ' + o.customer_email + '</div>' +
+      '<div><strong>Cliente:</strong> ' + escapeHtml(o.customer_name) + '</div>' +
+      '<div><strong>E-mail:</strong> ' + escapeHtml(o.customer_email) + '</div>' +
       '<div><strong>Telefone:</strong> ' + (o.customer_phone || '—') + ' ' +
         (whatsappLink ? '<a href="' + whatsappLink + '" target="_blank" class="btn btn-sm btn-secondary" style="background:#25D366;color:#fff;">Conversar no WhatsApp</a>' : '') +
       '</div>' +
-      '<div><strong>Endereço:</strong><br>' + (o.address || '—') + '</div>' +
-      '<div><strong>Forma de pagamento:</strong> ' + (o.payment_method || '—') + '</div>' +
+      '<div><strong>Endereço:</strong><br>' + escapeHtml(o.address || '—') + '</div>' +
+      '<div><strong>Forma de pagamento:</strong> ' + escapeHtml(o.payment_method || '—') + '</div>' +
       '<div><strong>Data:</strong> ' + data + '</div>' +
       '<div><strong>Total:</strong> R$ ' + total + '</div>' +
       '<div><strong>Status:</strong> ' +

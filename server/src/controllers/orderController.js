@@ -9,6 +9,8 @@ function generatePickupCode() {
   return String(crypto.randomInt(100000, 999999));
 }
 
+const VALID_DELIVERY_TYPES = ['delivery', 'pickup', 'negotiate'];
+
 export async function createOrder(req, res) {
   const {
     customer_name,
@@ -18,8 +20,8 @@ export async function createOrder(req, res) {
     cep, address, number, neighborhood, complement,
     city, state,
     items,
-    delivery_fee,
-    box_amount,
+    delivery_fee: _delivery_fee_raw,
+    box_amount: _box_amount_raw,
     shipping_service,
     shipping_amount,
     total_weight,
@@ -35,7 +37,15 @@ export async function createOrder(req, res) {
     });
   }
 
-  if (delivery_type === 'delivery' && !cep) {
+  if (delivery_type && !VALID_DELIVERY_TYPES.includes(delivery_type)) {
+    return res.status(400).json({
+      message: 'Tipo de entrega inválido. Valores aceitos: delivery, pickup, negotiate.'
+    });
+  }
+
+  const effectiveDeliveryType = delivery_type || 'delivery';
+
+  if (effectiveDeliveryType === 'delivery' && !cep) {
     return res.status(400).json({
       message: 'CEP é obrigatório para entrega.'
     });
@@ -49,41 +59,29 @@ export async function createOrder(req, res) {
   try {
     await client.query('BEGIN');
 
-  for (const item of items) {
-    let product = null;
-    let kit = null;
+    for (const item of items) {
+      if (!item.product_id && !item.kit_id) {
+        throw Object.assign(new Error('Cada item deve ter product_id ou kit_id.'), { status: 400 });
+      }
+      if (item.product_id && item.kit_id) {
+        throw Object.assign(new Error('Item deve ter product_id ou kit_id, não ambos.'), { status: 400 });
+      }
 
-    if (!item.product_id && !item.kit_id) {
-      await client.query('ROLLBACK');
-      client.release();
-      return res.status(400).json({
-        message: 'Cada item deve ter product_id ou kit_id.'
-      });
-    }
-
-    if (item.product_id) {
+      if (item.product_id) {
         const productResult = await client.query(`
           SELECT * FROM products
           WHERE id = $1 AND is_active = 1
           FOR UPDATE
         `, [item.product_id]);
 
-        product = productResult.rows[0];
+        const product = productResult.rows[0];
 
         if (!product) {
-          await client.query('ROLLBACK');
-          client.release();
-          return res.status(400).json({
-            message: `Produto ${item.product_id} não encontrado.`
-          });
+          throw Object.assign(new Error(`Produto ${item.product_id} não encontrado.`), { status: 400 });
         }
 
         if (!product.stock) {
-          await client.query('ROLLBACK');
-          client.release();
-          return res.status(400).json({
-            message: `O produto "${product.name}" está fora de estoque.`
-          });
+          throw Object.assign(new Error(`O produto "${product.name}" está fora de estoque.`), { status: 400 });
         }
 
         const salePrice = product.compare_price ? Number(product.compare_price) : Number(product.price);
@@ -107,22 +105,14 @@ export async function createOrder(req, res) {
           FOR UPDATE
         `, [item.kit_id]);
 
-        kit = kitResult.rows[0];
+        const kit = kitResult.rows[0];
 
         if (!kit) {
-          await client.query('ROLLBACK');
-          client.release();
-          return res.status(400).json({
-            message: `Kit ${item.kit_id} não encontrado.`
-          });
+          throw Object.assign(new Error(`Kit ${item.kit_id} não encontrado.`), { status: 400 });
         }
 
         if (!kit.stock) {
-          await client.query('ROLLBACK');
-          client.release();
-          return res.status(400).json({
-            message: `O kit "${kit.name}" está fora de estoque.`
-          });
+          throw Object.assign(new Error(`O kit "${kit.name}" está fora de estoque.`), { status: 400 });
         }
 
         const total = Number(kit.price) * item.quantity;
@@ -139,12 +129,12 @@ export async function createOrder(req, res) {
       }
     }
 
-    const deliveryFeeValue = delivery_type === 'pickup' || delivery_type === 'negotiate'
+    const deliveryFeeValue = effectiveDeliveryType === 'pickup' || effectiveDeliveryType === 'negotiate'
       ? 0
-      : Math.max(0, Number(delivery_fee || 0));
-    const boxAmountValue = delivery_type === 'pickup' || delivery_type === 'negotiate'
+      : Math.max(0, Number(_delivery_fee_raw || 0));
+    const boxAmountValue = effectiveDeliveryType === 'pickup' || effectiveDeliveryType === 'negotiate'
       ? 0
-      : Math.max(0, Number(box_amount || 0));
+      : Math.max(0, Number(_box_amount_raw || 0));
     let total = subtotal + deliveryFeeValue + boxAmountValue;
     let couponData = null;
     let couponDiscount = 0;
@@ -154,36 +144,30 @@ export async function createOrder(req, res) {
       const coupon = couponResult.rows[0];
 
       if (!coupon) {
-        await client.query('ROLLBACK');
-        client.release();
-        return res.status(400).json({ success: false, message: 'Cupom não encontrado.' });
+        throw Object.assign(new Error('Cupom não encontrado.'), { status: 400, success: false });
       }
 
       if (!coupon.is_active) {
-        await client.query('ROLLBACK');
-        client.release();
-        return res.status(400).json({ success: false, message: 'Este cupom está inativo.' });
+        throw Object.assign(new Error('Este cupom está inativo.'), { status: 400, success: false });
       }
 
-      if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-        await client.query('ROLLBACK');
-        client.release();
-        return res.status(400).json({ success: false, message: 'Este cupom expirou.' });
+      if (coupon.expires_at) {
+        const expResult = await client.query('SELECT NOW() AS now_ts');
+        const nowTs = expResult.rows[0].now_ts;
+        if (new Date(coupon.expires_at) < nowTs) {
+          throw Object.assign(new Error('Este cupom expirou.'), { status: 400, success: false });
+        }
       }
 
       if (coupon.max_uses && coupon.times_used >= coupon.max_uses) {
-        await client.query('ROLLBACK');
-        client.release();
-        return res.status(400).json({ success: false, message: 'Este cupom atingiu o limite de usos.' });
+        throw Object.assign(new Error('Este cupom atingiu o limite de usos.'), { status: 400, success: false });
       }
 
       if (coupon.min_order_amount && subtotal < Number(coupon.min_order_amount)) {
-        await client.query('ROLLBACK');
-        client.release();
-        return res.status(400).json({
-          success: false,
-          message: `Pedido mínimo de ${Number(coupon.min_order_amount).toFixed(2).replace('.', ',')} para usar este cupom.`
-        });
+        throw Object.assign(
+          new Error(`Pedido mínimo de ${Number(coupon.min_order_amount).toFixed(2).replace('.', ',')} para usar este cupom.`),
+          { status: 400, success: false }
+        );
       }
 
       if (coupon.discount_type === 'fixed') {
@@ -223,14 +207,14 @@ export async function createOrder(req, res) {
       customer_name,
       customer_email || null,
       customer_phone,
-      delivery_type || 'delivery',
-      delivery_type === 'delivery' ? (cep || null) : null,
-      delivery_type === 'delivery' ? (address || null) : null,
-      delivery_type === 'delivery' ? (number || null) : null,
-      delivery_type === 'delivery' ? (neighborhood || null) : null,
-      delivery_type === 'delivery' ? (complement || null) : null,
-      delivery_type === 'delivery' ? (city || null) : null,
-      delivery_type === 'delivery' ? (state || null) : null,
+      effectiveDeliveryType,
+      effectiveDeliveryType === 'delivery' ? (cep || null) : null,
+      effectiveDeliveryType === 'delivery' ? (address || null) : null,
+      effectiveDeliveryType === 'delivery' ? (number || null) : null,
+      effectiveDeliveryType === 'delivery' ? (neighborhood || null) : null,
+      effectiveDeliveryType === 'delivery' ? (complement || null) : null,
+      effectiveDeliveryType === 'delivery' ? (city || null) : null,
+      effectiveDeliveryType === 'delivery' ? (state || null) : null,
       subtotal,
       deliveryFeeValue,
       total,
@@ -261,7 +245,21 @@ export async function createOrder(req, res) {
         orderItem.quantity,
         orderItem.total
       ]);
+    }
 
+    for (const orderItem of orderItems) {
+      if (orderItem.product_id) {
+        await client.query(
+          'UPDATE products SET stock = false WHERE id = $1 AND stock = true',
+          [orderItem.product_id]
+        );
+      }
+      if (orderItem.kit_id) {
+        await client.query(
+          'UPDATE kits SET stock = false WHERE id = $1 AND stock = true',
+          [orderItem.kit_id]
+        );
+      }
     }
 
     if (couponData) {
@@ -274,7 +272,6 @@ export async function createOrder(req, res) {
 
     const orderData = orderResult.rows[0];
 
-    /* ── Notificações por email ── */
     try {
       const adminEmailResult = await pool.query(`SELECT value FROM settings WHERE key = 'contact_email'`);
       const adminEmail = adminEmailResult.rows[0]?.value || process.env.SENDGRID_FROM?.match(/<(.+)>/)?.[1];
@@ -343,8 +340,9 @@ export async function createOrder(req, res) {
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Erro ao criar pedido:', err);
-    res.status(500).json({
-      message: 'Erro ao criar pedido.'
+    res.status(err.status || 500).json({
+      success: err.success !== undefined ? err.success : undefined,
+      message: err.message || 'Erro ao criar pedido.'
     });
   } finally {
     client.release();
@@ -352,186 +350,211 @@ export async function createOrder(req, res) {
 }
 
 export async function listOrders(req, res) {
-  const { delivery_type, status, limit, offset } = req.query;
-  let query = 'SELECT * FROM orders';
-  const params = [];
-  const conditions = [];
+  try {
+    const { delivery_type, status, limit, offset } = req.query;
+    let query = 'SELECT * FROM orders';
+    const params = [];
+    const conditions = [];
 
-  if (delivery_type) {
-    params.push(delivery_type);
-    conditions.push(`delivery_type = $${params.length}`);
+    if (delivery_type) {
+      params.push(delivery_type);
+      conditions.push(`delivery_type = $${params.length}`);
+    }
+
+    if (status) {
+      params.push(status);
+      conditions.push(`status = $${params.length}`);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const limitVal = Math.min(Math.max(parseInt(limit) || 100, 1), 500);
+    const offsetVal = Math.max(parseInt(offset) || 0, 0);
+
+    params.push(limitVal);
+    query += ` LIMIT $${params.length}`;
+    params.push(offsetVal);
+    query += ` OFFSET $${params.length}`;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao listar pedidos:', err);
+    res.status(500).json({ message: 'Erro ao listar pedidos.' });
   }
-
-  if (status) {
-    params.push(status);
-    conditions.push(`status = $${params.length}`);
-  }
-
-  if (conditions.length > 0) {
-    query += ' WHERE ' + conditions.join(' AND ');
-  }
-
-  query += ' ORDER BY created_at DESC';
-
-  const limitVal = Math.min(Math.max(parseInt(limit) || 100, 1), 500);
-  const offsetVal = Math.max(parseInt(offset) || 0, 0);
-
-  params.push(limitVal);
-  query += ` LIMIT $${params.length}`;
-  params.push(offsetVal);
-  query += ` OFFSET $${params.length}`;
-
-  const result = await pool.query(query, params);
-  res.json(result.rows);
 }
 
 export async function getOrderById(req, res) {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
-  const order = orderResult.rows[0];
+    const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
+    const order = orderResult.rows[0];
 
-  if (!order) {
-    return res.status(404).json({ message: 'Pedido não encontrado.' });
+    if (!order) {
+      return res.status(404).json({ message: 'Pedido não encontrado.' });
+    }
+
+    const itemsResult = await pool.query('SELECT * FROM order_items WHERE order_id = $1', [id]);
+
+    res.json({ ...order, items: itemsResult.rows });
+  } catch (err) {
+    console.error('Erro ao buscar pedido:', err);
+    res.status(500).json({ message: 'Erro ao buscar pedido.' });
   }
-
-  const itemsResult = await pool.query('SELECT * FROM order_items WHERE order_id = $1', [id]);
-
-  res.json({ ...order, items: itemsResult.rows });
 }
 
 export async function getMyOrders(req, res) {
-  const userId = req.user.id;
+  try {
+    const userId = req.user.id;
 
-  const ordersResult = await pool.query(`
-    SELECT o.*,
-      COALESCE(
-        json_agg(
-          CASE WHEN oi.id IS NOT NULL THEN
-            json_build_object(
-              'id', oi.id, 'order_id', oi.order_id, 'product_id', oi.product_id,
-              'kit_id', oi.kit_id, 'item_name', oi.item_name, 'unit_price', oi.unit_price,
-              'quantity', oi.quantity, 'total', oi.total
-            )
-          END
-        ) FILTER (WHERE oi.id IS NOT NULL),
-        '[]'
-      ) as items
-    FROM orders o
-    LEFT JOIN order_items oi ON oi.order_id = o.id
-    WHERE o.user_id = $1
-    GROUP BY o.id
-    ORDER BY o.created_at DESC
-  `, [userId]);
+    const ordersResult = await pool.query(`
+      SELECT o.*,
+        COALESCE(
+          json_agg(
+            CASE WHEN oi.id IS NOT NULL THEN
+              json_build_object(
+                'id', oi.id, 'order_id', oi.order_id, 'product_id', oi.product_id,
+                'kit_id', oi.kit_id, 'item_name', oi.item_name, 'unit_price', oi.unit_price,
+                'quantity', oi.quantity, 'total', oi.total
+              )
+            END
+          ) FILTER (WHERE oi.id IS NOT NULL),
+          '[]'
+        ) as items
+      FROM orders o
+      LEFT JOIN order_items oi ON oi.order_id = o.id
+      WHERE o.user_id = $1
+      GROUP BY o.id
+      ORDER BY o.created_at DESC
+    `, [userId]);
 
-  const pickupCodes = {};
-  for (const order of ordersResult.rows) {
-    if (order.delivery_type === 'pickup' && order.pickup_code) {
-      pickupCodes[order.id] = order.pickup_code;
+    const pickupCodes = {};
+    for (const order of ordersResult.rows) {
+      if (order.delivery_type === 'pickup' && order.pickup_code) {
+        pickupCodes[order.id] = order.pickup_code;
+      }
+      delete order.pickup_code;
     }
-    delete order.pickup_code;
-  }
 
-  res.json({ orders: ordersResult.rows, pickupCodes });
+    res.json({ orders: ordersResult.rows, pickupCodes });
+  } catch (err) {
+    console.error('Erro ao listar pedidos do usuário:', err);
+    res.status(500).json({ message: 'Erro ao listar seus pedidos.' });
+  }
 }
 
 export async function updateOrderStatus(req, res) {
-  const { id } = req.params;
-  const { status: newStatus } = req.body;
+  try {
+    const { id } = req.params;
+    const { status: newStatus } = req.body;
 
-  const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
-  const order = orderResult.rows[0];
+    const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
+    const order = orderResult.rows[0];
 
-  if (!order) {
-    return res.status(404).json({ message: 'Pedido não encontrado.' });
-  }
+    if (!order) {
+      return res.status(404).json({ message: 'Pedido não encontrado.' });
+    }
 
-  const currentStatus = order.status;
-  const deliveryType = order.delivery_type;
+    const currentStatus = order.status;
+    const deliveryType = order.delivery_type;
 
-  if (!canTransition(currentStatus, newStatus, deliveryType)) {
-    return res.status(400).json({
-      message: `Transição de "${currentStatus}" para "${newStatus}" não é permitida para ${deliveryType === 'pickup' ? 'retirada' : 'entrega'}.`
-    });
-  }
+    if (!canTransition(currentStatus, newStatus, deliveryType)) {
+      return res.status(400).json({
+        message: `Transição de "${currentStatus}" para "${newStatus}" não é permitida para ${deliveryType === 'pickup' ? 'retirada' : 'entrega'}.`
+      });
+    }
 
-  if (newStatus === 'withdrawn') {
-    return res.status(400).json({
-      message: 'Confirmação de retirada deve ser feita com validação do código de retirada.'
-    });
-  }
+    if (newStatus === 'withdrawn') {
+      return res.status(400).json({
+        message: 'Confirmação de retirada deve ser feita com validação do código de retirada.'
+      });
+    }
 
-  if (deliveryType === 'pickup' && newStatus === 'ready_for_pickup') {
-    const pickupCode = generatePickupCode();
+    if (deliveryType === 'pickup' && newStatus === 'ready_for_pickup') {
+      const pickupCode = generatePickupCode();
+
+      await pool.query(`
+        UPDATE orders
+        SET status = $1, pickup_code = $2, pickup_code_generated_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $3
+      `, [newStatus, pickupCode, id]);
+
+      console.log(`Pedido #${id} pronto para retirada. Código: ${pickupCode}`);
+
+      return res.json({
+        message: 'Pedido marcado como pronto para retirada.',
+        pickup_code: pickupCode
+      });
+    }
 
     await pool.query(`
       UPDATE orders
-      SET status = $1, pickup_code = $2, pickup_code_generated_at = CURRENT_TIMESTAMP,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = $3
-    `, [newStatus, pickupCode, id]);
+      SET status = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+    `, [newStatus, id]);
 
-    console.log(`Pedido #${id} pronto para retirada. Código: ${pickupCode}`);
-
-    return res.json({
-      message: 'Pedido marcado como pronto para retirada.',
-      pickup_code: pickupCode
-    });
+    res.json({ message: 'Status do pedido atualizado.' });
+  } catch (err) {
+    console.error('Erro ao atualizar status do pedido:', err);
+    res.status(500).json({ message: 'Erro ao atualizar status do pedido.' });
   }
-
-  await pool.query(`
-    UPDATE orders
-    SET status = $1, updated_at = CURRENT_TIMESTAMP
-    WHERE id = $2
-  `, [newStatus, id]);
-
-  res.json({ message: 'Status do pedido atualizado.' });
 }
 
 export async function confirmPickup(req, res) {
-  const { id } = req.params;
-  const { pickup_code } = req.body;
+  try {
+    const { id } = req.params;
+    const { pickup_code } = req.body;
 
-  if (!pickup_code) {
-    return res.status(400).json({ message: 'Código de retirada é obrigatório.' });
+    if (!pickup_code) {
+      return res.status(400).json({ message: 'Código de retirada é obrigatório.' });
+    }
+
+    const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
+    const order = orderResult.rows[0];
+
+    if (!order) {
+      return res.status(404).json({ message: 'Pedido não encontrado.' });
+    }
+
+    if (order.delivery_type !== 'pickup') {
+      return res.status(400).json({ message: 'Este pedido não é do tipo retirada.' });
+    }
+
+    if (order.status !== 'ready_for_pickup') {
+      return res.status(400).json({
+        message: `Pedido está "${order.status}". Só é possível retirar pedidos "pronto para retirada".`
+      });
+    }
+
+    if (!order.pickup_code) {
+      return res.status(400).json({ message: 'Este pedido não possui código de retirada.' });
+    }
+
+    if (order.pickup_code !== pickup_code) {
+      console.log(`Tentativa de retirada inválida para pedido #${id}: código incorreto.`);
+      return res.status(400).json({ message: 'Código de retirada inválido.' });
+    }
+
+    await pool.query(`
+      UPDATE orders
+      SET status = 'withdrawn', pickup_code = NULL,
+          pickup_code_generated_at = NULL,
+          withdrawn_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `, [id]);
+
+    console.log(`Pedido #${id} retirado com sucesso pelo admin.`);
+
+    res.json({ message: 'Retirada confirmada com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao confirmar retirada:', err);
+    res.status(500).json({ message: 'Erro ao confirmar retirada.' });
   }
-
-  const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
-  const order = orderResult.rows[0];
-
-  if (!order) {
-    return res.status(404).json({ message: 'Pedido não encontrado.' });
-  }
-
-  if (order.delivery_type !== 'pickup') {
-    return res.status(400).json({ message: 'Este pedido não é do tipo retirada.' });
-  }
-
-  if (order.status !== 'ready_for_pickup') {
-    return res.status(400).json({
-      message: `Pedido está "${order.status}". Só é possível retirar pedidos "pronto para retirada".`
-    });
-  }
-
-  if (!order.pickup_code) {
-    return res.status(400).json({ message: 'Este pedido não possui código de retirada.' });
-  }
-
-  if (order.pickup_code !== pickup_code) {
-    console.log(`Tentativa de retirada inválida para pedido #${id}: código incorreto.`);
-    return res.status(400).json({ message: 'Código de retirada inválido.' });
-  }
-
-  await pool.query(`
-    UPDATE orders
-    SET status = 'withdrawn', pickup_code = NULL,
-        pickup_code_generated_at = NULL,
-        withdrawn_at = CURRENT_TIMESTAMP,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = $1
-  `, [id]);
-
-  console.log(`Pedido #${id} retirado com sucesso pelo admin.`);
-
-  res.json({ message: 'Retirada confirmada com sucesso.' });
 }

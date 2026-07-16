@@ -1,6 +1,11 @@
 import { protectRoute, showToast } from './admin-auth.js';
 import { apiRequest } from '../../../../assets/js/api.js';
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 protectRoute();
 
 const METRICS = [
@@ -56,7 +61,7 @@ function renderRecentOrders(orders) {
     const data = new Date(o.created_at).toLocaleDateString('pt-BR');
     html += '<tr>' +
       '<td data-label="#ID">' + o.id + '</td>' +
-      '<td data-label="Cliente">' + o.customer_name + '</td>' +
+      '<td data-label="Cliente">' + escapeHtml(o.customer_name) + '</td>' +
       '<td data-label="Total">R$ ' + total + '</td>' +
       '<td data-label="Status"><span class="badge ' + (badgeClass[o.status] || 'badge-neutral') + '">' + (statusMap[o.status] || o.status) + '</span></td>' +
       '<td data-label="Data">' + data + '</td>' +
@@ -79,7 +84,7 @@ function renderLowStock(products) {
   let html = '<table class="admin-table"><thead><tr><th>Nome</th><th>Estoque</th><th>Ações</th></tr></thead><tbody>';
   products.forEach(function (p) {
     html += '<tr>' +
-      '<td data-label="Nome">' + p.name + '</td>' +
+      '<td data-label="Nome">' + escapeHtml(p.name) + '</td>' +
       '<td data-label="Estoque"><span class="badge badge-danger">Sem estoque</span></td>' +
       '<td data-label="Ações"><a href="/site/pages/admin/produtos/index.html" class="btn btn-sm btn-secondary">Editar</a></td>' +
       '</tr>';

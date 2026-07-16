@@ -48,11 +48,6 @@ async function createOrder(body) {
   return data;
 }
 
-function getCardType(paymentMethodId) {
-  const debitCards = ['debelo'];
-  return debitCards.includes(paymentMethodId) ? 'debit_card' : 'credit_card';
-}
-
 export async function processCard(req, res) {
   const { orderId, token, installments, paymentMethodId, email, cpf, device_id, registration_date } = req.body;
 
@@ -231,12 +226,21 @@ export async function processPix(req, res) {
     const mpPaymentId = payment?.id ? String(payment.id) : null;
     const mpOrderId = result.id || null;
 
-    await pool.query(`
-      UPDATE orders
-      SET payment_status = 'pending', payment_external_id = $1,
-          payment_method = 'pix', cpf = $2, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $3
-    `, [mpOrderId, cpf.replace(/\D/g, ''), orderId]);
+    if (pixDiscountPercent > 0 && amount !== orderTotal) {
+      await pool.query(`
+        UPDATE orders
+        SET payment_status = 'pending', payment_external_id = $1,
+            payment_method = 'pix', cpf = $2, total = $3, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $4
+      `, [mpOrderId, cpf.replace(/\D/g, ''), amount, orderId]);
+    } else {
+      await pool.query(`
+        UPDATE orders
+        SET payment_status = 'pending', payment_external_id = $1,
+            payment_method = 'pix', cpf = $2, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $3
+      `, [mpOrderId, cpf.replace(/\D/g, ''), orderId]);
+    }
 
     res.json({
       success: true,
@@ -298,10 +302,10 @@ export async function handleWebhook(req, res) {
       mpStatusDetail = result.status_detail;
 
     } else if (type === 'order' && data?.id) {
-      const res = await fetch(`${MP_API}/orders/${data.id}`, {
+      const orderRes = await fetch(`${MP_API}/orders/${data.id}`, {
         headers: { 'Authorization': `Bearer ${getAccessToken()}` }
       });
-      const result = await res.json();
+      const result = await orderRes.json();
 
       mpOrderStatus = result.status;
       orderId = result.external_reference;

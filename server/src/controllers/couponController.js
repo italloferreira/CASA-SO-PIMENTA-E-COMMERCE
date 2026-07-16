@@ -156,8 +156,12 @@ export async function validateCoupon(req, res) {
       return res.status(400).json({ success: false, message: 'Este cupom está inativo.' });
     }
 
-    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-      return res.status(400).json({ success: false, message: 'Este cupom expirou.' });
+    if (coupon.expires_at) {
+      const nowResult = await pool.query('SELECT NOW() AS now_ts');
+      const nowTs = nowResult.rows[0].now_ts;
+      if (new Date(coupon.expires_at) < nowTs) {
+        return res.status(400).json({ success: false, message: 'Este cupom expirou.' });
+      }
     }
 
     if (coupon.max_uses && coupon.times_used >= coupon.max_uses) {

@@ -24,6 +24,8 @@ dotenv.config();
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 3333;
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || 'http://localhost:5500')

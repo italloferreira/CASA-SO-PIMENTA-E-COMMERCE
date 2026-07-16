@@ -1,10 +1,14 @@
 import { pool } from '../database/connection.js';
 
+const SENSITIVE_KEYS = ['pix_key', 'pix_key_type'];
+
 export async function getSettings(req, res) {
   try {
     const result = await pool.query('SELECT key, value FROM settings');
     const settings = {};
+    const isAdmin = req.user?.role === 'admin';
     result.rows.forEach(function (row) {
+      if (!isAdmin && SENSITIVE_KEYS.includes(row.key)) return;
       settings[row.key] = row.value;
     });
     res.json({ success: true, settings });

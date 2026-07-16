@@ -1,6 +1,11 @@
 import { protectRoute, showToast } from './admin-auth.js';
 import { apiRequest } from '../../../../assets/js/api.js';
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 protectRoute();
 
 var currentPage = 1;
@@ -52,9 +57,9 @@ function renderUsers(users) {
       ? '<span class="badge badge-danger">Inativo</span>'
       : '<span class="badge badge-success">Ativo</span>';
     return '<tr>' +
-      '<td data-label="Nome"><strong>' + (u.name || '—') + '</strong></td>' +
-      '<td data-label="Email">' + (u.email || '—') + '</td>' +
-      '<td data-label="Telefone">' + (u.phone || '—') + '</td>' +
+      '<td data-label="Nome"><strong>' + escapeHtml(u.name || '—') + '</strong></td>' +
+      '<td data-label="Email">' + escapeHtml(u.email || '—') + '</td>' +
+      '<td data-label="Telefone">' + escapeHtml(u.phone || '—') + '</td>' +
       '<td data-label="Pedidos">' + u.order_count + '</td>' +
       '<td data-label="Total">' + (u.total_spent > 0 ? formatMoney(u.total_spent) : '—') + '</td>' +
       '<td data-label="Cadastro">' + formatDate(u.created_at) + '</td>' +
@@ -107,8 +112,8 @@ function mostrarDrawer(user, orders) {
       return '<tr>' +
         '<td>#' + o.id + '</td>' +
         '<td>' + formatMoney(o.total) + '</td>' +
-        '<td>' + (o.status || '—') + '</td>' +
-        '<td>' + (o.payment_method || '—') + '</td>' +
+        '<td>' + escapeHtml(o.status || '—') + '</td>' +
+        '<td>' + escapeHtml(o.payment_method || '—') + '</td>' +
         '<td>' + formatDate(o.created_at) + '</td>' +
         '</tr>';
     }).join('');
@@ -120,13 +125,13 @@ function mostrarDrawer(user, orders) {
   }
 
   body.innerHTML =
-    '<div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-input" id="editUserName" value="' + (user.name || '') + '"></div>' +
-    '<div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="editUserEmail" value="' + (user.email || '') + '"></div>' +
-    '<div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-input" id="editUserPhone" value="' + (user.phone || '') + '"></div>' +
-    '<div class="form-group"><label class="form-label">CEP</label><input type="text" class="form-input" id="editUserCep" value="' + (user.cep || '') + '"></div>' +
-    '<div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-input" id="editUserAddress" value="' + (user.address || '') + '"></div>' +
-    '<div class="form-row"><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-input" id="editUserCity" value="' + (user.city || '') + '"></div>' +
-    '<div class="form-group"><label class="form-label">Estado</label><input type="text" class="form-input" id="editUserState" value="' + (user.state || '') + '" maxlength="2"></div></div>' +
+    '<div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-input" id="editUserName" value="' + escapeHtml(user.name || '') + '"></div>' +
+    '<div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="editUserEmail" value="' + escapeHtml(user.email || '') + '"></div>' +
+    '<div class="form-group"><label class="form-label">Telefone</label><input type="text" class="form-input" id="editUserPhone" value="' + escapeHtml(user.phone || '') + '"></div>' +
+    '<div class="form-group"><label class="form-label">CEP</label><input type="text" class="form-input" id="editUserCep" value="' + escapeHtml(user.cep || '') + '"></div>' +
+    '<div class="form-group"><label class="form-label">Endereço</label><input type="text" class="form-input" id="editUserAddress" value="' + escapeHtml(user.address || '') + '"></div>' +
+    '<div class="form-row"><div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-input" id="editUserCity" value="' + escapeHtml(user.city || '') + '"></div>' +
+    '<div class="form-group"><label class="form-label">Estado</label><input type="text" class="form-input" id="editUserState" value="' + escapeHtml(user.state || '') + '" maxlength="2"></div></div>' +
     '<div style="display:flex;gap:8px;margin-top:12px;">' +
       '<button class="btn btn-primary" onclick="window.salvarCliente(' + user.id + ')">Salvar</button>' +
       '<button class="btn btn-danger" onclick="window.excluirCliente(' + user.id + ')">Excluir</button>' +

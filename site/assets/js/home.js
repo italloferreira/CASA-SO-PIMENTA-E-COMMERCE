@@ -27,7 +27,7 @@ function renderProductCard(prod) {
     '<h1 class="cartao-h1">' + escH(prod.name) + '</h1>' +
     '<div class="cartao-valor">' + precoHtml + '</div>' +
     '<div class="conteiner-botões-kit">' +
-      '<button class="add-carrinho-botao"' + (disponivel ? ' onclick=\'addCarrinho(' + JSON.stringify({ id: prod.id, nome: prod.name, valor: venda, img: imgSrc, tipo: "produto" }) + ')\'' : ' disabled') + '><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
+      '<button class="add-carrinho-botao"' + (disponivel ? ' data-product-id="' + prod.id + '" data-product-name="' + escH(prod.name) + '" data-product-price="' + venda + '" data-product-img="' + imgSrc + '" data-product-type="produto"' : ' disabled') + '><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
       '<button class="ver-mais-botao"' + (disponivel ? ' onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + prod.id + '\'"' : ' disabled') + '>Ver mais</button>' +
     '</div>' +
     '</div>';
@@ -58,6 +58,19 @@ function observarSecao(el, chave, url, renderFn) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.add-carrinho-botao');
+    if (!btn || btn.disabled) return;
+    var data = btn.dataset;
+    addCarrinho({
+      id: data.productId,
+      nome: data.productName,
+      valor: data.productPrice,
+      img: data.productImg,
+      tipo: data.productType
+    });
+  });
 
   /* ===== CARROSSEL ===== */
 
@@ -195,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '<div class="cartao-valor"><p>R$</p><h3>' + valorFormatado + '</h3></div>' +
         produtosHtml +
         '<div class = "conteiner-botões-kit">' +
-          '<button class="add-carrinho-botao" onclick=\'addCarrinho(' + JSON.stringify({ id: kit.id, nome: kit.name, valor: kit.price, img: imgSrc, tipo: "kit" }) + ')\'><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
+          '<button class="add-carrinho-botao" data-product-id="' + kit.id + '" data-product-name="' + escH(kit.name) + '" data-product-price="' + kit.price + '" data-product-img="' + imgSrc + '" data-product-type="kit"><img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho"></button>' +
           '<button class="ver-mais-botao" onclick="window.location.href=\'/site/pages/kits/detalhe/index.html?id=' + kit.id + '\'">Ver mais</button>' +
         '</div>' +
         '</div>';

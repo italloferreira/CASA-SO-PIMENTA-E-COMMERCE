@@ -2,15 +2,12 @@ import { pool } from '../database/connection.js';
 
 export async function getDashboard(req, res) {
   try {
-    const hoje = new Date();
-    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-
     const results = await Promise.all([
       pool.query(`SELECT COUNT(*) AS total FROM products`),
       pool.query(`SELECT COUNT(*) AS total FROM products WHERE stock = false`),
       pool.query(`SELECT COUNT(*) AS total FROM orders WHERE status = 'pending'`),
-      pool.query(`SELECT COUNT(*) AS total FROM orders WHERE created_at::date = CURRENT_DATE`),
-      pool.query(`SELECT COALESCE(SUM(total), 0) AS total FROM orders WHERE created_at >= $1 AND status NOT IN ('cancelled')`, [inicioMes]),
+      pool.query(`SELECT COUNT(*) AS total FROM orders WHERE created_at AT TIME ZONE 'America/Sao_Paulo'::date = CURRENT_DATE`),
+      pool.query(`SELECT COALESCE(SUM(total), 0) AS total FROM orders WHERE created_at >= date_trunc('month', NOW()) AND status NOT IN ('cancelled')`),
       pool.query(`SELECT COUNT(*) AS total FROM kits WHERE is_active = 1`),
       pool.query(`SELECT COUNT(*) AS total FROM banners WHERE is_active = 1`),
       pool.query(`SELECT COUNT(*) AS total FROM users WHERE role = 'customer'`),
