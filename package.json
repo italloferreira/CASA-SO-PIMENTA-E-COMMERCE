@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@edusites/icons": "^1.5.2",
     "@sendgrid/mail": "^8.1.6"
   }
 }
