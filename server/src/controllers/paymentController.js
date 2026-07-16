@@ -206,8 +206,7 @@ export async function processPix(req, res) {
       ? orderTotal * (1 - pixDiscountPercent / 100)
       : orderTotal;
 
-    const pixNotificationUrl = process.env.MP_NOTIFICATION_URL || undefined;
-    const orderBody = {
+    const result = await createOrder({
       type: 'online',
       processing_mode: 'automatic',
       total_amount: String(amount.toFixed(2)),
@@ -222,11 +221,7 @@ export async function processPix(req, res) {
           }
         }]
       }
-    };
-    if (pixNotificationUrl) {
-      orderBody.notification_url = pixNotificationUrl;
-    }
-    const result = await createOrder(orderBody);
+    });
 
     const payment = result.transactions?.payments?.[0];
     const pmData = payment?.payment_method || {};
