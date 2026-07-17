@@ -6,7 +6,7 @@ export async function getDashboard(req, res) {
       pool.query(`SELECT COUNT(*) AS total FROM products`),
       pool.query(`SELECT COUNT(*) AS total FROM products WHERE stock = false`),
       pool.query(`SELECT COUNT(*) AS total FROM orders WHERE status = 'pending'`),
-      pool.query(`SELECT COUNT(*) AS total FROM orders WHERE created_at AT TIME ZONE 'America/Sao_Paulo'::date = CURRENT_DATE`),
+      pool.query(`SELECT COUNT(*) AS total FROM orders WHERE (created_at AT TIME ZONE 'America/Sao_Paulo')::date = CURRENT_DATE`),
       pool.query(`SELECT COALESCE(SUM(total), 0) AS total FROM orders WHERE created_at >= date_trunc('month', NOW()) AND status NOT IN ('cancelled')`),
       pool.query(`SELECT COUNT(*) AS total FROM kits WHERE is_active = 1`),
       pool.query(`SELECT COUNT(*) AS total FROM banners WHERE is_active = 1`),
