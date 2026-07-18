@@ -1164,11 +1164,11 @@ footer {
 
 .redes-section { width: 30%; height: 10vh; display: flex; justify-content: space-evenly; align-items: center; }
 .redes-section img { width: 1.5vw; }
-.navegacao-section, .navegacao-section a { width: 80%; height: 10vh; display: flex; justify-content: space-evenly; align-items: center; list-style-type: none; color: var(--cor-preto); text-decoration: none; }
+.navegacao-section, .navegacao-section a { width: 80%; height: 10vh; display: flex; justify-content: space-evenly; align-items: center; list-style-type: none; color: var(--cor-branco); text-decoration: none; }
 .pagamentos-section { width: 50%; height: 10vh; display: flex; justify-content: space-evenly; align-items: start; }
 .pagamentos-section div { width: 7%; height: 50%; border: 2px solid var(--cor-branco); display: flex; justify-content: center; align-items: center; }
 .pagamentos-section div img { width: 100%; height: 100%; }
-footer p { font-size: 15px; }
+footer p { font-size: 15px; color: var(--cor-branco);}
 
 /* ===== CARRINHO DRAWER ===== */
 .carrinho-overlay {
@@ -1212,82 +1212,139 @@ footer p { font-size: 15px; }
 .btn-finalizar-pedido { width: 100%; height: 45px; border: none; background: transparent; box-shadow: 0 2px 12px rgba(0,0,0,0.08); color: var(--cor-preto); border-radius: 8px; cursor: pointer; font-size: 16px; }
 .btn-finalizar-pedido:hover { background-color: rgb(235,235,235); transition: 0.5s; }
 
-/* ===== RESPONSIVO ===== */
-@media (max-width: 900px) {
-  .checkout-layout {
-    flex-direction: column;
-  }
 
-  .checkout-resumo-col {
-    position: static;
-    width: 100%;
-    order: -1;
-  }
+/* ===== CUPOM DE DESCONTO ===== */
+.resumo-cupom {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--cor-cinza-hover);
+  border-radius: 6px;
+  border: 1px solid var(--cor-cinza-borda);
+}
 
-  .checkout-resumo {
-    margin-bottom: 20px;
-  }
+.cupom-input-row {
+  display: flex;
+  gap: 8px;
+}
 
-  .checkout-steps {
-    gap: 4px;
-  }
+.cupom-input-row input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--cor-cinza-borda);
+  border-radius: 4px;
+  font-size: 13px;
+}
 
-  .step-line {
-    width: 40px;
-  }
+.cupom-input-row input:focus {
+  outline: none;
+  border-color: var(--cor-verde-primario);
+}
 
-  header {
-    width: 100%;
-    left: 0;
-    padding: 0 16px;
-    justify-content: space-between;
-  }
+.btn-aplicar-cupom {
+  padding: 8px 14px;
+  background: var(--cor-verde-primario);
+  color: var(--cor-branco);
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
 
-  .categoria-section {
-    display: none;
-  }
+.btn-aplicar-cupom:hover {
+  background: var(--cor-verde-hover);
+}
 
-  .redes-section img {
-    width: 24px;
-    height: 24px;
-  }
+.btn-aplicar-cupom:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
-  .navegacao-section,
-  .navegacao-section a {
-    width: 100%;
-    flex-direction: column;
-    height: auto;
-    gap: 10px;
-    text-align: center;
-  }
+.cupom-status {
+  margin-top: 6px;
+  font-size: 12px;
+  min-height: 18px;
+}
 
-  footer {
-    height: auto;
-    padding: 32px 16px;
-    gap: 20px;
-  }
+.cupom-status.success {
+  color: var(--cor-verde-primario);
+}
 
-  .pagamentos-section {
-    width: 80%;
-  }
+.cupom-status.error {
+  color: var(--cor-vermelho-primario);
+}
 
-  .pagamentos-section div {
-    width: 14%;
-    height: auto;
-  }
+.cupom-status.loading {
+  color: var(--cor-cinza-texto-secundario);
+}
 
-  .cep-input-row {
-    flex-direction: column;
-  }
-
-  .campo-row {
-    flex-direction: column;
-    gap: 0;
-  }
+/* ===== WHATSAPP CARD ===== */
+.confirmacao-whatsapp {
+  margin-bottom: 24px;
+}
+.whatsapp-card {
+  background: var(--cor-verde-fundo-claro);
+  border: 2px solid var(--cor-whatsapp);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
+}
+.whatsapp-card h3 {
+  font-size: 16px;
+  color: var(--cor-preto);
+  margin: 0 0 8px 0;
+}
+.btn-whatsapp {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 14px 32px;
+  background: var(--cor-whatsapp);
+  color: var(--cor-branco);
+  font-weight: 700;
+  font-size: 15px;
+  font-family: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.btn-whatsapp:hover {
+  background: var(--cor-whatsapp-hover);
 }
 
 /* ===== MOBILE MENU (≤ 1000px) ===== */
 @media (max-width: 1000px) {
+
+    /* Header */
+    header {
+        width: 100%;
+        height: 10vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .header{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .logo-section {
+        order:1;
+        width: auto;
+    }
+
+    .categoria-section {
+        display: none;
+    }
+
+    .carrinho-section{
+        order:2;
+    }
+
+    .usuario-section {
+        display: none;
+    }
 
     /* Hamburger button */
     .menu-hamburguer {
@@ -1453,106 +1510,81 @@ footer p { font-size: 15px; }
         color: var(--cor-vermelho-primario);
     }
 
-    /* Checkout: resumo do pedido só na etapa de pagamento */
-    .checkout-resumo-col {
-        display: none;
+    
+
+    .delivery-toggle{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      width: 100%;
     }
-}
 
-/* ===== CUPOM DE DESCONTO ===== */
-.resumo-cupom {
-  margin: 16px 0;
-  padding: 12px;
-  background: var(--cor-cinza-hover);
-  border-radius: 6px;
-  border: 1px solid var(--cor-cinza-borda);
-}
+    .delivery-option{
+      width: 100%;
+    }
 
-.cupom-input-row {
-  display: flex;
-  gap: 8px;
-}
+    .checkout-resumo-col{
+      order: 0;
+    }
 
-.cupom-input-row input {
-  flex: 1;
-  padding: 8px 10px;
-  border: 1px solid var(--cor-cinza-borda);
-  border-radius: 4px;
-  font-size: 13px;
-}
+    .checkout-layout{
+      order: 1;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
 
-.cupom-input-row input:focus {
-  outline: none;
-  border-color: var(--cor-verde-primario);
-}
 
-.btn-aplicar-cupom {
-  padding: 8px 14px;
-  background: var(--cor-verde-primario);
-  color: var(--cor-branco);
-  border: none;
-  border-radius: 4px;
-  font-size: 13px;
-  cursor: pointer;
-  white-space: nowrap;
-}
+    .btn-voltar-etapa{
+      order: 2;
+    }
 
-.btn-aplicar-cupom:hover {
-  background: var(--cor-verde-hover);
-}
+    /* Footer */
+    footer {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
 
-.btn-aplicar-cupom:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+    .redes-section {
+        width: 80%;
+    }
 
-.cupom-status {
-  margin-top: 6px;
-  font-size: 12px;
-  min-height: 18px;
-}
+    .navegacao-section,
+    .navegacao-section a {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
 
-.cupom-status.success {
-  color: var(--cor-verde-primario);
-}
+    .pagamentos-section {
+        width: 90%;
+    }
 
-.cupom-status.error {
-  color: var(--cor-vermelho-primario);
-}
+    .pagamentos-section div {
+        width: 15%;
+        height: 50%;
+        padding: 1%;
+    }
 
-.cupom-status.loading {
-  color: var(--cor-cinza-texto-secundario);
-}
+    .pagamentos-section div img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
 
-/* ===== WHATSAPP CARD ===== */
-.confirmacao-whatsapp {
-  margin-bottom: 24px;
-}
-.whatsapp-card {
-  background: var(--cor-verde-fundo-claro);
-  border: 2px solid var(--cor-whatsapp);
-  border-radius: 12px;
-  padding: 24px;
-  text-align: left;
-}
-.whatsapp-card h3 {
-  font-size: 16px;
-  color: var(--cor-preto);
-  margin: 0 0 8px 0;
-}
-.btn-whatsapp {
-  display: inline-block;
-  margin-top: 16px;
-  padding: 14px 32px;
-  background: var(--cor-whatsapp);
-  color: var(--cor-branco);
-  font-weight: 700;
-  font-size: 15px;
-  font-family: inherit;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-.btn-whatsapp:hover {
-  background: var(--cor-whatsapp-hover);
+    footer p{
+      text-align: center;
+    }
 }

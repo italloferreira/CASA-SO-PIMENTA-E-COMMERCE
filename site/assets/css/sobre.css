@@ -713,12 +713,20 @@ footer p{
     /* Header */
     header {
         width: 100%;
-        left: 0;
-        padding: 0 16px;
+        height: 10vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .header{
+        display: flex;
         justify-content: space-between;
+        align-items: center;
     }
 
     .logo-section {
+        order:1;
         width: auto;
     }
 
@@ -726,8 +734,8 @@ footer p{
         display: none;
     }
 
-    .carrinho-section {
-        display: none;
+    .carrinho-section{
+        order:2;
     }
 
     .usuario-section {
@@ -950,41 +958,46 @@ footer p{
 
     /* Footer */
     footer {
-        height: auto;
-        padding: 32px 16px;
-        gap: 20px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
     }
 
     .redes-section {
-        width: 60%;
-    }
-
-    .redes-section img {
-        width: 24px;
-        height: 24px;
+        width: 80%;
     }
 
     .navegacao-section,
     .navegacao-section a {
         width: 100%;
+        height: 100%;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         flex-direction: column;
-        height: auto;
-        gap: 10px;
-        text-align: center;
     }
 
     .pagamentos-section {
-        width: 80%;
+        width: 90%;
     }
 
     .pagamentos-section div {
-        width: 14%;
-        height: auto;
+        width: 15%;
+        height: 50%;
+        padding: 1%;
     }
 
     .pagamentos-section div img {
         width: 100%;
         height: 100%;
         object-fit: contain;
+    }
+
+    footer p{
+      text-align: center;
     }
 }

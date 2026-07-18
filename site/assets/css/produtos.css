@@ -709,12 +709,24 @@ footer p{
     /* Header */
     header {
         width: 100%;
-        left: 0;
-        padding: 0 16px;
+        height: 10vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .header{
+        display: flex;
         justify-content: space-between;
+        align-items: center;
     }
 
     .logo-section {
+        order:1;
         width: auto;
     }
 
@@ -722,8 +734,8 @@ footer p{
         display: none;
     }
 
-    .carrinho-section {
-        display: none;
+    .carrinho-section{
+        order:2;
     }
 
     .usuario-section {
@@ -896,7 +908,8 @@ footer p{
 
     /* Main produtos */
     main {
-        padding-top: 12vh;
+        height: 100%;
+        width: 100%;
     }
 
     .topo-section {
@@ -917,24 +930,36 @@ footer p{
     }
 
     .pesquisa {
+        position: relative;
+        left: 5%;
         width: 70vw;
-        font-size: 15px;
+        height: 5vh;
+        font-size: 12px;
+    }
+
+    .topo-section img{
+        width: 5%;
+        position: relative;
+        right: 6%;
     }
 
     .produtos-section {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-        padding-top: 4%;
-        width: 95%;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
     }
 
     .cartao {
-        height: 40vh;
-        min-height: 220px;
+        gap: 10px;
+        width: 80%;
+        height: 50vh;
     }
 
     .cartao img {
-        height: 55%;
+        height: 50%;
     }
 
     .cartao h3 {
@@ -949,36 +974,37 @@ footer p{
 
     /* Footer */
     footer {
-        height: auto;
-        padding: 32px 16px;
-        gap: 20px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
     }
 
     .redes-section {
-        width: 60%;
-    }
-
-    .redes-section img {
-        width: 24px;
-        height: 24px;
+        width: 80%;
     }
 
     .navegacao-section,
     .navegacao-section a {
         width: 100%;
+        height: 100%;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         flex-direction: column;
-        height: auto;
-        gap: 10px;
-        text-align: center;
     }
 
     .pagamentos-section {
-        width: 80%;
+        width: 90%;
     }
 
     .pagamentos-section div {
-        width: 14%;
-        height: auto;
+        width: 15%;
+        height: 50%;
+        padding: 1%;
     }
 
     .pagamentos-section div img {
@@ -986,10 +1012,8 @@ footer p{
         height: 100%;
         object-fit: contain;
     }
-}
 
-@media (max-width: 600px) {
-    .produtos-section {
-        grid-template-columns: 1fr;
+    footer p{
+      text-align: center;
     }
 }
