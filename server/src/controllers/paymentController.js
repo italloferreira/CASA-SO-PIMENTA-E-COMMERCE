@@ -219,12 +219,12 @@ export async function processPix(req, res) {
     });
 
     const payment = result.transactions?.payments?.[0];
-    const pmData = payment?.payment_method || {};
-    const qrCode = pmData.qr_code || null;
-    const qrCodeBase64 = pmData.qr_code_base64 || null;
-    const ticketUrl = pmData.ticket_url || null;
-    const mpPaymentId = payment?.id ? String(payment.id) : null;
-    const mpOrderId = result.id || null;
+    const pmData = payment?.payment_method || payment?.payment_method_data || payment?.payment_methods?.[0] || payment?.payment_data || {};
+    const qrCode = pmData.qr_code || payment?.qr_code || null;
+    const qrCodeBase64 = pmData.qr_code_base64 || payment?.qr_code_base64 || pmData.data?.qr_code_base64 || null;
+    const ticketUrl = pmData.ticket_url || payment?.ticket_url || null;
+    const mpPaymentId = payment?.id ? String(payment.id) : result.payment_id || String(result.id) || null;
+    const mpOrderId = result.id || payment?.order_id || null;
 
     if (pixDiscountPercent > 0 && amount !== orderTotal) {
       await pool.query(`

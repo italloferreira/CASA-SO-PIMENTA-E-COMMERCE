@@ -911,6 +911,8 @@ async function enviarPagamentoPix() {
 
     if (data.qrCodeBase64) {
       document.getElementById('pix-qrcode-img').src = 'data:image/png;base64,' + data.qrCodeBase64;
+    } else if (data.qrCodeUrl || data.ticketUrl) {
+      document.getElementById('pix-qrcode-img').src = data.qrCodeUrl || data.ticketUrl;
     }
     if (data.qrCode) {
       document.getElementById('pixCopiaCola').value = data.qrCode;

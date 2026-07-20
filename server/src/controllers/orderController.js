@@ -222,7 +222,7 @@ export async function createOrder(req, res) {
       selected_box || null,
       shipping_service || null,
       shipping_amount || null,
-      box_amount || null,
+      boxAmountValue || null,
       notes || null,
       payment_method || 'pix',
       couponData ? couponData.id : null,

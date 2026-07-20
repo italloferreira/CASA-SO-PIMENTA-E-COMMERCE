@@ -333,7 +333,7 @@ input[type="search"]::-webkit-search-cancel-button {
 footer{
     background-color: var(--cor-footer-fundo);
     width: 100%;
-    height: 40vh;
+    height: 100%;
 
     display: flex;
     flex-direction: column;
@@ -378,7 +378,7 @@ footer{
     width: 7%;
     height: 50%;
 
-    border: 2px solid var(--cor-footer-texto);
+    border: 0.5px solid var(--cor-footer-texto);
 
     display: flex;
     justify-content: center;
@@ -984,6 +984,7 @@ footer p{
 
     .redes-section {
         width: 80%;
+        padding-bottom: 20px;
     }
 
     .navegacao-section,
@@ -995,6 +996,8 @@ footer p{
         justify-content: center;
         align-items: center;
         flex-direction: column;
+        font-size: 15px;
+        padding-bottom: 20px;
     }
 
     .pagamentos-section {
@@ -1003,8 +1006,9 @@ footer p{
 
     .pagamentos-section div {
         width: 15%;
-        height: 50%;
-        padding: 1%;
+        height: 40%;
+        padding: 0.5%;
+        border: 0.5px solid var(--cor-footer-texto);
     }
 
     .pagamentos-section div img {
