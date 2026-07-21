@@ -343,7 +343,7 @@ main{
 }
 
 .destaque{
-    background: linear-gradient(135deg, var(--cor-preto) 0%, var(--cor-preto-hover) 100%);
+    background: var(--cor-preto);
 }
 
 .destaque .ano{
