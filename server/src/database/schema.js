@@ -307,6 +307,23 @@ export async function createTables() {
   }
 
   try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS integrations (
+        provider TEXT PRIMARY KEY,
+        access_token TEXT NOT NULL,
+        refresh_token TEXT,
+        expires_at TIMESTAMP,
+        token_type TEXT DEFAULT 'Bearer',
+        scopes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  } catch (err) {
+    console.error('Aviso: tabela integrations já existe ou não pôde ser criada:', err.message);
+  }
+
+  try {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)`);

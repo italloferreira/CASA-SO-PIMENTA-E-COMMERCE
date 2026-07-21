@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import couponRoutes from './routes/couponRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
+import melhorEnvioRoutes from './routes/melhorEnvioRoutes.js';
 import { getMpPublicKey } from './controllers/paymentController.js';
 
 import { createTables } from './database/schema.js';
@@ -78,6 +79,8 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/coupons', couponRoutes);
 
 app.use('/api/settings', settingsRoutes);
+
+app.use('/api/melhor-envio', melhorEnvioRoutes);
 
 app.get('/api/config/mp-key', getMpPublicKey);
 

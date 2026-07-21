@@ -1,5 +1,6 @@
 import { pool } from '../database/connection.js';
 import { selectBox } from '../config/boxes.js';
+import { getAccessToken } from './melhorEnvioController.js';
 import crypto from 'crypto';
 
 const MELHOR_ENVIO_API = process.env.MELHOR_ENVIO_ENV === 'production'
@@ -52,9 +53,9 @@ export async function calculateShipping(req, res) {
       return res.status(500).json({ message: 'CEP de origem não configurado.' });
     }
 
-    const token = process.env.MELHOR_ENVIO_TOKEN;
+    const token = await getAccessToken();
     if (!token) {
-      return res.status(500).json({ message: 'Token do Melhor Envio não configurado.' });
+      return res.status(500).json({ message: 'Melhor Envio não conectado. Vincule a integração em Configurações.' });
     }
 
     let totalWeight = 0;
