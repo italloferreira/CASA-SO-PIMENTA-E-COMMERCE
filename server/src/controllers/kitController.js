@@ -221,9 +221,10 @@ export async function getKitsStatus(req, res) {
   }
 
   const placeholders = idList.map(function (_, i) { return '$' + (i + 1); }).join(',');
-  const result = await pool.query(`
-    SELECT id, stock, is_active FROM kits WHERE id IN (${placeholders})
-  `, idList);
+  const result = await pool.query(
+    `SELECT id, stock, is_active FROM kits WHERE id IN (${placeholders})`,
+    idList
+  );
 
   var statusMap = {};
   result.rows.forEach(function (row) {

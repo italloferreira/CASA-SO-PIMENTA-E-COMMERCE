@@ -1,6 +1,4 @@
 import { Router } from 'express';
-import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
-
 import {
   listKits,
   getKitById,
@@ -11,16 +9,18 @@ import {
   deleteKitItems,
   deleteKit
 } from '../controllers/kitController.js';
+import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
+import { adminLimiter } from '../middlewares/rateLimiter.js';
 
 const router = Router();
 
 router.get('/status', getKitsStatus);
 router.get('/', listKits);
 router.get('/:id', getKitById);
-router.post('/', authMiddleware, adminMiddleware, createKit);
-router.put('/:id', authMiddleware, adminMiddleware, updateKit);
-router.post('/:id/items', authMiddleware, adminMiddleware, addKitItem);
-router.delete('/:id/items', authMiddleware, adminMiddleware, deleteKitItems);
-router.delete('/:id', authMiddleware, adminMiddleware, deleteKit);
+router.post('/', authMiddleware, adminMiddleware, adminLimiter, createKit);
+router.put('/:id', authMiddleware, adminMiddleware, adminLimiter, updateKit);
+router.post('/:id/items', authMiddleware, adminMiddleware, adminLimiter, addKitItem);
+router.delete('/:id/items', authMiddleware, adminMiddleware, adminLimiter, deleteKitItems);
+router.delete('/:id', authMiddleware, adminMiddleware, adminLimiter, deleteKit);
 
 export default router;

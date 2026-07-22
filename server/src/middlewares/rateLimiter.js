@@ -39,3 +39,19 @@ export const paymentLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
+
+export const adminLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 30,
+  message: { message: 'Muitas requisições administrativas. Aguarde um momento.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+export const pickupLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 10,
+  message: { message: 'Muitas tentativas de confirmação de retirada. Aguarde 5 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});

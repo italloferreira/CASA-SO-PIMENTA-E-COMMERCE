@@ -3,10 +3,116 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 import { adminNewOrderEmail, customerOrderConfirmationEmail } from '../utils/emailTemplates.js';
 import { pool } from '../database/connection.js';
 import { canTransition, isValidStatusForType } from '../config/orderStatusMachine.js';
+import { selectBox } from '../config/boxes.js';
+import { getAccessToken } from './melhorEnvioController.js';
 import crypto from 'crypto';
 
 function generatePickupCode() {
   return String(crypto.randomInt(100000, 999999));
+}
+
+const DEFAULT_WEIGHT_LIGHT = 0.1;
+const DEFAULT_WEIGHT_HEAVY = 0.3;
+const LIGHT_CATEGORIES = ['farinhas', 'castanhas', 'temperos'];
+
+function getDefaultWeight(categorySlug) {
+  if (categorySlug && LIGHT_CATEGORIES.includes(categorySlug.toLowerCase())) {
+    return DEFAULT_WEIGHT_LIGHT;
+  }
+  return DEFAULT_WEIGHT_HEAVY;
+}
+
+const MELHOR_ENVIO_API = process.env.MELHOR_ENVIO_ENV === 'production'
+  ? 'https://api.melhorenvio.com'
+  : 'https://sandbox.melhorenvio.com.br';
+const ORIGIN_CEP = (process.env.ORIGIN_CEP || '').replace(/\D/g, '');
+
+async function recalculateShipping(items, destCep, client) {
+  const dest = destCep.replace(/\D/g, '');
+  if (dest.length !== 8 || !ORIGIN_CEP || ORIGIN_CEP.length !== 8) {
+    return null;
+  }
+
+  const token = await getAccessToken();
+  if (!token) return null;
+
+  let totalWeight = 0;
+  for (const item of items) {
+    let unitWeight = 0;
+    if (item.product_id) {
+      const result = await client.query(`
+        SELECT p.weight, c.slug as category_slug
+        FROM products p
+        LEFT JOIN categories c ON c.id = p.category_id
+        WHERE p.id = $1
+      `, [item.product_id]);
+      if (result.rows[0]) {
+        const stored = Number(result.rows[0].weight) || 0;
+        unitWeight = stored > 0 ? stored : getDefaultWeight(result.rows[0].category_slug);
+      }
+    } else if (item.kit_id) {
+      const kitItems = await client.query(`
+        SELECT p.weight, c.slug as category_slug, ki.quantity
+        FROM kit_items ki
+        JOIN products p ON p.id = ki.product_id
+        LEFT JOIN categories c ON c.id = p.category_id
+        WHERE ki.kit_id = $1
+      `, [item.kit_id]);
+      for (const ki of kitItems.rows) {
+        const stored = Number(ki.weight) || 0;
+        unitWeight += (stored > 0 ? stored : getDefaultWeight(ki.category_slug)) * (Number(ki.quantity) || 1);
+      }
+    }
+    totalWeight += unitWeight * (item.quantity || 1);
+  }
+
+  const box = selectBox(Math.max(totalWeight, 0.1));
+
+  try {
+    const meResponse = await fetch(`${MELHOR_ENVIO_API}/api/v2/me/shipment/calculate`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'User-Agent': 'CasaSoPimenta (casasopimenta@gmail.com)'
+      },
+      body: JSON.stringify({
+        from: { postal_code: ORIGIN_CEP },
+        to: { postal_code: dest },
+        package: {
+          width: box.width,
+          height: box.height,
+          length: box.length,
+          weight: Math.max(totalWeight, 0.1)
+        },
+        options: { receipt: false, own_hand: false },
+        services: '1,2'
+      })
+    });
+
+    if (!meResponse.ok) return null;
+
+    const meData = await meResponse.json();
+    let cheapest = null;
+
+    for (const service of meData) {
+      if (service.error) continue;
+      const price = Number(service.price);
+      if (!cheapest || price < cheapest.price) {
+        cheapest = {
+          service: service.id === 2 ? 'SEDEX' : 'PAC',
+          price,
+          delivery_time: Number(service.delivery_time) || 0
+        };
+      }
+    }
+
+    return cheapest ? cheapest.price : null;
+  } catch (err) {
+    console.error('Erro ao recalcular frete:', err.message);
+    return null;
+  }
 }
 
 const VALID_DELIVERY_TYPES = ['delivery', 'pickup', 'negotiate'];
@@ -128,9 +234,15 @@ export async function createOrder(req, res) {
       }
     }
 
-    const deliveryFeeValue = effectiveDeliveryType === 'pickup' || effectiveDeliveryType === 'negotiate'
-      ? 0
-      : Math.max(0, Number(_delivery_fee_raw || 0));
+    let serverDeliveryFee = 0;
+    if (effectiveDeliveryType === 'delivery') {
+      const calculatedFee = await recalculateShipping(items, cep, client);
+      if (calculatedFee === null) {
+        throw Object.assign(new Error('Não foi possível calcular o frete. Tente novamente.'), { status: 400 });
+      }
+      serverDeliveryFee = calculatedFee;
+    }
+    const deliveryFeeValue = serverDeliveryFee;
     const boxAmountValue = 0;
     let total = subtotal + deliveryFeeValue;
     let couponData = null;

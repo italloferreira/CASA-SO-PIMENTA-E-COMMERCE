@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
@@ -41,6 +42,8 @@ function isOriginAllowed(origin) {
   if (origin.endsWith('.vercel.app')) return true;
   return false;
 }
+
+app.use(helmet());
 
 app.use(cors({
   origin: function (origin, callback) {

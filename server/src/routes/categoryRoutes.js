@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
+import { adminLimiter } from '../middlewares/rateLimiter.js';
 
 import {
   listCategories,
@@ -11,8 +12,8 @@ import {
 const router = Router();
 
 router.get('/', listCategories);
-router.post('/', authMiddleware, adminMiddleware, createCategory);
-router.put('/:id', authMiddleware, adminMiddleware, updateCategory);
-router.delete('/:id', authMiddleware, adminMiddleware, deleteCategory);
+router.post('/', authMiddleware, adminMiddleware, adminLimiter, createCategory);
+router.put('/:id', authMiddleware, adminMiddleware, adminLimiter, updateCategory);
+router.delete('/:id', authMiddleware, adminMiddleware, adminLimiter, deleteCategory);
 
 export default router;

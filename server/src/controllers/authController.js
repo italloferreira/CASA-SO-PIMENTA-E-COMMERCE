@@ -14,9 +14,9 @@ export async function register(req, res) {
     });
   }
 
-  if (password.length < 6) {
+  if (password.length < 8) {
     return res.status(400).json({
-      message: 'A senha deve ter no mínimo 6 caracteres.'
+      message: 'A senha deve ter no mínimo 8 caracteres.'
     });
   }
 
@@ -50,16 +50,13 @@ export async function register(req, res) {
 }
 
 const MAX_LOGIN_ATTEMPTS = 5;
-const LOCKOUT_MINUTES = 15;
 
 export async function login(req, res) {
   const { email, password } = req.body;
 
-  console.log('[LOGIN] Tentativa para email:', email);
-
   const attemptsResult = await pool.query(`
     SELECT COUNT(*) as attempts FROM login_attempts
-    WHERE email = $1 AND attempted_at > NOW() - INTERVAL '${LOCKOUT_MINUTES} minutes'
+    WHERE email = $1 AND attempted_at > NOW() - INTERVAL '15 minutes'
   `, [email]);
   const attempts = Number(attemptsResult.rows[0]?.attempts) || 0;
 
@@ -90,8 +87,6 @@ export async function login(req, res) {
       message: 'Email ou senha inválidos.'
     });
   }
-
-  console.log('[LOGIN] Login bem-sucedido para:', email);
 
   await pool.query(`DELETE FROM login_attempts WHERE email = $1`, [email]);
 
@@ -124,8 +119,7 @@ export async function login(req, res) {
       address: user.address,
       city: user.city,
       state: user.state,
-      role: user.role,
-      token
+      role: user.role
     }
   });
 }
@@ -250,13 +244,11 @@ export async function forgotPassword(req, res) {
         subject: 'Recuperação de senha - Casa Só Pimenta',
         html: forgotPasswordEmail(user.name, resetLink)
       });
-      console.log('Email enviado com sucesso para', email);
+      console.log('Email de recuperação enviado com sucesso');
     } catch (err) {
-      const sendgridErr = err.response?.body?.errors?.[0]?.message || err.message;
-      console.error('Erro SendGrid:', sendgridErr);
+      console.error('Erro SendGrid:', err.message);
       return res.status(500).json({
-        message: 'Erro ao enviar email.',
-        detail: sendgridErr
+        message: 'Erro ao enviar email.'
       });
     }
   } else {
@@ -275,8 +267,8 @@ export async function resetPassword(req, res) {
     return res.status(400).json({ message: 'Token e nova senha são obrigatórios.' });
   }
 
-  if (password.length < 6) {
-    return res.status(400).json({ message: 'A senha deve ter no mínimo 6 caracteres.' });
+  if (password.length < 8) {
+    return res.status(400).json({ message: 'A senha deve ter no mínimo 8 caracteres.' });
   }
 
   let result;
