@@ -354,7 +354,6 @@ function calcularFreteDaAPI(cep) {
         card.setAttribute('data-price', svc.price);
         card.setAttribute('data-delivery-time', svc.delivery_time);
         card.setAttribute('data-box', data.selected_box ? data.selected_box.name : '');
-        card.setAttribute('data-box-price', data.selected_box ? data.selected_box.price : 0);
         card.onclick = function () { selecionarFrete(this); };
         card.innerHTML =
           '<div class="frete-radio"></div>' +
@@ -444,8 +443,7 @@ window.selecionarFrete = function (el) {
     service: el.getAttribute('data-service'),
     name: el.getAttribute('data-name'),
     delivery_time: Number(el.getAttribute('data-delivery-time')),
-    box: el.getAttribute('data-box'),
-    boxPrice: Number(el.getAttribute('data-box-price'))
+    box: el.getAttribute('data-box')
   };
   atualizarResumo();
 };
@@ -592,7 +590,6 @@ window.atualizarResumo = function () {
   var carrinho = getCarrinho();
   var subtotal = calcularSubtotal();
   var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
-  var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
 
   var container = document.getElementById('resumoItens');
   container.innerHTML = '';
@@ -612,13 +609,7 @@ window.atualizarResumo = function () {
   document.getElementById('resumoSubtotal').textContent = formatarPreco(subtotal);
 
   var resumoBoxLinha = document.getElementById('resumoBoxLinha');
-  var resumoBox = document.getElementById('resumoBox');
-  if (deliveryType === 'delivery' && freteSelecionado && freteSelecionado.tipo !== 'retirada' && boxPrice > 0) {
-    resumoBoxLinha.style.display = '';
-    resumoBox.textContent = formatarPreco(boxPrice);
-  } else {
-    resumoBoxLinha.style.display = 'none';
-  }
+  resumoBoxLinha.style.display = 'none';
 
   var resumoFrete = document.getElementById('resumoFrete');
   if (freteSelecionado) {
@@ -635,7 +626,7 @@ window.atualizarResumo = function () {
   var descontoEl = document.getElementById('resumoDesconto');
   var cupomLinha = document.getElementById('resumoCupomLinha');
   var cupomEl = document.getElementById('resumoCupom');
-  var total = subtotal + boxPrice + freteValor;
+  var total = subtotal + freteValor;
 
   if (metodoPagamento === 'pix') {
     var taxaDesc = getPixDiscountRate();
@@ -683,8 +674,7 @@ function getPixDiscountRate() {
 function getTotalFinal() {
   var subtotal = calcularSubtotal();
   var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
-  var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
-  var total = subtotal + boxPrice + freteValor;
+  var total = subtotal + freteValor;
   if (metodoPagamento === 'pix') total = total - (total * getPixDiscountRate());
   if (cupomAplicado && cupomAplicado.discount_calculated > 0) {
     total = total - cupomAplicado.discount_calculated;
@@ -745,8 +735,7 @@ function criarPedidoEProcessarPagamento() {
   var subtotal = 0;
   carrinho.forEach(function (item) { subtotal += Number(item.valor) * item.quantidade; });
   var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
-  var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
-  var total = subtotal + boxPrice + freteValor;
+  var total = subtotal + freteValor;
   if (metodoPagamento === 'pix') total = total - (total * getPixDiscountRate());
 
   var items = carrinho.map(function (item) {
@@ -775,7 +764,6 @@ function criarPedidoEProcessarPagamento() {
     delivery_type: deliveryType,
     subtotal: subtotal,
     delivery_fee: freteValor,
-    box_amount: boxPrice,
     selected_box: freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '',
     shipping_service: freteSelecionado && freteSelecionado.service ? freteSelecionado.service : '',
     shipping_amount: deliveryType === 'delivery' ? freteValor : 0,
@@ -783,7 +771,7 @@ function criarPedidoEProcessarPagamento() {
     payment_method: metodoPagamento || 'pix',
     coupon_code: cupomAplicado ? cupomAplicado.code : null,
     notes: deliveryType === 'delivery'
-      ? 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Frete: ' + (freteSelecionado ? freteSelecionado.name + ' (' + freteSelecionado.service + ')' : '\u2014') + ' | BOX: ' + (freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '\u2014') + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
+      ? 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Frete: ' + (freteSelecionado ? freteSelecionado.name + ' (' + freteSelecionado.service + ')' : '\u2014') + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
       : deliveryType === 'negotiate'
         ? 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Combinar frete com vendedor' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
         : 'M\u00e9todo: ' + (metodoPagamento || '').toUpperCase() + ' | Retirada na loja' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : ''),
@@ -1143,8 +1131,7 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
   var subtotal = 0;
   carrinho.forEach(function (item) { subtotal += Number(item.valor) * item.quantidade; });
   var freteValor = freteSelecionado ? freteSelecionado.valor : 0;
-  var boxPrice = (freteSelecionado && freteSelecionado.boxPrice) ? freteSelecionado.boxPrice : 0;
-  var total = subtotal + boxPrice + freteValor;
+  var total = subtotal + freteValor;
 
   var items = carrinho.map(function (item) {
     var isKit = item.tipo === 'kit';
@@ -1172,7 +1159,6 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
     delivery_type: deliveryType,
     subtotal: subtotal,
     delivery_fee: freteValor,
-    box_amount: boxPrice,
     selected_box: freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '',
     shipping_service: freteSelecionado && freteSelecionado.service ? freteSelecionado.service : '',
     shipping_amount: deliveryType === 'delivery' ? freteValor : 0,
@@ -1180,7 +1166,7 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
     payment_method: 'cartao',
     coupon_code: cupomAplicado ? cupomAplicado.code : null,
     notes: deliveryType === 'delivery'
-      ? 'M\u00e9todo: CARTAO | Frete: ' + (freteSelecionado ? freteSelecionado.name + ' (' + freteSelecionado.service + ')' : '\u2014') + ' | BOX: ' + (freteSelecionado && freteSelecionado.box ? freteSelecionado.box : '\u2014') + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
+      ? 'M\u00e9todo: CARTAO | Frete: ' + (freteSelecionado ? freteSelecionado.name + ' (' + freteSelecionado.service + ')' : '\u2014') + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
       : deliveryType === 'negotiate'
         ? 'M\u00e9todo: CARTAO | Combinar frete com vendedor' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : '')
         : 'M\u00e9todo: CARTAO | Retirada na loja' + (cupomAplicado ? ' | Cupom: ' + cupomAplicado.code : ''),

@@ -11,6 +11,17 @@ const ORIGIN_CEP = (process.env.ORIGIN_CEP || '').replace(/\D/g, '');
 const CACHE_DURATION_MS = 15 * 60 * 1000;
 const CACHE_MAX_SIZE = 500;
 
+const DEFAULT_WEIGHT_LIGHT = 0.1;
+const DEFAULT_WEIGHT_HEAVY = 0.3;
+const LIGHT_CATEGORIES = ['farinhas', 'castanhas', 'temperos'];
+
+function getDefaultWeight(categorySlug) {
+  if (categorySlug && LIGHT_CATEGORIES.includes(categorySlug.toLowerCase())) {
+    return DEFAULT_WEIGHT_LIGHT;
+  }
+  return DEFAULT_WEIGHT_HEAVY;
+}
+
 const freightCache = new Map();
 
 function getCacheKey(cep) {
@@ -64,16 +75,28 @@ export async function calculateShipping(req, res) {
       for (const item of cart) {
         let unitWeight = 0;
         if (item.product_id) {
-          const result = await pool.query('SELECT weight FROM products WHERE id = $1', [item.product_id]);
-          if (result.rows[0]) unitWeight = Number(result.rows[0].weight) || 0;
-        } else if (item.kit_id) {
           const result = await pool.query(`
-            SELECT SUM(p.weight * ki.quantity) as total_weight
+            SELECT p.weight, c.slug as category_slug
+            FROM products p
+            LEFT JOIN categories c ON c.id = p.category_id
+            WHERE p.id = $1
+          `, [item.product_id]);
+          if (result.rows[0]) {
+            const stored = Number(result.rows[0].weight) || 0;
+            unitWeight = stored > 0 ? stored : getDefaultWeight(result.rows[0].category_slug);
+          }
+        } else if (item.kit_id) {
+          const kitItems = await pool.query(`
+            SELECT p.weight, c.slug as category_slug, ki.quantity
             FROM kit_items ki
             JOIN products p ON p.id = ki.product_id
+            LEFT JOIN categories c ON c.id = p.category_id
             WHERE ki.kit_id = $1
           `, [item.kit_id]);
-          if (result.rows[0]) unitWeight = Number(result.rows[0].total_weight) || 0;
+          for (const ki of kitItems.rows) {
+            const stored = Number(ki.weight) || 0;
+            unitWeight += (stored > 0 ? stored : getDefaultWeight(ki.category_slug)) * (Number(ki.quantity) || 1);
+          }
         }
         totalWeight += unitWeight * (item.quantity || 1);
       }
@@ -85,9 +108,9 @@ export async function calculateShipping(req, res) {
       const response = {
         success: true,
         services: cached.services,
-        selected_box: { name: box.name || box.id, price: box.price },
+        selected_box: { name: box.name || box.id, price: 0 },
         box_id: box.id,
-        box_price: box.price,
+        box_price: 0,
         box_width: box.width,
         box_height: box.height,
         box_length: box.length,
@@ -167,9 +190,9 @@ export async function calculateShipping(req, res) {
     const result = {
       success: true,
       services: correctionsOptions,
-      selected_box: { name: box.name || box.id, price: box.price },
+      selected_box: { name: box.name || box.id, price: 0 },
       box_id: box.id,
-      box_price: box.price,
+      box_price: 0,
       box_width: box.width,
       box_height: box.height,
       box_length: box.length,

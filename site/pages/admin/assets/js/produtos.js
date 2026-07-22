@@ -128,6 +128,7 @@ function openDrawer(product) {
     document.getElementById('prodStock').checked = !!product.stock;
     document.getElementById('prodDescription').value = product.description || '';
     document.getElementById('prodIngredients').value = product.ingredients || '';
+    document.getElementById('prodWeight').value = product.weight || '';
     document.getElementById('prodActive').checked = product.is_active !== false;
     document.getElementById('prodFeatured').checked = product.is_featured === true;
     if (product.image_url) {
@@ -144,6 +145,7 @@ function openDrawer(product) {
     document.getElementById('productId').value = '';
     document.getElementById('prodImageUrl').value = '';
     document.getElementById('prodImagePreview').style.display = 'none';
+    document.getElementById('prodWeight').value = '';
     document.getElementById('prodActive').checked = true;
     document.getElementById('prodFeatured').checked = false;
     document.getElementById('prodStock').checked = false;
@@ -207,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
       stock: document.getElementById('prodStock').checked,
       description: document.getElementById('prodDescription').value.trim(),
       ingredients: document.getElementById('prodIngredients').value.trim(),
+      weight: document.getElementById('prodWeight').value ? Number(document.getElementById('prodWeight').value) : 0,
       image_url: document.getElementById('prodImageUrl').value || null,
       is_active: document.getElementById('prodActive').checked,
       is_featured: document.getElementById('prodFeatured').checked

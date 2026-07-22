@@ -21,7 +21,6 @@ export async function createOrder(req, res) {
     city, state,
     items,
     delivery_fee: _delivery_fee_raw,
-    box_amount: _box_amount_raw,
     shipping_service,
     shipping_amount,
     total_weight,
@@ -132,10 +131,8 @@ export async function createOrder(req, res) {
     const deliveryFeeValue = effectiveDeliveryType === 'pickup' || effectiveDeliveryType === 'negotiate'
       ? 0
       : Math.max(0, Number(_delivery_fee_raw || 0));
-    const boxAmountValue = effectiveDeliveryType === 'pickup' || effectiveDeliveryType === 'negotiate'
-      ? 0
-      : Math.max(0, Number(_box_amount_raw || 0));
-    let total = subtotal + deliveryFeeValue + boxAmountValue;
+    const boxAmountValue = 0;
+    let total = subtotal + deliveryFeeValue;
     let couponData = null;
     let couponDiscount = 0;
 
