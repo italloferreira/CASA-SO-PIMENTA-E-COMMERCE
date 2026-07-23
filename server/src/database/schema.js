@@ -264,6 +264,11 @@ export async function createTables() {
   `);
 
   await pool.query(`
+    UPDATE settings SET value = '/site/imgs/logo.png'
+    WHERE key = 'store_logo' AND value LIKE '%logo.jpe%';
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS coupons (
       id SERIAL PRIMARY KEY,
       code TEXT NOT NULL UNIQUE,
