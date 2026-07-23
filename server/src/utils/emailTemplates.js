@@ -8,7 +8,7 @@ const STORE_URL = process.env.FRONTEND_URL || 'http://localhost:5500/site/pages/
 const PRIMARY_COLOR = '#c53b22';
 const SECONDARY_COLOR = '#1a1a1a';
 const BG_COLOR = '#f5f3f0';
-const LOGO_URL = STORE_URL.replace('/site/pages/index.html', '') + '/site/imgs/logo.jpeg';
+const LOGO_URL = STORE_URL.replace('/site/pages/index.html', '') + '/site/imgs/logo.png';
 
 function formatMoney(val) {
   return 'R$ ' + Number(val).toFixed(2).replace('.', ',');

@@ -59,7 +59,7 @@ function apiRequest(method, path, body, isFormData) {
 }
 
 function imageUrl(path) {
-  if (!path) return '/site/imgs/logo.jpeg';
+  if (!path) return '/site/imgs/logo.png';
   if (path.startsWith('http')) return path;
   return API_BASE + path;
 }

@@ -5,7 +5,7 @@ var API_BASE_URL = (window.location.hostname === 'localhost' || window.location.
   : 'https://casa-so-pimenta-api.onrender.com';
 
 function imgUrl(path) {
-  if (!path) return '/site/imgs/logo.jpeg';
+  if (!path) return '/site/imgs/logo.png';
   if (path.startsWith('http')) return path;
   return (window.API_BASE_URL || 'http://localhost:3333') + path;
 }

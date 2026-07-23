@@ -246,7 +246,7 @@ export async function createTables() {
     INSERT INTO settings (key, value) VALUES
       ('store_name', 'Casa Só Pimenta'),
       ('store_description', ''),
-      ('store_logo', '/site/imgs/logo.jpeg'),
+      ('store_logo', '/site/imgs/logo.png'),
       ('contact_email', 'casasopimenta@gmail.com'),
       ('contact_phone', '(31) 98314-3902'),
       ('contact_address', 'Avenida Augusto de Lima, 744 M4 113, 117 - Centro, Belo Horizonte - MG, 30190-922'),

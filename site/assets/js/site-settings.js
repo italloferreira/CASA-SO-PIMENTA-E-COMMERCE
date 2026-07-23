@@ -19,7 +19,7 @@ function applySettings(settings) {
   }
 
   if (settings.store_logo) {
-    document.querySelectorAll('img[src*="logo.jpeg"], img[src*="logo.jpg"], img[src*="logo.png"]').forEach(function (img) {
+    document.querySelectorAll('img[src*="logo.png"], img[src*="logo.jpg"]').forEach(function (img) {
       if (img.closest('header') || img.closest('.logo-section') || img.closest('a[href*="index"]')) {
         img.src = settings.store_logo;
       }
