@@ -218,6 +218,16 @@ export async function createTables() {
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS withdrawn_at TIMESTAMP;
   `);
 
+  await pool.query(`
+    ALTER TABLE carts ADD COLUMN IF NOT EXISTS cart_token TEXT;
+  `);
+
+  try {
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_carts_cart_token ON carts(cart_token) WHERE cart_token IS NOT NULL`);
+  } catch (err) {
+    console.error('Aviso: erro ao criar indice cart_token:', err.message);
+  }
+
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS password_resets (
@@ -337,7 +347,7 @@ export async function createTables() {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_is_featured ON products(is_featured)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_cart_items_cart_id ON cart_items(cart_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token)`);
   } catch (err) {
     console.error('Aviso: Erro ao criar índices:', err.message);

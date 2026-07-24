@@ -1,13 +1,11 @@
-import Database from 'better-sqlite3';
-import path from 'path';
 import dotenv from 'dotenv';
 import pkg from 'pg';
+import { readFileSync, existsSync } from 'fs';
+import path from 'path';
 
 dotenv.config();
 
 const { Pool } = pkg;
-
-const sqlitePath = path.resolve('data', 'casa-so-pimenta.db');
 
 const TABLES_IN_ORDER = [
   'categories',
@@ -22,25 +20,61 @@ const TABLES_IN_ORDER = [
   'order_items'
 ];
 
-async function migrate() {
-  if (!process.env.SUPABASE_DB_URL) {
-    console.error('ERRO: SUPABASE_DB_URL não definida no .env');
-    process.exit(1);
-  }
-
+async function readSQLiteData(sqlitePath) {
+  const Database = (await import('better-sqlite3')).default;
   const sqlite = new Database(sqlitePath);
-  const pgPool = new Pool({
-    connectionString: process.env.SUPABASE_DB_URL,
-    ssl: { rejectUnauthorized: false }
-  });
-
-  console.log('Lendo dados do SQLite...');
 
   const allData = {};
   for (const table of TABLES_IN_ORDER) {
     const rows = sqlite.prepare(`SELECT * FROM ${table}`).all();
     allData[table] = rows;
     console.log(`  ${table}: ${rows.length} registros`);
+  }
+
+  sqlite.close();
+  return allData;
+}
+
+function readJSONFallback(jsonPath) {
+  if (!existsSync(jsonPath)) {
+    console.error(`Arquivo nao encontrado: ${jsonPath}`);
+    process.exit(1);
+  }
+  const raw = readFileSync(jsonPath, 'utf-8');
+  return JSON.parse(raw);
+}
+
+async function migrate() {
+  if (!process.env.SUPABASE_DB_URL) {
+    console.error('ERRO: SUPABASE_DB_URL não definida no .env');
+    process.exit(1);
+  }
+
+  const pgPool = new Pool({
+    connectionString: process.env.SUPABASE_DB_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  const sqlitePath = path.resolve('data', 'casa-so-pimenta.db');
+  const jsonPath = path.resolve('data', 'export.json');
+
+  let allData;
+
+  if (existsSync(sqlitePath)) {
+    console.log('Lendo dados do SQLite...');
+    try {
+      allData = await readSQLiteData(sqlitePath);
+    } catch (err) {
+      console.error('Erro ao ler SQLite (better-sqlite3 nao instalado?):', err.message);
+      console.log('Tentando fallback para JSON...');
+      allData = readJSONFallback(jsonPath);
+    }
+  } else if (existsSync(jsonPath)) {
+    console.log('SQLite nao encontrado. Lendo dados do JSON...');
+    allData = readJSONFallback(jsonPath);
+  } else {
+    console.error('Nenhum arquivo de dados encontrado (SQLite ou JSON). Nada a migrar.');
+    process.exit(1);
   }
 
   console.log('\nInserindo dados no PostgreSQL...');
@@ -50,7 +84,7 @@ async function migrate() {
   try {
     for (const table of TABLES_IN_ORDER) {
       const rows = allData[table];
-      if (rows.length === 0) {
+      if (!rows || rows.length === 0) {
         console.log(`  ${table}: sem dados para migrar`);
         continue;
       }
@@ -80,9 +114,7 @@ async function migrate() {
       if (table !== 'categories' && table !== 'users') {
         const maxId = rows.reduce((max, r) => Math.max(max, r.id || 0), 0);
         if (maxId > 0) {
-          await client.query(`
-            SELECT setval('${table}_id_seq', $1, true)
-          `, [maxId]);
+          await client.query(`SELECT setval('${table}_id_seq', $1, true)`, [maxId]);
         }
       }
 
@@ -95,7 +127,6 @@ async function migrate() {
     process.exit(1);
   } finally {
     client.release();
-    sqlite.close();
     await pgPool.end();
   }
 }

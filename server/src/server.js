@@ -17,6 +17,7 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import couponRoutes from './routes/couponRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import melhorEnvioRoutes from './routes/melhorEnvioRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
 import { getMpPublicKey } from './controllers/paymentController.js';
 
 import { createTables } from './database/schema.js';
@@ -39,7 +40,6 @@ function isOriginAllowed(origin) {
   if (!origin) return true;
   if (allowedOrigins.indexOf(origin) !== -1) return true;
   if (process.env.NODE_ENV !== 'production') return true;
-  if (origin.endsWith('.vercel.app')) return true;
   return false;
 }
 
@@ -84,6 +84,8 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/settings', settingsRoutes);
 
 app.use('/api/melhor-envio', melhorEnvioRoutes);
+
+app.use('/api/cart', cartRoutes);
 
 app.get('/api/config/mp-key', getMpPublicKey);
 

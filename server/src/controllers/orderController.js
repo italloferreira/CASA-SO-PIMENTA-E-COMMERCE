@@ -129,6 +129,7 @@ export async function createOrder(req, res) {
     delivery_fee: _delivery_fee_raw,
     shipping_service,
     shipping_amount,
+    box_amount: box_amount_raw,
     total_weight,
     selected_box,
     notes,
@@ -243,7 +244,7 @@ export async function createOrder(req, res) {
       serverDeliveryFee = calculatedFee;
     }
     const deliveryFeeValue = serverDeliveryFee;
-    const boxAmountValue = 0;
+    const boxAmountValue = Number(box_amount_raw) || 0;
     let total = subtotal + deliveryFeeValue;
     let couponData = null;
     let couponDiscount = 0;
