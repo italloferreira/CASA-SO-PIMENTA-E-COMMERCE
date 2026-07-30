@@ -123,40 +123,4 @@ window.decrementarQtd = function () {
   if (atual > 1) el.textContent = atual - 1;
 };
 
-window.adicionarAoCarrinhoDetalhe = function () {
-  const produto = window._produtoAtual;
-  if (!produto || produto.estoque <= 0) return;
 
-  const qtd = Number(document.getElementById('qtdSelecionada').textContent);
-
-  let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
-  const existente = carrinho.find(item => item.id == produto.id);
-
-  if (existente) {
-    existente.quantidade += qtd;
-  } else {
-    carrinho.push({
-      id: produto.id,
-      nome: produto.nome,
-      valor: produto.valor,
-      img: produto.img,
-      quantidade: qtd,
-      tipo: produto.tipo || 'produto'
-    });
-  }
-
-  window.salvarCarrinho(carrinho);
-  window.renderizarCarrinho();
-  window.atualizarBadgeCarrinho();
-
-  const btn = document.querySelector('.btn-add-carrinho');
-  const textoOriginal = btn.innerHTML;
-  btn.innerHTML = '✓ Adicionado!';
-  btn.style.background = 'var(--cor-verde-primario)';
-  btn.style.color = 'var(--cor-branco)';
-  setTimeout(function () {
-    btn.innerHTML = textoOriginal;
-    btn.style.background = '';
-    btn.style.color = '';
-  }, 1500);
-};

@@ -357,21 +357,6 @@ export async function createOrder(req, res) {
       ]);
     }
 
-    for (const orderItem of orderItems) {
-      if (orderItem.product_id) {
-        await client.query(
-          'UPDATE products SET stock = false WHERE id = $1 AND stock = true',
-          [orderItem.product_id]
-        );
-      }
-      if (orderItem.kit_id) {
-        await client.query(
-          'UPDATE kits SET stock = false WHERE id = $1 AND stock = true',
-          [orderItem.kit_id]
-        );
-      }
-    }
-
     if (couponData) {
       await client.query(`
         UPDATE coupons SET times_used = times_used + 1, updated_at = CURRENT_TIMESTAMP WHERE id = $1

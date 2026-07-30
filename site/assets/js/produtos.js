@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '<h3>' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '</h3>' +
       '<p>' + precoHtml + '</p>' +
       '<div>' +
-        '<button' + (disponivel ? ' data-product-id="' + produto.id + '" data-product-name="' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '" data-product-price="' + venda + '" data-product-img="' + imgSrc + '" data-product-type="produto" data-product-categoria="' + categoria + '"' : ' disabled') + '>' +
+        '<button class="add-carrinho-botao"' + (disponivel ? ' data-product-id="' + produto.id + '" data-product-name="' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '" data-product-price="' + venda + '" data-product-img="' + imgSrc + '" data-product-type="produto" data-product-categoria="' + categoria + '"' : ' disabled') + '>' +
           '<img src="/site/imgs/icones/carrinho.png" alt="Adicionar ao carrinho">' +
         '</button>' +
         '<button' + (disponivel ? ' onclick="window.location.href=\'/site/pages/produtos/detalhe/index.html?id=' + produto.id + '&categoria=' + categoria + '\'"' : ' disabled') + '>Ver produto</button>' +
