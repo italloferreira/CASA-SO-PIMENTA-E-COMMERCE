@@ -1,6 +1,6 @@
 import sgMail from '@sendgrid/mail';
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-import { adminNewOrderEmail, customerOrderConfirmationEmail } from '../utils/emailTemplates.js';
+import { adminNewOrderEmail, customerOrderConfirmationEmail, orderStatusChangeEmail } from '../utils/emailTemplates.js';
 import { pool } from '../database/connection.js';
 import { canTransition, isValidStatusForType } from '../config/orderStatusMachine.js';
 import { selectBox } from '../config/boxes.js';
@@ -576,7 +576,7 @@ export async function getMyOrderById(req, res) {
 export async function updateOrderStatus(req, res) {
   try {
     const { id } = req.params;
-    const { status: newStatus } = req.body;
+    const { status: newStatus, tracking_code, tracking_url } = req.body;
 
     const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
     const order = orderResult.rows[0];
@@ -600,6 +600,23 @@ export async function updateOrderStatus(req, res) {
       });
     }
 
+    const fromAddr = process.env.SENDGRID_FROM || '"Casa Só Pimenta" <casasopimenta@gmail.com>';
+
+    async function sendStatusEmail(updatedFields, subject) {
+      if (!order.customer_email) return;
+      try {
+        const updatedOrder = { ...order, ...updatedFields };
+        await sgMail.send({
+          to: order.customer_email,
+          from: fromAddr,
+          subject: subject,
+          html: orderStatusChangeEmail(updatedOrder, currentStatus, newStatus)
+        });
+      } catch (emailErr) {
+        console.error('Erro ao enviar email de status:', emailErr.message);
+      }
+    }
+
     if (deliveryType === 'pickup' && newStatus === 'ready_for_pickup') {
       const pickupCode = generatePickupCode();
 
@@ -612,6 +629,11 @@ export async function updateOrderStatus(req, res) {
 
       console.log(`Pedido #${id} pronto para retirada. Código: ${pickupCode}`);
 
+      await sendStatusEmail(
+        { status: newStatus, pickup_code: pickupCode },
+        'Pedido #' + id + ' pronto para retirada! — Casa Só Pimenta'
+      );
+
       return res.json({
         message: 'Pedido marcado como pronto para retirada.',
         pickup_code: pickupCode
@@ -620,11 +642,32 @@ export async function updateOrderStatus(req, res) {
 
     await pool.query(`
       UPDATE orders
-      SET status = $1, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2
-    `, [newStatus, id]);
+      SET status = $1,
+          tracking_code = COALESCE($2, tracking_code),
+          tracking_url = COALESCE($3, tracking_url),
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $4
+    `, [newStatus, tracking_code || null, tracking_url || null, id]);
 
-    res.json({ message: 'Status do pedido atualizado.' });
+    const subjectLabels = {
+      confirmed: 'confirmado',
+      shipped: 'enviado',
+      delivered: 'entregue',
+      preparing: 'em preparação',
+      cancelled: 'cancelado'
+    };
+    const label = subjectLabels[newStatus] || newStatus;
+
+    await sendStatusEmail(
+      { status: newStatus, tracking_code, tracking_url },
+      'Pedido #' + id + ' ' + label + ' — Casa Só Pimenta'
+    );
+
+    res.json({
+      message: 'Status do pedido atualizado.',
+      tracking_code: tracking_code || undefined,
+      tracking_url: tracking_url || undefined
+    });
   } catch (err) {
     console.error('Erro ao atualizar status do pedido:', err);
     res.status(500).json({ message: 'Erro ao atualizar status do pedido.' });
@@ -677,9 +720,99 @@ export async function confirmPickup(req, res) {
 
     console.log(`Pedido #${id} retirado com sucesso pelo admin.`);
 
+    if (order.customer_email) {
+      try {
+        const fromAddr = process.env.SENDGRID_FROM || '"Casa Só Pimenta" <casasopimenta@gmail.com>';
+        const updatedOrder = { ...order, status: 'withdrawn' };
+        await sgMail.send({
+          to: order.customer_email,
+          from: fromAddr,
+          subject: 'Pedido #' + id + ' retirado — Casa Só Pimenta',
+          html: orderStatusChangeEmail(updatedOrder, 'ready_for_pickup', 'withdrawn')
+        });
+      } catch (emailErr) {
+        console.error('Erro ao enviar email de retirada:', emailErr.message);
+      }
+    }
+
     res.json({ message: 'Retirada confirmada com sucesso.' });
   } catch (err) {
     console.error('Erro ao confirmar retirada:', err);
     res.status(500).json({ message: 'Erro ao confirmar retirada.' });
+  }
+}
+
+export async function cancelMyOrder(req, res) {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1 AND user_id = $2', [id, userId]);
+    const order = orderResult.rows[0];
+
+    if (!order) {
+      return res.status(404).json({ message: 'Pedido não encontrado.' });
+    }
+
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ message: 'Este pedido já foi cancelado.' });
+    }
+
+    if (!['pending', 'confirmed'].includes(order.status)) {
+      return res.status(400).json({ message: 'Só é possível cancelar pedidos com status "Pendente" ou "Confirmado".' });
+    }
+
+    await pool.query(`
+      UPDATE orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = $1
+    `, [id]);
+
+    console.log(`Pedido #${id} cancelado pelo cliente ${userId}.`);
+
+    /* Notificar cliente */
+    if (order.customer_email) {
+      try {
+        const fromAddr = process.env.SENDGRID_FROM || '"Casa Só Pimenta" <casasopimenta@gmail.com>';
+        const updatedOrder = { ...order, status: 'cancelled' };
+        await sgMail.send({
+          to: order.customer_email,
+          from: fromAddr,
+          subject: 'Pedido #' + id + ' cancelado — Casa Só Pimenta',
+          html: orderStatusChangeEmail(updatedOrder, order.status, 'cancelled')
+        });
+      } catch (emailErr) {
+        console.error('Erro ao enviar email de cancelamento:', emailErr.message);
+      }
+    }
+
+    /* Notificar admin */
+    try {
+      const adminResult = await pool.query("SELECT email FROM users WHERE role = 'admin' LIMIT 1");
+      if (adminResult.rows.length > 0) {
+        const adminEmail = adminResult.rows[0].email;
+        const fromAddr = process.env.SENDGRID_FROM || '"Casa Só Pimenta" <casasopimenta@gmail.com>';
+        const adminSiteUrl = (process.env.FRONTEND_URL || 'http://localhost:5500/site/pages/index.html').replace('/site/pages/index.html', '');
+        const safeName = String(order.customer_name).replace(/[&<>"']/g, function (m) {
+          if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;'; return '&#39;';
+        });
+        await sgMail.send({
+          to: adminEmail,
+          from: fromAddr,
+          subject: 'Pedido #' + id + ' cancelado pelo cliente — Casa Só Pimenta',
+          html: '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">' +
+            '<h2 style="color:#dc2626;">Pedido cancelado pelo cliente</h2>' +
+            '<p>O pedido <strong>#' + Number(id) + '</strong> foi cancelado pelo cliente <strong>' + safeName + '</strong>.</p>' +
+            '<p style="color:#666;font-size:14px;">Acesse o painel admin para mais detalhes e para realizar o estorno se necess\u00e1rio.</p>' +
+            '<a href="' + adminSiteUrl + '/site/pages/admin/pedidos/index.html" style="display:inline-block;padding:12px 24px;background:#dc2626;color:white;text-decoration:none;border-radius:6px;">Ver no painel</a>' +
+          '</div>'
+        });
+      }
+    } catch (emailErr) {
+      console.error('Erro ao notificar admin sobre cancelamento:', emailErr.message);
+    }
+
+    res.json({ message: 'Pedido cancelado com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao cancelar pedido:', err);
+    res.status(500).json({ message: 'Erro ao cancelar pedido.' });
   }
 }

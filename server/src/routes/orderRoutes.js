@@ -7,7 +7,8 @@ import {
   getMyOrders,
   getMyOrderById,
   updateOrderStatus,
-  confirmPickup
+  confirmPickup,
+  cancelMyOrder
 } from '../controllers/orderController.js';
 
 import { calculateShipping } from '../controllers/shippingController.js';
@@ -24,6 +25,7 @@ router.get('/', authMiddleware, adminMiddleware, listOrders);
 router.get('/:id', authMiddleware, adminMiddleware, getOrderById);
 router.patch('/:id/status', authMiddleware, adminMiddleware, updateOrderStatus);
 router.post('/:id/confirm-pickup', authMiddleware, adminMiddleware, pickupLimiter, confirmPickup);
+router.post('/:id/cancel', authMiddleware, cancelMyOrder);
 
 router.post('/calculate-shipping', authMiddleware, shippingLimiter, calculateShipping);
 

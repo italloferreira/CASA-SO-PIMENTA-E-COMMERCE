@@ -116,6 +116,59 @@ export function customerOrderConfirmationEmail(order) {
   `);
 }
 
+export function orderStatusChangeEmail(order, oldStatus, newStatus) {
+  const statusLabels = {
+    pending: 'Pendente', confirmed: 'Confirmado', preparing: 'Preparando',
+    shipped: 'Enviado', ready_for_pickup: 'Pronto para retirada',
+    delivered: 'Entregue', withdrawn: 'Retirado', cancelled: 'Cancelado'
+  };
+
+  const messages = {
+    confirmed: { emoji: '✅', title: 'Pagamento confirmado!', message: 'Seu pagamento foi confirmado. Seu pedido já está sendo processado.' },
+    preparing: { emoji: '👩‍🍳', title: 'Preparando seu pedido', message: 'Seu pedido está sendo preparado com todo cuidado.' },
+    shipped: { emoji: '🚚', title: 'Pedido enviado!', message: 'Seu pedido saiu para entrega.' },
+    ready_for_pickup: { emoji: '📍', title: 'Pronto para retirada!', message: 'Seu pedido está pronto para ser retirado na loja.' },
+    delivered: { emoji: '📦', title: 'Pedido entregue!', message: 'Seu pedido foi entregue. Esperamos que você ame!' },
+    withdrawn: { emoji: '✅', title: 'Pedido retirado', message: 'Seu pedido foi retirado. Obrigado pela preferência!' },
+    cancelled: { emoji: '❌', title: 'Pedido cancelado', message: 'Seu pedido foi cancelado.' }
+  };
+
+  const info = messages[newStatus] || { emoji: '📋', title: 'Status atualizado', message: 'O status do seu pedido foi atualizado.' };
+
+  const oldLabel = statusLabels[oldStatus] || oldStatus;
+  const newLabel = statusLabels[newStatus] || newStatus;
+
+  return baseHtml(`
+    <h2 style="color:${PRIMARY_COLOR};margin-top:0;">${info.emoji} ${info.title}</h2>
+    <p style="color:#444;font-size:15px;">Olá, <strong>${escHtml(order.customer_name)}</strong>!</p>
+    <p style="color:#444;font-size:15px;">${info.message}</p>
+    <div style="background:${BG_COLOR};padding:16px;border-radius:8px;margin:16px 0;text-align:center;">
+      <p style="margin:0;color:#333;font-size:14px;">Pedido <strong>#${Number(order.id)}</strong></p>
+      <p style="margin:8px 0 0;color:#666;font-size:13px;">
+        Status: <strong style="color:${PRIMARY_COLOR};">${newLabel}</strong>
+        ${oldStatus ? '<span style="color:#999;"> (de ' + oldLabel + ')</span>' : ''}
+      </p>
+    </div>
+    ${newStatus === 'ready_for_pickup' && order.pickup_code ? `
+    <div style="background:#f0fdf4;border:2px dashed #86efac;padding:20px;border-radius:8px;margin:16px 0;text-align:center;">
+      <p style="margin:0;color:#166534;font-size:14px;font-weight:bold;">Código de retirada</p>
+      <p style="margin:8px 0 0;font-size:28px;font-weight:bold;color:#166534;letter-spacing:6px;">${escHtml(String(order.pickup_code))}</p>
+      <p style="margin:8px 0 0;color:#166534;font-size:13px;">Apresente este código ao retirar o pedido na loja.</p>
+    </div>` : ''}
+    ${newStatus === 'shipped' ? `
+    <div style="background:${BG_COLOR};padding:16px;border-radius:8px;margin:16px 0;text-align:center;">
+      ${order.tracking_code ? `
+      <p style="margin:0;color:#333;font-size:14px;">📦 Código de rastreamento</p>
+      <p style="margin:8px 0 0;font-size:22px;font-weight:bold;color:${PRIMARY_COLOR};letter-spacing:2px;">
+        ${order.tracking_url ? `<a href="${escHtml(order.tracking_url)}" style="color:${PRIMARY_COLOR};text-decoration:none;">${escHtml(order.tracking_code)}</a>` : escHtml(order.tracking_code)}
+      </p>` : ''}
+      ${order.shipping_service ? `<p style="margin:12px 0 0;color:#666;font-size:13px;">🚚 Serviço: ${escHtml(order.shipping_service)}</p>` : ''}
+    </div>` : ''}
+    <a href="${STORE_URL.replace('/site/pages/index.html', '')}/site/pages/pedidos/detalhe/index.html?id=${Number(order.id)}" style="display:block;width:260px;margin:30px auto;padding:14px 0;background:${PRIMARY_COLOR};color:white !important;text-align:center;text-decoration:none;font-size:16px;border-radius:8px;font-weight:bold;">Acompanhar pedido</a>
+    <p style="text-align:center;font-size:14px;color:#888;">Qualquer dúvida, responda este email ou entre em contato conosco!</p>
+  `);
+}
+
 export function forgotPasswordEmail(userName, resetLink) {
   const safeName = escHtml(userName);
   const safeLink = escHtml(resetLink);

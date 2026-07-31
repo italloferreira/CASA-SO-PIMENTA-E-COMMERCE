@@ -213,7 +213,25 @@
       '</div>';
     }
 
+    if (pedido.delivery_type === 'delivery' && pedido.tracking_code) {
+      var linkHtml = pedido.tracking_url
+        ? '<a href="' + pedido.tracking_url + '" target="_blank" rel="noopener" style="color:var(--cor-vermelho-primario);text-decoration:underline;">' + pedido.tracking_code + '</a>'
+        : '<strong>' + pedido.tracking_code + '</strong>';
+      html += '<div class="info-item full">' +
+        '<label>Código de Rastreamento</label>' +
+        '<p style="font-size:18px;">' + linkHtml + '</p>' +
+        (pedido.shipping_service ? '<p style="font-size:12px;color:var(--cor-cinza-texto-secundario);">Serviço: ' + pedido.shipping_service + '</p>' : '') +
+      '</div>';
+    }
+
     html += '</div></div>';
+
+    /* Botão cancelar */
+    if (pedido.status === 'pending' || pedido.status === 'confirmed') {
+      html += '<div style="text-align:center;margin-top:24px;">' +
+        '<button class="btn-cancelar" id="btnCancelarPedido" data-pedido-id="' + pedido.id + '">Cancelar Pedido</button>' +
+      '</div>';
+    }
 
     return html;
   }
@@ -248,11 +266,59 @@
       })
       .then(function (pedido) {
         conteudo.innerHTML = renderDetalhe(pedido);
+
+        /* Cancel button handler */
+        var btnCancelar = document.getElementById('btnCancelarPedido');
+        if (btnCancelar) {
+          btnCancelar.addEventListener('click', function () {
+            document.getElementById('cancelModalText').textContent = 'Tem certeza que deseja cancelar o Pedido #' + pedido.id + '? Esta ação não pode ser desfeita.';
+            document.getElementById('cancelModalOverlay').style.display = 'flex';
+          });
+        }
       })
       .catch(function () {
         conteudo.innerHTML = '<div class="pedidos-vazio"><h2>Pedido não encontrado</h2><p>Não foi possível carregar os detalhes deste pedido.</p><a href="/site/pages/pedidos/index.html">Voltar para Meus Pedidos</a></div>';
       });
   }
 
-  document.addEventListener('DOMContentLoaded', carregarDetalhe);
+  document.addEventListener('DOMContentLoaded', function () {
+    carregarDetalhe();
+
+    /* Modal handlers */
+    document.getElementById('cancelModalNo').addEventListener('click', function () {
+      document.getElementById('cancelModalOverlay').style.display = 'none';
+    });
+    document.getElementById('cancelModalOverlay').addEventListener('click', function (e) {
+      if (e.target === this) {
+        this.style.display = 'none';
+      }
+    });
+    document.getElementById('cancelModalYes').addEventListener('click', function () {
+      var modal = document.getElementById('cancelModalOverlay');
+      modal.style.display = 'none';
+
+      var params = new URLSearchParams(window.location.search);
+      var pedidoId = params.get('id');
+      if (!pedidoId) return;
+
+      var conteudo = document.getElementById('detalheConteudo');
+      conteudo.innerHTML = '<div class="pedidos-loading">Cancelando pedido...</div>';
+
+      fetch(API + '/api/orders/' + pedidoId + '/cancel', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
+        credentials: 'include'
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (d) { throw new Error(d.message || 'Erro ao cancelar.'); });
+          return r.json();
+        })
+        .then(function () {
+          carregarDetalhe();
+        })
+        .catch(function (err) {
+          conteudo.innerHTML = '<div class="pedidos-vazio"><h2>Erro ao cancelar</h2><p>' + err.message + '</p><a href="javascript:void(0)" onclick="location.reload()">Tentar novamente</a></div>';
+        });
+    });
+  });
 })();

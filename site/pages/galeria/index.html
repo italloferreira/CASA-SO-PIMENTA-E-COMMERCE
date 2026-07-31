@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/site/assets/css/pedidos.css">
-  <title>Casa SÃ³ Pimenta / Detalhe do Pedido</title>
+  <link rel="stylesheet" href="/site/assets/css/galeria.css">
+  <title>Casa Só Pimenta / Galeria</title>
   <link rel="icon" type="image/png" href="/site/imgs/logo.png">
 </head>
 
@@ -29,7 +29,7 @@
           </li>
           <li><a href="/site/pages/produtos/temperos/index.html">Temperos</a></li>
           <li><a href="/site/pages/produtos/outro/index.html">Outros</a></li>
-          <li><a href="/site/pages/galeria/index.html">Galeria</a></li>
+          <li><a href="/site/pages/galeria/index.html" style="color:var(--cor-vermelho-primario);font-weight:600;">Galeria</a></li>
           <li><a href="/site/pages/sobre/index.html">Sobre</a></li>
         </ul>
       </section>
@@ -88,11 +88,29 @@
   <div class="overlay-mobile" id="overlayMobile"></div>
 
   <main>
-    <div class="detalhe-container">
-      <a href="/site/pages/pedidos/index.html" class="btn-voltar">&larr; Voltar para Meus Pedidos</a>
-      <div id="detalheConteudo"></div>
+    <div class="galeria-container">
+      <div class="galeria-header">
+        <h1>Galeria</h1>
+        <p>Veja nossos produtos em detalhes</p>
+      </div>
+      <div class="galeria-filtros" id="galeriaFiltros"></div>
+      <div class="galeria-grid" id="galeriaGrid"></div>
+      <div class="galeria-loading" id="galeriaLoading">Carregando galeria...</div>
     </div>
   </main>
+
+  <div class="lightbox-overlay" id="lightboxOverlay" style="display:none;">
+    <button class="lightbox-close" id="lightboxClose">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="lightboxPrev">&lsaquo;</button>
+    <button class="lightbox-nav lightbox-next" id="lightboxNext">&rsaquo;</button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" src="" alt="">
+      <div class="lightbox-info">
+        <span id="lightboxName"></span>
+        <a id="lightboxLink" href="#" target="_blank">Ver produto</a>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <section class="redes-section">
@@ -103,9 +121,9 @@
 
     <ul class="navegacao-section">
       <a href="https://www.google.com/search?q=casa+so+pimenta&oq=casa+so+pimenta&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIJCAEQABgNGIAEMggIAhAAGBYYHjIICAMQABgWGB4yCAgEEAAYFhgeMgYIBRBFGDwyBggGEEUYPDIGCAcQRRg80gEINTIwNWowajeoAgCwAgA&sourceid=chrome&source=chrome.ob&ie=UTF-8" target="_blank" rel="noopener noreferrer"><li>Onde estamos?</li></a>
-      <a href="/site/pages/troca-e-devolucao/index.html"><li>Troca e DevoluÃ§Ãµes</li></a>
+      <a href="/site/pages/troca-e-devolucao/index.html"><li>Troca e Devoluções</li></a>
       <a href="/site/pages/termos/index.html"><li>Termos de Uso</li></a>
-      <a href="/site/pages/privacidade/index.html"><li>PolÃ­tica de Privacidade</li></a>
+      <a href="/site/pages/privacidade/index.html"><li>Política de Privacidade</li></a>
     </ul>
 
     <section class="pagamentos-section">
@@ -115,7 +133,7 @@
       <div><img src="/site/imgs/icones/pagamento/pix.png" alt="Pix"></div>
     </section>
 
-    <p>&copy; Copyright Casa SÃ³ Pimenta BH - 2026 - Todos os direitos reservados</p>
+    <p>&copy; Copyright Casa Só Pimenta BH - 2026 - Todos os direitos reservados</p>
   </footer>
 
   <div class="carrinho-overlay" id="carrinhoOverlay"></div>
@@ -139,21 +157,10 @@
     </div>
   </aside>
 
-  <div class="modal-overlay" id="cancelModalOverlay" style="display:none;">
-    <div class="modal-box" id="cancelModalBox">
-      <h3>Cancelar Pedido</h3>
-      <p id="cancelModalText">Tem certeza que deseja cancelar este pedido? Esta aÃ§Ã£o nÃ£o pode ser desfeita.</p>
-      <div class="modal-actions">
-        <button class="btn-modal btn-modal-cancel" id="cancelModalNo">Voltar</button>
-        <button class="btn-modal btn-modal-confirm" id="cancelModalYes">Sim, cancelar pedido</button>
-      </div>
-    </div>
-  </div>
-
   <script src="/site/assets/js/config.js"></script>
   <script src="/site/assets/js/header.js"></script>
   <script type="module" src="/site/assets/js/carrinho.js"></script>
-  <script src="/site/assets/js/detalhe-pedido.js"></script>
+  <script src="/site/assets/js/galeria.js"></script>
   <script type="module" src="/site/assets/js/auth.js"></script>
   <script src="/site/assets/js/site-settings.js"></script>
   <script src="/site/assets/js/mobile.js"></script>

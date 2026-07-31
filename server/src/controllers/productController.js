@@ -305,3 +305,29 @@ export async function getProductsStatus(req, res) {
     res.status(500).json({ message: 'Erro ao consultar status dos produtos.' });
   }
 }
+
+export async function getGalleryProducts(req, res) {
+  try {
+    const { category } = req.query;
+    let query = `
+      SELECT p.id, p.name, p.slug, p.image_url, p.category_id, c.name AS category_name, c.slug AS category_slug
+      FROM products p
+      LEFT JOIN categories c ON c.id = p.category_id
+      WHERE p.is_active = 1 AND p.image_url IS NOT NULL AND p.image_url != ''
+    `;
+    const params = [];
+
+    if (category) {
+      params.push(category);
+      query += ` AND c.slug = $${params.length}`;
+    }
+
+    query += ' ORDER BY p.created_at DESC';
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar galeria:', err);
+    res.status(500).json({ message: 'Erro ao buscar galeria.' });
+  }
+}

@@ -164,14 +164,43 @@ window.openDetail = function (orderId) {
         '</select>' +
         '<button class="btn btn-sm btn-primary" id="detailStatusBtn" style="margin-left:8px;">Salvar</button>' +
       '</div>' +
+      (o.delivery_type === 'delivery' ? (
+        '<div><strong>Código de rastreamento:</strong><br>' +
+          '<input class="form-input" id="detailTrackingCode" type="text" value="' + escapeHtml(o.tracking_code || '') + '" placeholder="Ex: AA123456789BR" style="width:100%;margin-top:4px;">' +
+          '<input class="form-input" id="detailTrackingUrl" type="text" value="' + escapeHtml(o.tracking_url || '') + '" placeholder="Link de rastreamento (opcional)" style="width:100%;margin-top:6px;">' +
+        '</div>'
+      ) : '') +
       itemsHtml +
     '</div>';
 
+  function updateTrackingVisibility() {
+    var sel = document.getElementById('detailStatusSelect');
+    var container = document.getElementById('detailTrackingCode') ? document.getElementById('detailTrackingCode').closest('div') : null;
+    if (container) {
+      container.style.display = (sel.value === 'shipped' || sel.value === 'delivered') ? '' : 'none';
+    }
+  }
+
+  var statusSelect = document.getElementById('detailStatusSelect');
+  statusSelect.addEventListener('change', updateTrackingVisibility);
+  updateTrackingVisibility();
+
   document.getElementById('detailStatusBtn').addEventListener('click', async function () {
     var newStatus = document.getElementById('detailStatusSelect').value;
+    var body = { status: newStatus };
+    var trackingInput = document.getElementById('detailTrackingCode');
+    var urlInput = document.getElementById('detailTrackingUrl');
+    if (trackingInput) {
+      body.tracking_code = trackingInput.value.trim() || null;
+      body.tracking_url = urlInput.value.trim() || null;
+    }
     try {
-      await apiRequest('PATCH', '/api/orders/' + o.id + '/status', { status: newStatus });
+      var result = await apiRequest('PATCH', '/api/orders/' + o.id + '/status', body);
       o.status = newStatus;
+      if (trackingInput) {
+        o.tracking_code = result.tracking_code || body.tracking_code;
+        o.tracking_url = result.tracking_url || body.tracking_url;
+      }
       showToast('Status atualizado!');
       renderOrders();
     } catch (err) {

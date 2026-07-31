@@ -219,6 +219,14 @@ export async function createTables() {
   `);
 
   await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_code TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_url TEXT;
+  `);
+
+  await pool.query(`
     ALTER TABLE carts ADD COLUMN IF NOT EXISTS cart_token TEXT;
   `);
 
