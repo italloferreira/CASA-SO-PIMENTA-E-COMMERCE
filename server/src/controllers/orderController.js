@@ -528,18 +528,48 @@ export async function getMyOrders(req, res) {
       ORDER BY o.created_at DESC
     `, [userId]);
 
-    const pickupCodes = {};
-    for (const order of ordersResult.rows) {
-      if (order.delivery_type === 'pickup' && order.pickup_code) {
-        pickupCodes[order.id] = order.pickup_code;
-      }
-      delete order.pickup_code;
-    }
-
-    res.json({ orders: ordersResult.rows, pickupCodes });
+    res.json({ orders: ordersResult.rows });
   } catch (err) {
     console.error('Erro ao listar pedidos do usuário:', err);
     res.status(500).json({ message: 'Erro ao listar seus pedidos.' });
+  }
+}
+
+export async function getMyOrderById(req, res) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const orderResult = await pool.query(`
+      SELECT o.*,
+        COALESCE(
+          json_agg(
+            CASE WHEN oi.id IS NOT NULL THEN
+              json_build_object(
+                'id', oi.id, 'order_id', oi.order_id, 'product_id', oi.product_id,
+                'kit_id', oi.kit_id, 'item_name', oi.item_name, 'unit_price', oi.unit_price,
+                'quantity', oi.quantity, 'total', oi.total
+              )
+            END
+          ) FILTER (WHERE oi.id IS NOT NULL),
+          '[]'
+        ) as items
+      FROM orders o
+      LEFT JOIN order_items oi ON oi.order_id = o.id
+      WHERE o.id = $1 AND o.user_id = $2
+      GROUP BY o.id
+    `, [id, userId]);
+
+    const order = orderResult.rows[0];
+
+    if (!order) {
+      return res.status(404).json({ message: 'Pedido não encontrado.' });
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error('Erro ao buscar pedido:', err);
+    res.status(500).json({ message: 'Erro ao buscar pedido.' });
   }
 }
 

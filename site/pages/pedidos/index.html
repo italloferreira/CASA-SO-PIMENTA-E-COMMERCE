@@ -4,32 +4,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Casa Só Pimenta / Minha Conta</title>
+  <link rel="stylesheet" href="/site/assets/css/pedidos.css">
+  <title>Casa Só Pimenta / Meus Pedidos</title>
   <link rel="icon" type="image/png" href="/site/imgs/logo.png">
-  <link rel="stylesheet" href="/site/assets/css/conta.css">
 </head>
 
 <body>
   <header>
-    <div class = "header">
+    <div class="header">
       <a href="/site/pages/index.html" class="logo-section"><img src="/site/imgs/logo.png" alt=""></a>
       <section class="categoria-section">
         <ul class="menu-principal">
           <li><a href="/site/pages/index.html">Home</a></li>
           <li><a href="/site/pages/produtos/pimentas/index.html">Pimentas</a></li>
-
           <li class="dropdown">
             <button class="dropdown-btn">
               Produtos naturais
               <img src="/site/imgs/icones/seta-baixo.png" alt="">
             </button>
-
             <ul class="submenu">
               <li><a href="/site/pages/produtos/produtosNaturais/farinhas/index.html">Farinhas</a></li>
               <li><a href="/site/pages/produtos/produtosNaturais/castanhas/index.html">Castanhas</a></li>
             </ul>
           </li>
-
           <li><a href="/site/pages/produtos/temperos/index.html">Temperos</a></li>
           <li><a href="/site/pages/produtos/outro/index.html">Outros</a></li>
           <li><a href="/site/pages/sobre/index.html">Sobre</a></li>
@@ -41,119 +38,59 @@
           <span class="badge-carrinho" id="badgeCarrinho"></span>
         </div>
       </a>
-      <a href="/site/pages/conta/index.html" class="usuario-section">
-        <img src="/site/imgs/icones/usuario.svg" alt="">
-        <p>Minha conta</p>
+      <a href="javascript:void(0)" class="usuario-section" id="usuarioSection">
+        <p id="usuarioNome">Login/Cadastrar</p>
+        <div class="usuario-dropdown" id="usuarioDropdown">
+          <a href="/site/pages/conta/index.html">Minha Conta</a>
+          <a href="/site/pages/pedidos/index.html">Meus Pedidos</a>
+          <div class="divider"></div>
+          <a href="javascript:void(0)" class="sair" id="btnSair">Sair</a>
+        </div>
       </a>
       <button class="menu-hamburguer" id="menuHamburguer" aria-label="Abrir menu">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
     </div>
   </header>
 
   <nav class="menu-mobile" id="menuMobile">
-      <div class="menu-mobile-topo">
-          <a href="/site/pages/index.html" class="logo-section"><img src="/site/imgs/logo.png" alt=""></a>
-          <button class="menu-fechar" id="menuFechar" aria-label="Fechar menu">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-          </button>
-      </div>
-      <ul class="menu-mobile-links">
-          <li><a href="/site/pages/index.html">Home</a></li>
-          <li><a href="/site/pages/produtos/pimentas/index.html">Pimentas</a></li>
-          <li class="dropdown-mobile">
-              <button class="dropdown-mobile-btn">Produtos naturais <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-              <ul class="submenu-mobile">
-                  <li><a href="/site/pages/produtos/produtosNaturais/farinhas/index.html">Farinhas</a></li>
-                  <li><a href="/site/pages/produtos/produtosNaturais/castanhas/index.html">Castanhas</a></li>
-              </ul>
-          </li>
-          <li><a href="/site/pages/produtos/temperos/index.html">Temperos</a></li>
-          <li><a href="/site/pages/produtos/outro/index.html">Outros</a></li>
-          <li><a href="/site/pages/sobre/index.html">Sobre</a></li>
-      </ul>
-      <div class="menu-mobile-footer">
-          <a href="/site/pages/login/index.html" class="menu-mobile-usuario">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              Login/Cadastrar
-          </a>
-      </div>
+    <div class="menu-mobile-topo">
+      <a href="/site/pages/index.html" class="logo-section"><img src="/site/imgs/logo.png" alt=""></a>
+      <button class="menu-fechar" id="menuFechar" aria-label="Fechar menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+      </button>
+    </div>
+    <ul class="menu-mobile-links">
+      <li><a href="/site/pages/index.html">Home</a></li>
+      <li><a href="/site/pages/produtos/pimentas/index.html">Pimentas</a></li>
+      <li class="dropdown-mobile">
+        <button class="dropdown-mobile-btn">Produtos naturais <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        <ul class="submenu-mobile">
+          <li><a href="/site/pages/produtos/produtosNaturais/farinhas/index.html">Farinhas</a></li>
+          <li><a href="/site/pages/produtos/produtosNaturais/castanhas/index.html">Castanhas</a></li>
+        </ul>
+      </li>
+      <li><a href="/site/pages/produtos/temperos/index.html">Temperos</a></li>
+      <li><a href="/site/pages/produtos/outro/index.html">Outros</a></li>
+      <li><a href="/site/pages/sobre/index.html">Sobre</a></li>
+      <li><a href="/site/pages/pedidos/index.html">Meus Pedidos</a></li>
+      <li><a href="/site/pages/conta/index.html">Minha Conta</a></li>
+    </ul>
+    <div class="menu-mobile-footer">
+      <a href="/site/pages/login/index.html" class="menu-mobile-usuario" id="mobileUsuario">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        Login/Cadastrar
+      </a>
+    </div>
   </nav>
   <div class="overlay-mobile" id="overlayMobile"></div>
 
   <main>
-    <div class="conta-container">
-
-      <!-- Cabeçalho com avatar e nome -->
-      <div class="conta-header">
-        <div class="conta-avatar" id="contaAvatar">?</div>
-        <div class="conta-header-info">
-          <h1 id="nomeUsuario">Carregando...</h1>
-          <p id="emailUsuario"></p>
-        </div>
+    <div class="pedidos-container">
+      <div class="pedidos-header">
+        <h1>Meus Pedidos</h1>
       </div>
-
-      <!-- Card: informações da conta -->
-      <div class="conta-card">
-        <h2>Informações da conta</h2>
-
-        <div class="campo-conta">
-          <label for="inputNome">Nome</label>
-          <input type="text" id="inputNome" placeholder="Seu nome">
-        </div>
-
-        <div class="campo-conta">
-          <label for="email">Email</label>
-          <input type="email" id="email" readonly>
-        </div>
-
-        <div class="campo-conta">
-          <label for="telefone">Telefone</label>
-          <input type="tel" id="telefone" placeholder="(00) 00000-0000">
-        </div>
-
-        <div class="campo-conta">
-          <label for="cep">CEP</label>
-          <input type="text" id="cep" placeholder="00000-000">
-          <span class="info-cep" id="infoCep"></span>
-        </div>
-
-        <div class="campo-conta">
-          <label for="endereco">Endereço</label>
-          <input type="text" id="endereco" placeholder="Rua, número">
-        </div>
-
-        <div class="campo-conta">
-          <label for="bairro">Bairro</label>
-          <input type="text" id="bairro" placeholder="Seu bairro">
-        </div>
-
-        <div class="campo-conta">
-          <label for="cidade">Cidade</label>
-          <input type="text" id="cidade" placeholder="Sua cidade">
-        </div>
-
-        <div class="campo-conta">
-          <label for="estado">Estado</label>
-          <input type="text" id="estado" placeholder="UF">
-        </div>
-
-        <button class="btn-salvar" id="btnSalvar">Salvar alterações</button>
-        <p class="msg-salvar" id="msgSalvar"></p>
-      </div>
-
-      <!-- Card: ações da conta -->
-      <div class="conta-acoes">
-        <a href="/site/pages/pedidos/index.html" class="btn-acao" style="text-decoration:none;color:inherit;">
-          <span class="icone">📦</span>
-          Meus Pedidos
-        </a>
-        <button class="btn-acao sair" id="btnSair">
-          <span class="icone">↩</span>
-          Sair da conta
-        </button>
-      </div>
-
+      <div id="pedidosLista"></div>
     </div>
   </main>
 
@@ -178,7 +115,7 @@
       <div><img src="/site/imgs/icones/pagamento/pix.png" alt="Pix"></div>
     </section>
 
-    <p>© Copyright Casa Só Pimenta BH - 2026 - Todos os direitos reservados</p>
+    <p>&copy; Copyright Casa Só Pimenta BH - 2026 - Todos os direitos reservados</p>
   </footer>
 
   <div class="carrinho-overlay" id="carrinhoOverlay"></div>
@@ -203,12 +140,12 @@
   </aside>
 
   <script src="/site/assets/js/config.js"></script>
-  <script type="module" src="/site/assets/js/carrinho.js"></script>
   <script src="/site/assets/js/header.js"></script>
-  <script type="module" src="/site/assets/js/conta.js"></script>
+  <script type="module" src="/site/assets/js/carrinho.js"></script>
+  <script src="/site/assets/js/pedidos.js"></script>
   <script type="module" src="/site/assets/js/auth.js"></script>
-<script src="/site/assets/js/site-settings.js"></script>
-    <script src="/site/assets/js/mobile.js"></script>
+  <script src="/site/assets/js/site-settings.js"></script>
+  <script src="/site/assets/js/mobile.js"></script>
 </body>
 
 </html>

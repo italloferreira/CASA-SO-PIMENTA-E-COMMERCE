@@ -5,6 +5,7 @@ import {
   listOrders,
   getOrderById,
   getMyOrders,
+  getMyOrderById,
   updateOrderStatus,
   confirmPickup
 } from '../controllers/orderController.js';
@@ -18,6 +19,7 @@ const router = Router();
 
 router.post('/', optionalAuth, orderLimiter, createOrder);
 router.get('/my', authMiddleware, getMyOrders);
+router.get('/my/:id', authMiddleware, getMyOrderById);
 router.get('/', authMiddleware, adminMiddleware, listOrders);
 router.get('/:id', authMiddleware, adminMiddleware, getOrderById);
 router.patch('/:id/status', authMiddleware, adminMiddleware, updateOrderStatus);
