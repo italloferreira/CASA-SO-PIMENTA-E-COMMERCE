@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import categoryRoutes from './routes/categoryRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
@@ -88,6 +90,12 @@ app.use('/api/melhor-envio', melhorEnvioRoutes);
 app.use('/api/cart', cartRoutes);
 
 app.get('/api/config/mp-key', getMpPublicKey);
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const siteDir = path.resolve(__dirname, '../../site');
+
+app.use('/site', helmet({ contentSecurityPolicy: false }));
+app.use('/site', express.static(siteDir, { index: 'index.html' }));
 
 app.get('/', (req, res) => {
   res.json({

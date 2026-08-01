@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Casa SÃ³ Pimenta / Checkout</title>
+  <title>Casa Só Pimenta / Checkout</title>
   <link rel="icon" type="image/png" href="/site/imgs/logo.png">
   <link rel="stylesheet" href="/site/assets/css/checkout.css">
 </head>
@@ -86,11 +86,11 @@
   <main>
     <div class="checkout-container" id="checkoutContainer">
 
-      <!-- TELA DE CONFIRMAÃ‡ÃƒO (oculta inicialmente) -->
+      <!-- TELA DE CONFIRMAÇÃO (oculta inicialmente) -->
       <div class="checkout-confirmacao" id="checkoutConfirmacao" style="display:none;">
         <div class="confirmacao-icon">&#10004;</div>
         <h1>Pedido #<span id="confirmacaoPedidoId"></span> confirmado!</h1>
-        <p class="confirmacao-subtitle">Seu pedido foi recebido e estÃ¡ sendo processado.</p>
+        <p class="confirmacao-subtitle">Seu pedido foi recebido e está sendo processado.</p>
 
         <div class="confirmacao-detalhes">
           <div class="confirmacao-info">
@@ -118,26 +118,26 @@
           </div>
           <div class="pix-copia-cola">
             <input type="text" id="pixCopiaCola" readonly style="width:100%;padding:8px;border:1px solid var(--cor-cinza-borda);border-radius:4px;font-size:12px;margin-bottom:8px;">
-            <button class="btn-copiar" onclick="copiarChavePix()">Copiar cÃ³digo</button>
+            <button class="btn-copiar" onclick="copiarChavePix()">Copiar código</button>
           </div>
-          <p style="margin-top:12px;font-size:13px;color:var(--cor-cinza-texto-secundario);">ApÃ³s o pagamento, a confirmaÃ§Ã£o Ã© automÃ¡tica.</p>
+          <p style="margin-top:12px;font-size:13px;color:var(--cor-cinza-texto-secundario);">Após o pagamento, a confirmação é automática.</p>
         </div>
 
         <div class="confirmacao-cartao" id="confirmacaoCartao" style="display:none;">
-          <p style="margin-bottom:8px;">Pagamento aprovado via cartÃ£o de crÃ©dito.</p>
+          <p style="margin-bottom:8px;">Pagamento aprovado via cartão de crédito.</p>
           <p id="confirmacaoCartaoDetalhes" style="font-size:14px;color:var(--cor-cinza-texto-secundario);"></p>
         </div>
 
         <div class="confirmacao-whatsapp" id="confirmacaoWhatsApp" style="display:none;">
           <div class="whatsapp-card">
-            <h3>ðŸ“± Combine a entrega pelo WhatsApp</h3>
+            <h3>📱 Combine a entrega pelo WhatsApp</h3>
             <p style="margin-top:8px;font-size:14px;color:var(--cor-cinza-texto-secundario);">
-              VocÃª escolheu <strong>combinar o frete com o vendedor</strong>.
+              Você escolheu <strong>combinar o frete com o vendedor</strong>.
               Entre em contato pelo WhatsApp para acertar os detalhes da entrega.
-              Tenha em mÃ£os o nÃºmero do pedido <strong>#<span id="whatsappPedidoId"></span></strong>.
+              Tenha em mãos o número do pedido <strong>#<span id="whatsappPedidoId"></span></strong>.
             </p>
             <p style="margin-top:4px;font-size:13px;color:var(--cor-cinza-texto-secundario);">
-              âš¡ Apenas para <strong>Belo Horizonte</strong> â€” O pagamento do frete Ã© feito direto com o vendedor.
+              ⚡ Apenas para <strong>Belo Horizonte</strong> — O pagamento do frete é feito direto com o vendedor.
             </p>
             <a id="whatsappLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
               Falar no WhatsApp
@@ -148,7 +148,7 @@
         <a href="/site/pages/index.html" class="btn-continuar">Continuar comprando</a>
       </div>
 
-      <!-- FORMULÃRIO DE CHECKOUT -->
+      <!-- FORMULÁRIO DE CHECKOUT -->
       <div class="checkout-form" id="checkoutForm">
         <h1 class="checkout-titulo">Finalizar pedido</h1>
 
@@ -156,7 +156,7 @@
         <div class="checkout-steps">
           <div class="step-item ativo" data-step="1">
             <div class="step-circle">1</div>
-            <span class="step-label">IdentificaÃ§Ã£o</span>
+            <span class="step-label">Identificação</span>
           </div>
           <div class="step-line"></div>
           <div class="step-item" data-step="2">
@@ -170,15 +170,15 @@
           </div>
         </div>
 
-        <!-- CONTEÃšDO DO CHECKOUT (2 colunas) -->
+        <!-- CONTEÚDO DO CHECKOUT (2 colunas) -->
         <div class="checkout-layout">
-          <!-- COLUNA ESQUERDA: FORMULÃRIO -->
+          <!-- COLUNA ESQUERDA: FORMULÁRIO -->
           <div class="checkout-form-col">
 
-            <!-- ETAPA 1: IdentificaÃ§Ã£o -->
+            <!-- ETAPA 1: Identificação -->
             <div class="checkout-panel ativo" id="etapa1">
               <div class="panel-header">
-                <h2>1. IdentificaÃ§Ã£o</h2>
+                <h2>1. Identificação</h2>
                 <div class="panel-seguro">&#128274; Dados da sua conta</div>
               </div>
               <div class="panel-body">
@@ -234,14 +234,14 @@
                     <div class="delivery-radio" id="deliveryRadioPickup"></div>
                     <div class="delivery-info">
                       <strong>Retirar na loja</strong>
-                      <span>GrÃ¡tis</span>
+                      <span>Grátis</span>
                     </div>
                   </div>
                   <div class="delivery-option" data-delivery="negotiate" onclick="selecionarTipoEntrega('negotiate')">
                     <div class="delivery-radio" id="deliveryRadioNegotiate"></div>
                     <div class="delivery-info">
                       <strong>Combinar frete</strong>
-                      <span>SÃ³ BH Â· Frete a combinar</span>
+                      <span>Só BH · Frete a combinar</span>
                     </div>
                   </div>
                 </div>
@@ -258,15 +258,15 @@
                   </div>
 
                   <div class="campo-grupo">
-                    <label for="inputEndereco">EndereÃ§o *</label>
+                    <label for="inputEndereco">Endereço *</label>
                     <input type="text" id="inputEndereco" placeholder="Rua, Avenida..." readonly>
                     <span class="campo-erro" id="erroEndereco"></span>
                   </div>
 
                   <div class="campo-row">
                     <div class="campo-grupo campo-pequeno">
-                      <label for="inputNumero">NÃºmero *</label>
-                      <input type="text" id="inputNumero" placeholder="NÂº">
+                      <label for="inputNumero">Número *</label>
+                      <input type="text" id="inputNumero" placeholder="Nº">
                       <span class="campo-erro" id="erroNumero"></span>
                     </div>
                     <div class="campo-grupo campo-pequeno">
@@ -294,7 +294,7 @@
                   </div>
 
                   <div class="frete-opcoes" id="freteOpcoes" style="display:none;">
-                    <h3>OpÃ§Ãµes de frete</h3>
+                    <h3>Opções de frete</h3>
                     <div id="freteLista"></div>
                     <div id="freteLoading" style="display:none;padding:12px;text-align:center;color:var(--cor-cinza-texto-secundario);">Calculando frete...</div>
                     <div id="freteErro" style="display:none;padding:12px;text-align:center;color:var(--cor-vermelho-primario);"></div>
@@ -303,7 +303,7 @@
 
                 <div id="pickupInfo" style="display:none;">
                   <div class="pickup-card">
-                    <h3>ðŸ“ Retirada na loja</h3>
+                    <h3>📍 Retirada na loja</h3>
                     <p id="storeAddress" data-setting="contact_address" data-setting-fallback="Avenida Augusto de Lima, 744 M4 113, 117 - Centro, Belo Horizonte - MG, 30190-922" style="margin-top:8px;font-size:14px;color:var(--cor-cinza-texto-secundario);">
                       Avenida Augusto de Lima, 744 M4 113, 117 - Centro, Belo Horizonte - MG, 30190-922
                     </p>
@@ -311,21 +311,21 @@
                       Seg a Sab: 08h-18h | Dom: 08h-13h
                     </p>
                     <p style="margin-top:8px;font-size:13px;color:var(--cor-verde-primario);">
-                      âœ… Frete grÃ¡tis â€” Sem custo de entrega
+                      ✅ Frete grátis — Sem custo de entrega
                     </p>
                   </div>
                 </div>
 
                 <div id="negotiateInfo" style="display:none;">
                   <div class="pickup-card">
-                    <h3>ðŸ“¦ Combinar frete com o vendedor</h3>
+                    <h3>📦 Combinar frete com o vendedor</h3>
                     <p style="margin-top:8px;font-size:14px;color:var(--cor-cinza-texto-secundario);">
-                      DisponÃ­vel apenas para entregas em <strong>Belo Horizonte</strong>.
-                      ApÃ³s finalizar a compra, entre em contato pelo WhatsApp para combinar a entrega.
-                      O valor do frete serÃ¡ acertado diretamente com o vendedor.
+                      Disponível apenas para entregas em <strong>Belo Horizonte</strong>.
+                      Após finalizar a compra, entre em contato pelo WhatsApp para combinar a entrega.
+                      O valor do frete será acertado diretamente com o vendedor.
                     </p>
                     <p style="margin-top:12px;font-size:13px;color:var(--cor-verde-primario);">
-                      âœ… Frete grÃ¡tis no pedido â€” O frete Ã© combinado Ã  parte com o vendedor
+                      ✅ Frete grátis no pedido — O frete é combinado à parte com o vendedor
                     </p>
                     <a id="negotiateWhatsappBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn-whatsapp" style="margin-top:16px;display:inline-block;">
                       Falar no WhatsApp
@@ -349,18 +349,18 @@
                     </div>
                     <div class="pagamento-info">
                       <strong>PIX</strong>
-                      <span>AprovaÃ§Ã£o imediata &middot; <span class="desconto-destaque" data-pix-discount>5% de desconto</span></span>
+                      <span>Aprovação imediata &middot; <span class="desconto-destaque" data-pix-discount>5% de desconto</span></span>
                     </div>
                   </div>
 
                   <div class="pagamento-card" data-metodo="cartao" onclick="selecionarPagamento(this)">
                     <div class="pagamento-radio"></div>
                     <div class="pagamento-icon">
-                      <img src="/site/imgs/icones/pagamento/masterCard.jpg" alt="CartÃ£o">
+                      <img src="/site/imgs/icones/pagamento/masterCard.jpg" alt="Cartão">
                     </div>
                     <div class="pagamento-info">
-                      <strong>CartÃ£o de CrÃ©dito</strong>
-                      <span>Em atÃ© 3x sem juros</span>
+                      <strong>Cartão de Crédito</strong>
+                      <span>Em até 3x sem juros</span>
                     </div>
                   </div>
 
@@ -374,22 +374,22 @@
                   </div>
                   <div class="pix-copia-cola">
                     <span id="pixCodigoForm">00020126580014br.gov.bcb.pix0136a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8f9204081234565204000053039865406123.005802BR5913Casa So Pimenta6009SAOPAULO62070503***63041234</span>
-                    <button class="btn-copiar" onclick="copiarChavePix()">Copiar cÃ³digo</button>
+                    <button class="btn-copiar" onclick="copiarChavePix()">Copiar código</button>
                   </div>
                 </div>
 
-                <!-- CartÃ£o detalhes -->
+                <!-- Cartão detalhes -->
                 <div class="pagamento-detalhes" id="detalhesCartao" style="display:none;">
                   <form id="form-checkout">
                     <div class="campo-grupo">
-                      <label for="form-checkout__cardNumber">NÃºmero do cartÃ£o *</label>
+                      <label for="form-checkout__cardNumber">Número do cartão *</label>
                       <div id="form-checkout__cardNumber" class="mp-input"></div>
                       <span class="campo-erro" id="erroCartaoNumero"></span>
                     </div>
 
                     <div class="campo-grupo">
-                      <label for="form-checkout__cardholderName">Nome no cartÃ£o *</label>
-                      <input id="form-checkout__cardholderName" class="mp-input" type="text" placeholder="Nome como no cartÃ£o" />
+                      <label for="form-checkout__cardholderName">Nome no cartão *</label>
+                      <input id="form-checkout__cardholderName" class="mp-input" type="text" placeholder="Nome como no cartão" />
                       <span class="campo-erro" id="erroCartaoNome"></span>
                     </div>
 
@@ -421,7 +421,7 @@
                     </div>
 
                     <div class="campo-grupo" style="display:none;">
-                      <label for="form-checkout__identificationNumber">NÃºmero do documento</label>
+                      <label for="form-checkout__identificationNumber">Número do documento</label>
                       <input type="text" id="form-checkout__identificationNumber" class="mp-input">
                     </div>
 
@@ -435,10 +435,10 @@
               </div>
             </div>
 
-            <!-- NAVEGAÃ‡ÃƒO ENTRE ETAPAS -->
+            <!-- NAVEGAÇÃO ENTRE ETAPAS -->
             <div class="checkout-navegacao">
               <button class="btn-voltar-etapa" id="btnVoltarEtapa" onclick="etapaAnterior()" style="display:none;">&larr; Voltar</button>
-              <button class="btn-proxima-etapa" id="btnProximaEtapa" onclick="proximaEtapa()">PrÃ³xima etapa</button>
+              <button class="btn-proxima-etapa" id="btnProximaEtapa" onclick="proximaEtapa()">Próxima etapa</button>
             </div>
 
           </div>
@@ -459,7 +459,7 @@
                 </div>
                 <div class="resumo-linha">
                   <span>Frete</span>
-                  <span id="resumoFrete">â€” Selecione o CEP</span>
+                  <span id="resumoFrete">— Selecione o CEP</span>
                 </div>
                 <div class="resumo-linha" id="resumoDescontoLinha" style="display:none;">
                   <span>Desconto PIX (-5%)</span>
@@ -501,7 +501,7 @@
               </button>
               <label class="consent-checkbox">
                 <input type="checkbox" id="consentLGPD">
-                <span>Li e concordo com os <a href="/site/pages/termos/index.html" target="_blank">Termos de Uso</a> e a <a href="/site/pages/privacidade/index.html" target="_blank">PolÃ­tica de Privacidade</a></span>
+                <span>Li e concordo com os <a href="/site/pages/termos/index.html" target="_blank">Termos de Uso</a> e a <a href="/site/pages/privacidade/index.html" target="_blank">Política de Privacidade</a></span>
               </label>
             </div>
           </div>
@@ -520,9 +520,9 @@
 
     <ul class="navegacao-section">
       <a href="https://www.google.com/search?q=casa+so+pimenta&oq=casa+so+pimenta&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIJCAEQABgNGIAEMggIAhAAGBYYHjIICAMQABgWGB4yCAgEEAAYFhgeMgYIBRBFGDwyBggGEEUYPDIGCAcQRRg80gEINTIwNWowajeoAgCwAgA&sourceid=chrome&source=chrome.ob&ie=UTF-8" target="_blank" rel="noopener noreferrer"><li>Onde estamos?</li></a>
-      <a href="/site/pages/troca-e-devolucao/index.html"><li>Troca e DevoluÃ§Ãµes</li></a>
+      <a href="/site/pages/troca-e-devolucao/index.html"><li>Troca e Devoluções</li></a>
       <a href="/site/pages/termos/index.html"><li>Termos de Uso</li></a>
-      <a href="/site/pages/privacidade/index.html"><li>PolÃ­tica de Privacidade</li></a>
+      <a href="/site/pages/privacidade/index.html"><li>Política de Privacidade</li></a>
     </ul>
 
     <section class="pagamentos-section">
@@ -532,7 +532,7 @@
       <div><img src="/site/imgs/icones/pagamento/pix.png" alt="Pix"></div>
     </section>
 
-    <p>&copy; Copyright Casa SÃ³ Pimenta BH - 2026 - Todos os direitos reservados</p>
+    <p>&copy; Copyright Casa Só Pimenta BH - 2026 - Todos os direitos reservados</p>
   </footer>
 
   <!-- Carrinho lateral -->

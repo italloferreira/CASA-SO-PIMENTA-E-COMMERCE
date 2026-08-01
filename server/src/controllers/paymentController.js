@@ -48,8 +48,29 @@ async function createOrder(body) {
   return data;
 }
 
+function traduzirErroMP(err) {
+  const data = err.cause?.[0] || err.data || {};
+  const raw = data.description || data.message || err.message || '';
+  const map = {
+    'invalid users involved': 'Credenciais do Mercado Pago inválidas ou incompatíveis.',
+    'el pago no puede ser aprobado': 'O pagamento não pôde ser aprovado.',
+    'payment cannot be approved': 'O pagamento não pôde ser aprovado.',
+    'invalid card token': 'Token do cartão inválido. Refresque a página e tente novamente.',
+    'transaction_amount must be greater than 0': 'Valor do pedido é inválido para pagamento.',
+    'payment_method_id: value is required': 'Bandeira do cartão não reconhecida.',
+    'issuer_id: value is required': 'Bandeira do cartão não reconhecida.',
+    'unexpected error': 'Erro inesperado ao processar o pagamento. Tente novamente.',
+    'unauthorized': 'Não autorizado. Verifique as credenciais do Mercado Pago.'
+  };
+  const lower = String(raw).toLowerCase();
+  for (const [key, value] of Object.entries(map)) {
+    if (lower.includes(key)) return value;
+  }
+  return raw || 'Erro ao processar pagamento com cartão.';
+}
+
 export async function processCard(req, res) {
-  const { orderId, token, installments, paymentMethodId, email, cpf, device_id, registration_date } = req.body;
+  const { orderId, token, installments, paymentMethodId, issuerId, email, cpf, device_id, registration_date } = req.body;
 
   if (!orderId || !token || !installments || !email || !cpf) {
     return res.status(400).json({ message: 'Dados incompletos para pagamento com cartão.' });
@@ -64,6 +85,10 @@ export async function processCard(req, res) {
 
     if (order.user_id && req.user && order.user_id !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Acesso negado. Este pedido não pertence ao seu usuário.' });
+    }
+
+    if (!Number(order.total) || Number(order.total) <= 0) {
+      return res.status(400).json({ message: 'Valor do pedido é inválido para pagamento.' });
     }
 
     const orderItems = await pool.query(
@@ -102,6 +127,7 @@ export async function processCard(req, res) {
       token,
       installments: parseInt(installments),
       payment_method_id: paymentMethodId || undefined,
+      issuer_id: issuerId || undefined,
       statement_descriptor: 'CASA SO PIMENTA',
       description: 'Casa So Pimenta - Pedido #' + String(orderId),
       payer: {
@@ -170,9 +196,7 @@ export async function processCard(req, res) {
     });
   } catch (err) {
     console.error('Erro processCard:', err);
-    const data = err.cause?.[0] || err.data || {};
-    const message = data.description || data.message || err.message || 'Erro ao processar pagamento com cartão.';
-    res.status(err.status || 500).json({ message });
+    res.status(err.status || 500).json({ message: traduzirErroMP(err) });
   }
 }
 

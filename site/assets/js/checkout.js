@@ -409,6 +409,7 @@ window.aplicarCupom = function () {
       btn.textContent = 'Remover';
       btn.onclick = removerCupom;
       atualizarResumo();
+      sincronizarCardFormComTotal();
     })
     .catch(function (err) {
       cupomAplicado = null;
@@ -432,6 +433,7 @@ function removerCupom() {
   btn.textContent = 'Aplicar';
   btn.onclick = aplicarCupom;
   atualizarResumo();
+  sincronizarCardFormComTotal();
 }
 
 window.selecionarFrete = function (el) {
@@ -446,6 +448,7 @@ window.selecionarFrete = function (el) {
     box: el.getAttribute('data-box')
   };
   atualizarResumo();
+  sincronizarCardFormComTotal();
 };
 
 function validarEtapa2() {
@@ -498,6 +501,7 @@ window.selecionarPagamento = function (el) {
     } else {
       cardForm.unmount();
       cardForm.mount();
+      cardFormMountedAmount = getTotalFinal();
     }
   }
 
@@ -549,6 +553,7 @@ window.proximaEtapa = function () {
     document.getElementById('btnConfirmarPedido').disabled = false;
     setTimeout(function () {
       if (metodoPagamento === 'cartao' && cardForm) {
+        cardFormMountedAmount = getTotalFinal();
         cardForm.mount();
       }
     }, 100);
@@ -827,7 +832,12 @@ window.enviarPagamentoCartao = async function (dados) {
   mostrarLoading(true);
   try {
     var deviceId = '';
-    try { deviceId = mp.getDeviceId(); } catch (e) {}
+    try {
+      var d = MercadoPago.getDeviceId();
+      deviceId = d && typeof d.then === 'function' ? await d : d;
+    } catch (e) {
+      deviceId = '';
+    }
     var regDate = dados.registration_date || '';
     var body = Object.assign({ orderId: pedidoCriado.id, device_id: deviceId }, dados);
     if (regDate) body.registration_date = regDate;
@@ -1026,6 +1036,17 @@ function inicializarMercadoPago() {
 
 var cardBin = '';
 var cardPaymentMethodId = '';
+var cardFormMountedAmount = 0;
+
+function sincronizarCardFormComTotal() {
+  if (metodoPagamento !== 'cartao' || !cardForm || etapaAtual !== 3) return;
+  var novoTotal = getTotalFinal();
+  if (cardFormMountedAmount !== novoTotal) {
+    cardFormMountedAmount = novoTotal;
+    cardForm.unmount();
+    cardForm.mount();
+  }
+}
 
 function detectPaymentMethodId(bin) {
   if (!bin || bin.length < 3) return '';
@@ -1122,6 +1143,7 @@ function iniciarCardForm() {
   };
 
   cardForm = mp.cardForm(cardFormOptions);
+  cardFormMountedAmount = total;
 }
 
 function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
@@ -1205,7 +1227,7 @@ function criarPedidoESubmeterCartao(formData, email, cpf, pmId) {
         issuerId: formData.issuerId,
         email: email,
         cpf: cpf,
-        amount: total,
+        amount: Number(data.order.total) || total,
         registration_date: dadosPerfil && dadosPerfil.created_at ? dadosPerfil.created_at : ''
       });
     })
