@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Carrega perfil completo da API */
   fetch(API_BASE + '/api/auth/profile', {
+    headers: getAuthHeaders(),
     credentials: 'include'
   })
     .then(function (r) { return r.json(); })
