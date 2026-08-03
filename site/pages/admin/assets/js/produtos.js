@@ -8,6 +8,7 @@ let categories = [];
 let currentPage = 1;
 const PER_PAGE = 10;
 let deleteTargetId = null;
+let productImages = [];
 
 /* --- Transliterate slug --- */
 function slugify(text) {
@@ -131,20 +132,17 @@ function openDrawer(product) {
     document.getElementById('prodWeight').value = product.weight || '';
     document.getElementById('prodActive').checked = product.is_active !== false;
     document.getElementById('prodFeatured').checked = product.is_featured === true;
-    if (product.image_url) {
-      document.getElementById('prodImageUrl').value = product.image_url;
-      var preview = document.getElementById('prodImagePreview');
-      preview.src = imageUrl(product.image_url);
-      preview.style.display = 'block';
-    } else {
-      document.getElementById('prodImageUrl').value = '';
-      document.getElementById('prodImagePreview').style.display = 'none';
-    }
+    productImages = (product.images && product.images.length)
+      ? product.images.slice()
+      : (product.image_url ? [product.image_url] : []);
+    document.getElementById('prodImageUrl').value = productImages[0] || '';
+    renderImagePreview();
   } else {
     document.getElementById('productForm').reset();
     document.getElementById('productId').value = '';
+    productImages = [];
     document.getElementById('prodImageUrl').value = '';
-    document.getElementById('prodImagePreview').style.display = 'none';
+    renderImagePreview();
     document.getElementById('prodWeight').value = '';
     document.getElementById('prodActive').checked = true;
     document.getElementById('prodFeatured').checked = false;
@@ -171,27 +169,61 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-/* --- Image upload --- */
+/* --- Image upload (múltiplas imagens) --- */
+function renderImagePreview() {
+  var container = document.getElementById('prodImagesPreview');
+  if (!container) return;
+  document.getElementById('prodImageUrl').value = productImages[0] || '';
+
+  if (productImages.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = productImages.map(function (url, index) {
+    return '<div class="prod-image-thumb' + (index === 0 ? ' principal' : '') + '">' +
+      (index === 0 ? '<span class="thumb-badge">Principal</span>' : '') +
+      '<img src="' + imageUrl(url) + '" alt="Imagem ' + (index + 1) + '">' +
+      '<button type="button" class="thumb-remove" title="Remover imagem" data-index="' + index + '">✕</button>' +
+      (index !== 0 ? '<button type="button" class="thumb-main" title="Definir como principal" data-main="' + index + '">Tornar principal</button>' : '') +
+      '</div>';
+  }).join('');
+
+  container.querySelectorAll('.thumb-remove').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      productImages.splice(Number(btn.dataset.index), 1);
+      renderImagePreview();
+    });
+  });
+  container.querySelectorAll('.thumb-main').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var index = Number(btn.dataset.main);
+      var url = productImages.splice(index, 1)[0];
+      productImages.unshift(url);
+      renderImagePreview();
+    });
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
-  document.getElementById('prodImageInput').addEventListener('change', async function (e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    console.log('Upload iniciado:', file.name, file.size);
-    var formData = new FormData();
-    formData.append('image', file);
-    try {
-      console.log('Enviando upload...');
-      var result = await apiRequest('POST', '/api/uploads', formData, true);
-      console.log('Upload resposta:', result);
-      document.getElementById('prodImageUrl').value = result.image_url;
-      var preview = document.getElementById('prodImagePreview');
-      preview.src = imageUrl(result.image_url);
-      preview.style.display = 'block';
-      console.log('Preview atualizado');
-    } catch (err) {
-      console.error('Upload erro:', err);
-      showToast(err.message || 'Erro ao fazer upload da imagem.', 'error');
+  document.getElementById('prodImagesInput').addEventListener('change', async function (e) {
+    var files = Array.prototype.slice.call(e.target.files);
+    if (files.length === 0) return;
+
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      var formData = new FormData();
+      formData.append('image', file);
+      try {
+        var result = await apiRequest('POST', '/api/uploads', formData, true);
+        productImages.push(result.image_url);
+        renderImagePreview();
+      } catch (err) {
+        console.error('Upload erro:', err);
+        showToast(err.message || 'Erro ao fazer upload da imagem "' + file.name + '".', 'error');
+      }
     }
+    e.target.value = '';
   });
 });
 
@@ -210,7 +242,8 @@ document.addEventListener('DOMContentLoaded', function () {
       description: document.getElementById('prodDescription').value.trim(),
       ingredients: document.getElementById('prodIngredients').value.trim(),
       weight: document.getElementById('prodWeight').value ? Number(document.getElementById('prodWeight').value) : 0,
-      image_url: document.getElementById('prodImageUrl').value || null,
+      image_url: productImages[0] || null,
+      images: productImages,
       is_active: document.getElementById('prodActive').checked,
       is_featured: document.getElementById('prodFeatured').checked
     };

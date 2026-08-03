@@ -37,6 +37,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const btnLogin    = document.querySelector("#login .btn");
   const btnCadastro = document.querySelector("#cadastro .btn");
 
+  const pageParams = new URLSearchParams(window.location.search);
+  if (pageParams.get('expired') === '1') {
+    mostrarErro("login", "Sua sessão expirou. Faça login novamente para continuar.");
+  }
+
   /* LOGIN EMAIL/SENHA */
   btnLogin.addEventListener("click", function (e) {
     e.preventDefault();

@@ -207,6 +207,46 @@ main {
   display: block;
 }
 
+/* Galeria */
+.produto-galeria {
+  flex: 1;
+  max-width: 480px;
+}
+
+.produto-galeria-miniaturas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.produto-miniatura {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: transparent;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+
+.produto-miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.produto-miniatura:hover {
+  opacity: 0.8;
+}
+
+.produto-miniatura.ativa {
+  border-color: var(--cor-vermelho-primario);
+}
+
 /* Info */
 .produto-detalhe-info {
   flex: 1;
@@ -698,6 +738,10 @@ footer p {
   }
 
   .produto-detalhe-img {
+    max-width: 100%;
+  }
+
+  .produto-galeria {
     max-width: 100%;
   }
 

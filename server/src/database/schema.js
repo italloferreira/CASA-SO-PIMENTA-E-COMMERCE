@@ -30,6 +30,15 @@ export async function createTables() {
       FOREIGN KEY (category_id) REFERENCES categories(id)
     );
 
+    CREATE TABLE IF NOT EXISTS product_images (
+      id SERIAL PRIMARY KEY,
+      product_id INTEGER NOT NULL,
+      image_url TEXT NOT NULL,
+      position INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS banners (
       id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
@@ -351,6 +360,7 @@ export async function createTables() {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_product_images_product_id ON product_images(product_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(is_active)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_is_featured ON products(is_featured)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)`);

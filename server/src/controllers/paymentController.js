@@ -196,6 +196,12 @@ export async function processCard(req, res) {
     });
   } catch (err) {
     console.error('Erro processCard:', err);
+    const cause = err.cause && err.cause[0] ? err.cause[0] : null;
+    if (cause) {
+      console.error('MP card error -> status:', err.status, '| code:', cause.code || err.error || '', '| description:', cause.description || '', '| message:', cause.message || '');
+    } else {
+      console.error('MP card error -> status:', err.status, '| error:', err.error || '', '| message:', err.message || '');
+    }
     res.status(err.status || 500).json({ message: traduzirErroMP(err) });
   }
 }

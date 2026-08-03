@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.title = 'Casa Só Pimenta / ' + produto.name;
 
     const imgSrc = imgUrl(produto.image_url);
+    const imagens = (produto.images && produto.images.length) ? produto.images : [produto.image_url];
 
     const ingredientes = produto.ingredients
       ? produto.ingredients.split(',').map(function (i) { return i.trim(); })
@@ -27,8 +28,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     container.innerHTML = `
       <div class="produto-detalhe-card">
-        <div class="produto-detalhe-img">
-          <img src="${imgSrc}" alt="${escHtml(produto.name)}">
+        <div class="produto-galeria">
+          <div class="produto-detalhe-img">
+            <img id="produtoImagemPrincipal" src="${imgSrc}" alt="${escHtml(produto.name)}">
+          </div>
+
+          ${imagens.length > 1 ? `
+          <div class="produto-galeria-miniaturas">
+            ${imagens.map(function (url, i) {
+              return '<button type="button" class="produto-miniatura' + (i === 0 ? ' ativa' : '') + '" data-img="' + i + '"><img src="' + imgUrl(url) + '" alt="' + escHtml(produto.name) + '"></button>';
+            }).join('')}
+          </div>
+          ` : ''}
         </div>
 
         <div class="produto-detalhe-info">
@@ -75,6 +86,20 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
     `;
 
+    var miniaturas = container.querySelectorAll('.produto-miniatura');
+    for (var m = 0; m < miniaturas.length; m++) {
+      (function (btn, index) {
+        btn.addEventListener('click', function () {
+          var principal = document.getElementById('produtoImagemPrincipal');
+          if (!principal) return;
+          principal.src = imgUrl(imagens[index]);
+          var ativas = container.querySelectorAll('.produto-miniatura.ativa');
+          for (var k = 0; k < ativas.length; k++) ativas[k].classList.remove('ativa');
+          btn.classList.add('ativa');
+        });
+      })(miniaturas[m], m);
+    }
+
     window._produtoAtual = {
       id: produto.id,
       nome: produto.name,
@@ -84,8 +109,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   }
 
-  const chaveCache = 'produto_v2_' + produtoId + '_cache';
-  const chaveTempo = 'produto_v2_' + produtoId + '_timestamp';
+  const chaveCache = 'produto_v3_' + produtoId + '_cache';
+  const chaveTempo = 'produto_v3_' + produtoId + '_timestamp';
   const tempoAgora = Date.now();
   const tempoValidade = 5 * 60 * 1000;
 

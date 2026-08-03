@@ -40,7 +40,13 @@ export async function listProducts(req, res) {
       SELECT
         products.*,
         categories.name AS category_name,
-        categories.slug AS category_slug
+        categories.slug AS category_slug,
+        COALESCE(
+          (SELECT json_agg(pi.image_url ORDER BY pi.position ASC, pi.id ASC)
+           FROM product_images pi
+           WHERE pi.product_id = products.id),
+          '[]'
+        ) AS images
       FROM products
       LEFT JOIN categories ON categories.id = products.category_id
       ${whereClause}
@@ -78,6 +84,15 @@ export async function getProductById(req, res) {
       });
     }
 
+    const imagesResult = await pool.query(`
+      SELECT image_url
+      FROM product_images
+      WHERE product_id = $1
+      ORDER BY position ASC, id ASC
+    `, [id]);
+
+    product.images = imagesResult.rows.map(function (row) { return row.image_url; });
+
     res.json(product);
   } catch (err) {
     console.error('Erro ao buscar produto:', err);
@@ -98,6 +113,7 @@ export async function createProduct(req, res) {
       stock,
       weight,
       image_url,
+      images,
       is_active,
       is_featured
     } = req.body;
@@ -108,32 +124,56 @@ export async function createProduct(req, res) {
       });
     }
 
-    const result = await pool.query(`
-      INSERT INTO products (
-        category_id, name, slug, description, ingredients,
-        price, compare_price, stock, weight, image_url, is_active, is_featured
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      RETURNING id
-    `, [
-      category_id || null,
-      name,
-      slug,
-      description || null,
-      ingredients || null,
-      Number(price),
-      compare_price ? Number(compare_price) : null,
-      stock === true || stock === 1 || stock === '1' || stock === 'true',
-      Number(weight || 0),
-      image_url || null,
-      is_active !== false ? 1 : 0,
-      is_featured ? 1 : 0
-    ]);
+    const imageList = Array.isArray(images) ? images.filter(Boolean) : [];
+    const coverUrl = imageList.length > 0 ? imageList[0] : (image_url || null);
 
-    res.status(201).json({
-      id: result.rows[0].id,
-      message: 'Produto criado com sucesso.'
-    });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const result = await client.query(`
+        INSERT INTO products (
+          category_id, name, slug, description, ingredients,
+          price, compare_price, stock, weight, image_url, is_active, is_featured
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING id
+      `, [
+        category_id || null,
+        name,
+        slug,
+        description || null,
+        ingredients || null,
+        Number(price),
+        compare_price ? Number(compare_price) : null,
+        stock === true || stock === 1 || stock === '1' || stock === 'true',
+        Number(weight || 0),
+        coverUrl,
+        is_active !== false ? 1 : 0,
+        is_featured ? 1 : 0
+      ]);
+
+      const productId = result.rows[0].id;
+
+      for (let i = 0; i < imageList.length; i++) {
+        await client.query(`
+          INSERT INTO product_images (product_id, image_url, position)
+          VALUES ($1, $2, $3)
+        `, [productId, imageList[i], i]);
+      }
+
+      await client.query('COMMIT');
+
+      res.status(201).json({
+        id: productId,
+        message: 'Produto criado com sucesso.'
+      });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error('Erro ao criar produto:', err);
     res.status(500).json({ message: 'Erro ao criar produto.' });
@@ -155,52 +195,82 @@ export async function updateProduct(req, res) {
       stock,
       weight,
       image_url,
+      images,
       is_active,
       is_featured
     } = req.body;
 
-    const result = await pool.query(`
-      UPDATE products
-      SET
-        category_id = $1,
-        name = $2,
-        slug = $3,
-        description = $4,
-        ingredients = $5,
-        price = $6,
-        compare_price = $7,
-        stock = $8,
-        weight = $9,
-        image_url = $10,
-        is_active = $11,
-        is_featured = $12,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = $13
-    `, [
-      category_id || null,
-      name,
-      slug,
-      description || null,
-      ingredients || null,
-      Number(price),
-      compare_price ? Number(compare_price) : null,
-      stock === true || stock === 1 || stock === '1' || stock === 'true',
-      Number(weight || 0),
-      image_url || null,
-      is_active ? 1 : 0,
-      is_featured ? 1 : 0,
-      id
-    ]);
+    const imageList = Array.isArray(images) ? images.filter(Boolean) : null;
+    const coverUrl = imageList !== null && imageList.length > 0
+      ? imageList[0]
+      : (imageList !== null ? null : (image_url || null));
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({
-        message: 'Produto não encontrado.'
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const result = await client.query(`
+        UPDATE products
+        SET
+          category_id = $1,
+          name = $2,
+          slug = $3,
+          description = $4,
+          ingredients = $5,
+          price = $6,
+          compare_price = $7,
+          stock = $8,
+          weight = $9,
+          image_url = $10,
+          is_active = $11,
+          is_featured = $12,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $13
+      `, [
+        category_id || null,
+        name,
+        slug,
+        description || null,
+        ingredients || null,
+        Number(price),
+        compare_price ? Number(compare_price) : null,
+        stock === true || stock === 1 || stock === '1' || stock === 'true',
+        Number(weight || 0),
+        coverUrl,
+        is_active ? 1 : 0,
+        is_featured ? 1 : 0,
+        id
+      ]);
+
+      if (result.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({
+          message: 'Produto não encontrado.'
+        });
+      }
+
+      if (imageList !== null) {
+        await client.query('DELETE FROM product_images WHERE product_id = $1', [id]);
+
+        for (let i = 0; i < imageList.length; i++) {
+          await client.query(`
+            INSERT INTO product_images (product_id, image_url, position)
+            VALUES ($1, $2, $3)
+          `, [id, imageList[i], i]);
+        }
+      }
+
+      await client.query('COMMIT');
+
+      res.json({
+        message: 'Produto atualizado com sucesso.'
       });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
-
-    res.json({
-      message: 'Produto atualizado com sucesso.'
-    });
   } catch (err) {
     console.error('Erro ao atualizar produto:', err);
     res.status(500).json({ message: 'Erro ao atualizar produto.' });
@@ -303,31 +373,5 @@ export async function getProductsStatus(req, res) {
   } catch (err) {
     console.error('Erro ao consultar status dos produtos:', err);
     res.status(500).json({ message: 'Erro ao consultar status dos produtos.' });
-  }
-}
-
-export async function getGalleryProducts(req, res) {
-  try {
-    const { category } = req.query;
-    let query = `
-      SELECT p.id, p.name, p.slug, p.image_url, p.category_id, c.name AS category_name, c.slug AS category_slug
-      FROM products p
-      LEFT JOIN categories c ON c.id = p.category_id
-      WHERE p.is_active = 1 AND p.image_url IS NOT NULL AND p.image_url != ''
-    `;
-    const params = [];
-
-    if (category) {
-      params.push(category);
-      query += ` AND c.slug = $${params.length}`;
-    }
-
-    query += ' ORDER BY p.created_at DESC';
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Erro ao buscar galeria:', err);
-    res.status(500).json({ message: 'Erro ao buscar galeria.' });
   }
 }

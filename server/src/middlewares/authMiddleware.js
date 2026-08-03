@@ -25,7 +25,8 @@ export function authMiddleware(req, res, next) {
     next();
   } catch {
     return res.status(401).json({
-      message: 'Token inválido.'
+      message: 'Sessão expirada. Faça login novamente.',
+      session_expired: true
     });
   }
 }

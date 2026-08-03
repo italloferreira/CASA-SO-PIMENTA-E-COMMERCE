@@ -103,7 +103,7 @@ export async function login(req, res) {
 
   res.cookie('csp_admin_token', token, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000
   });
@@ -127,7 +127,7 @@ export async function login(req, res) {
 export async function logout(req, res) {
   res.clearCookie('csp_admin_token', {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax'
   });
   res.json({ message: 'Sessão encerrada.' });

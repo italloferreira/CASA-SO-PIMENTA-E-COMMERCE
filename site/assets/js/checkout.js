@@ -94,6 +94,11 @@ function mostrarLoading(show) {
   }
 }
 
+function redirecionarSessaoExpirada() {
+  localStorage.removeItem('csp_admin_user');
+  window.location.href = '/site/pages/login/index.html?redirect=checkout&expired=1';
+}
+
 (function () {
   if (!getUsuario()) {
     window.location.href = '/site/pages/login/index.html?redirect=checkout';
@@ -112,8 +117,15 @@ function carregarPerfil() {
     headers: getAuthHeaders(),
     credentials: 'include'
   })
-    .then(function (r) { return r.json(); })
+    .then(function (r) {
+      if (r.status === 401) {
+        redirecionarSessaoExpirada();
+        return null;
+      }
+      return r.json();
+    })
     .then(function (perfil) {
+      if (!perfil) return;
       dadosPerfil = perfil;
       preencherPerfil(perfil);
       preencherEntrega(perfil);
@@ -830,6 +842,7 @@ function processarPagamentoMetodo() {
 
 window.enviarPagamentoCartao = async function (dados) {
   mostrarLoading(true);
+  isSubmitting = true;
   try {
     var deviceId = '';
     try {
@@ -849,6 +862,10 @@ window.enviarPagamentoCartao = async function (dados) {
     var data = await res.json();
 
     if (!res.ok) {
+      if (res.status === 401 || data.session_expired) {
+        redirecionarSessaoExpirada();
+        return;
+      }
       console.error('Server error:', data);
       throw new Error(data.message || 'Erro ao processar pagamento.');
     }
@@ -887,7 +904,13 @@ async function enviarPagamentoPix() {
     });
     var data = await res.json();
 
-    if (!res.ok) throw new Error(data.message || 'Erro ao gerar PIX.');
+    if (!res.ok) {
+      if (res.status === 401 || data.session_expired) {
+        redirecionarSessaoExpirada();
+        return;
+      }
+      throw new Error(data.message || 'Erro ao gerar PIX.');
+    }
 
     mostrarLoading(false);
 
@@ -1098,6 +1121,7 @@ function iniciarCardForm() {
       },
       onSubmit: function (event) {
         event.preventDefault();
+        if (isSubmitting) return;
         var formData = cardForm.getCardFormData();
         console.log('cardForm data:', JSON.stringify(formData));
         var cpf = document.getElementById('inputCpf').value.replace(/\D/g, '');

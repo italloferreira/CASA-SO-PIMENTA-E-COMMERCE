@@ -8,15 +8,13 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  getProductsStatus,
-  getGalleryProducts
+  getProductsStatus
 } from '../controllers/productController.js';
 import { adminLimiter } from '../middlewares/rateLimiter.js';
 
 const router = Router();
 
 router.get('/', optionalAuth, listProducts);
-router.get('/gallery', getGalleryProducts);
 router.get('/search', searchProducts);
 router.get('/status', getProductsStatus);
 router.get('/:id', getProductById);
