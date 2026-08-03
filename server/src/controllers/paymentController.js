@@ -92,7 +92,7 @@ export async function processCard(req, res) {
     }
 
     const orderItems = await pool.query(
-      'SELECT name, unit_price, quantity FROM order_items WHERE order_id = $1',
+      'SELECT item_name, unit_price, quantity FROM order_items WHERE order_id = $1',
       [orderId]
     );
 
@@ -108,7 +108,7 @@ export async function processCard(req, res) {
       },
       items: orderItems.rows.map(function (item) {
         return {
-          title: item.name,
+          title: item.item_name,
           unit_price: Number(item.unit_price),
           quantity: item.quantity,
           category_id: 'MLB11878'
