@@ -1,7 +1,7 @@
 import { pool } from '../database/connection.js';
 
 const ME_API = process.env.MELHOR_ENVIO_ENV === 'production'
-  ? 'https://api.melhorenvio.com'
+  ? 'https://melhorenvio.com.br'
   : 'https://sandbox.melhorenvio.com.br';
 
 const CLIENT_ID = process.env.MELHOR_ENVIO_CLIENT_ID;

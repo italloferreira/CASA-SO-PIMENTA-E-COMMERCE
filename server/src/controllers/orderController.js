@@ -23,7 +23,7 @@ function getDefaultWeight(categorySlug) {
 }
 
 const MELHOR_ENVIO_API = process.env.MELHOR_ENVIO_ENV === 'production'
-  ? 'https://api.melhorenvio.com'
+  ? 'https://melhorenvio.com.br'
   : 'https://sandbox.melhorenvio.com.br';
 const ORIGIN_CEP = (process.env.ORIGIN_CEP || '').replace(/\D/g, '');
 
