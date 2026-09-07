@@ -27,6 +27,11 @@ export async function createCategory(req, res) {
     const result = await pool.query(`
       INSERT INTO categories (name, slug, color)
       VALUES ($1, $2, $3)
+      ON CONFLICT (slug) DO UPDATE
+        SET name = EXCLUDED.name,
+            color = EXCLUDED.color,
+            is_active = 1,
+            updated_at = CURRENT_TIMESTAMP
       RETURNING id
     `, [name, slug, color || null]);
 
