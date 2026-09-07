@@ -7,6 +7,7 @@ export async function seedDatabase() {
     ['Temperos', 'temperos'],
     ['Farinhas', 'farinhas'],
     ['Castanhas', 'castanhas'],
+    ['Chás', 'chas'],
     ['Outros', 'outros'],
     ['Kits', 'kits']
   ];
