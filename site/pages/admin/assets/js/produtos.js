@@ -78,26 +78,29 @@ function renderTable(products) {
     '<button class="btn btn-sm btn-secondary" id="nextPage" ' + (currentPage >= totalPages ? 'disabled' : '') + '>Próxima →</button>' +
     '</div>';
 
-  document.getElementById('prevPage').addEventListener('click', function () { if (currentPage > 1) { currentPage--; applyFilters(); } });
-  document.getElementById('nextPage').addEventListener('click', function () { if (currentPage < totalPages) { currentPage++; applyFilters(); } });
+  document.getElementById('prevPage').addEventListener('click', function () { if (currentPage > 1) { currentPage--; renderTable(getFilteredProducts()); } });
+  document.getElementById('nextPage').addEventListener('click', function () { if (currentPage < totalPages) { currentPage++; renderTable(getFilteredProducts()); } });
 }
 
-/* --- Apply filters --- */
-function applyFilters() {
-  currentPage = 1;
+/* --- Filtering --- */
+function getFilteredProducts() {
   var search = document.getElementById('searchInput').value.toLowerCase().trim();
   var catId = document.getElementById('filterCategory').value;
   var active = document.getElementById('filterActive').value;
 
-  var filtered = allProducts.filter(function (p) {
+  return allProducts.filter(function (p) {
     if (search && !p.name.toLowerCase().includes(search) && (!p.category_name || !p.category_name.toLowerCase().includes(search))) return false;
     if (catId && String(p.category_id) !== catId) return false;
     if (active === 'active' && !p.is_active) return false;
     if (active === 'inactive' && p.is_active) return false;
     return true;
   });
+}
 
-  renderTable(filtered);
+/* --- Apply filters --- */
+function applyFilters() {
+  currentPage = 1;
+  renderTable(getFilteredProducts());
 }
 
 /* --- Load products --- */
@@ -105,7 +108,7 @@ async function loadProducts() {
   var container = document.getElementById('tableContainer');
   container.innerHTML = '<div class="skeleton skeleton-table"></div>';
   try {
-    var data = await apiRequest('GET', '/api/products');
+    var data = await apiRequest('GET', '/api/products?limit=1000');
     allProducts = data.products || [];
     applyFilters();
   } catch (e) {
