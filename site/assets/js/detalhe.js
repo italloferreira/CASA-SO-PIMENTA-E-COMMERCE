@@ -46,8 +46,11 @@ document.addEventListener('DOMContentLoaded', function () {
           <span class="produto-categoria">${escHtml(produto.category_name || categoria)}</span>
           <h1>${escHtml(produto.name)}</h1>
 
-          ${produto.compare_price ? '<p class="produto-preco-antigo">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</p>' : ''}
-          <p class="produto-preco">R$ ${valorFormatado}</p>
+          <div class="div-preço-e-qual-unidade"> 
+            ${produto.compare_price ? '<p class="produto-preco-antigo">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</p>' : ''}
+            <p class="produto-preco">R$ ${valorFormatado}</p> 
+            <p class="unidade-de-medida"> 100g </p>
+          </div>
 
           <div class="produto-estoque">
             <h3>Estoque</h3>

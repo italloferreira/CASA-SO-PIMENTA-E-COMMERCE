@@ -276,6 +276,18 @@ main {
   margin-bottom: 4px;
 }
 
+.div-preço-e-qual-unidade{
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap:10px;
+}
+
+.unidade-de-medida{
+  font-size: 15px;
+  color: var(--cor-cinza-texto-secundario);
+}
+
 .produto-preco {
   font-size: 1.8rem;
   font-weight: 700;
@@ -823,6 +835,10 @@ footer p {
 
     .usuario-section {
         display: none;
+    }
+
+    .produto-galeria{
+      width: 100%;
     }
 
     /* Hamburger button */
