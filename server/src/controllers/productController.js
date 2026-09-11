@@ -24,7 +24,7 @@ export async function listProducts(req, res) {
 
     const whereClause = conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '';
 
-    const limitVal = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    const limitVal = Math.min(Math.max(parseInt(limit) || 20, 1), 1000);
     const offsetVal = Math.max(parseInt(offset) || 0, 0);
 
     const countResult = await pool.query(`
