@@ -216,6 +216,29 @@ export async function createTables() {
   `);
 
   await pool.query(`
+    UPDATE categories
+    SET name = 'Molhos', slug = 'molhos', updated_at = CURRENT_TIMESTAMP
+    WHERE slug = 'pimentas'
+      AND NOT EXISTS (SELECT 1 FROM categories WHERE slug = 'molhos');
+  `);
+
+  await pool.query(`
+    DELETE FROM categories
+    WHERE slug = 'pimentas'
+      AND NOT EXISTS (SELECT 1 FROM products WHERE products.category_id = categories.id);
+  `);
+
+  await pool.query(`
+    INSERT INTO categories (name, slug)
+    VALUES
+      ('Conservas', 'conservas'),
+      ('Azeites', 'azeites'),
+      ('Vinagres', 'vinagres'),
+      ('Produtos de limpeza', 'produtos-de-limpeza')
+    ON CONFLICT (slug) DO NOTHING;
+  `);
+
+  await pool.query(`
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_code TEXT UNIQUE;
   `);
 

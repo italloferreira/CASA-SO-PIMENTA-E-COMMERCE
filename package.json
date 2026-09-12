@@ -1,5 +1,11 @@
 {
   "name": "casa-so-pimenta-ecommerce",
   "private": true,
-  "description": "E-commerce Casa So Pimenta"
+  "description": "E-commerce Casa So Pimenta",
+  "type": "module",
+  "scripts": {
+    "test:site": "node --test \"site/test/*.test.js\"",
+    "test:server": "cd server && node --test",
+    "test": "npm run test:site && npm run test:server"
+  }
 }

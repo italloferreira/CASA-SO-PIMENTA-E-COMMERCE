@@ -3,11 +3,15 @@ import bcrypt from 'bcryptjs';
 
 export async function seedDatabase() {
   const categories = [
-    ['Pimentas', 'pimentas'],
+    ['Molhos', 'molhos'],
+    ['Conservas', 'conservas'],
     ['Temperos', 'temperos'],
     ['Farinhas', 'farinhas'],
     ['Castanhas', 'castanhas'],
     ['Chás', 'chas'],
+    ['Azeites', 'azeites'],
+    ['Vinagres', 'vinagres'],
+    ['Produtos de limpeza', 'produtos-de-limpeza'],
     ['Outros', 'outros'],
     ['Kits', 'kits']
   ];
