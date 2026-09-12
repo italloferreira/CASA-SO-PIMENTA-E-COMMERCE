@@ -17,6 +17,14 @@ async function getProductsByCategory(slug) {
   return res.json();
 }
 
+async function getProductById(id) {
+  const res = await fetch(API_BASE + '/api/products/' + id);
+  assert.equal(res.status, 200, 'GET /api/products/' + id + ' deve retornar 200');
+  return res.json();
+}
+
+const CATEGORIAS_GRANEL = ['farinhas', 'castanhas', 'chas', 'temperos', 'produtos-de-limpeza'];
+
 beforeEach(async () => {
   if (!categories) categories = await getCategories();
 });
@@ -61,4 +69,25 @@ test('molhos herda os produtos que eram de pimentas', async () => {
   assert.ok(data.total >= 1, 'molhos deve conter pelo menos 1 produto');
   const first = data.products[0];
   assert.equal(first.category_slug, 'molhos', 'produto deve apontar para categoria molhos');
+});
+
+test('detalhe de produto retorna category_slug para categorias granel e nao-granel', async () => {
+  const slugsGranelComProduto = [];
+  for (const slug of CATEGORIAS_GRANEL) {
+    const data = await getProductsByCategory(slug);
+    if (data.total >= 1) {
+      const first = data.products[0];
+      const detail = await getProductById(first.id);
+      assert.equal(detail.category_slug, slug, 'detalhe de produto de ' + slug + ' deve ter category_slug = ' + slug);
+      slugsGranelComProduto.push(slug);
+    }
+  }
+
+  assert.ok(slugsGranelComProduto.length >= 3, 'pelo menos 3 categorias granel deveriam ter produtos para validar (veio ' + slugsGranelComProduto.length + ')');
+
+  const dataMolhos = await getProductsByCategory('molhos');
+  assert.ok(dataMolhos.total >= 1, 'molhos deve ter produto para validar detalhe');
+  const molhosDetail = await getProductById(dataMolhos.products[0].id);
+  assert.equal(molhosDetail.category_slug, 'molhos');
+  assert.ok(!CATEGORIAS_GRANEL.includes(molhosDetail.category_slug), 'molhos nao deve ser tratado como granel');
 });

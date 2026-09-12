@@ -2,6 +2,9 @@
 
 var escHtml = window.escapeHtml || function (s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') : ''; };
 
+/* categorias vendidas a granel cujo detalhe exibe a medida padrão */
+var CATEGORIAS_COM_MEDIDA_100G = ['farinhas', 'castanhas', 'chas', 'temperos', 'produtos-de-limpeza'];
+
 document.addEventListener('DOMContentLoaded', function () {
   const params = new URLSearchParams(window.location.search);
   const produtoId = params.get('id');
@@ -49,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <div class="div-preço-e-qual-unidade"> 
             ${produto.compare_price ? '<p class="produto-preco-antigo">R$ ' + Number(produto.price).toFixed(2).replace('.', ',') + '</p>' : ''}
             <p class="produto-preco">R$ ${valorFormatado}</p> 
-            <p class="unidade-de-medida"> 100g </p>
+            ${CATEGORIAS_COM_MEDIDA_100G.indexOf(produto.category_slug) !== -1 ? '<p class="unidade-de-medida">100g</p>' : ''}
           </div>
 
           <div class="produto-estoque">
