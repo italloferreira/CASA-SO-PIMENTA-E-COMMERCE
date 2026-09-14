@@ -29,7 +29,19 @@ const expected = [
   ['temperos', 'Temperos'],
   ['castanhas', 'Castanhas'],
   ['chas', 'Chás'],
-  ['outros', 'Outros']
+  ['outros', 'Outros'],
+  ['geleias', 'Geleias'],
+  ['pastosas', 'Pastosas'],
+  ['sementes', 'Sementes'],
+  ['liofilizados', 'Liofilizados'],
+  ['aveias', 'Aveias'],
+  ['desidratados', 'Desidratados'],
+  ['melados', 'Melados'],
+  ['mantegas', 'Mantegas'],
+  ['sal', 'Sal'],
+  ['farofas', 'Farofas'],
+  ['mel', 'Mel'],
+  ['tira-gostos', 'Tira gostos']
 ];
 
 test('todas as categorias esperadas existem com nomes corretos', async () => {

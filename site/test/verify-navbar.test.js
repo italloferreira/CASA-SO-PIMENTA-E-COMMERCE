@@ -53,16 +53,28 @@ const CHECK_DESKTOP = [
   ['Molhos e Conservas', 'Molhos e Conservas'],
   ['submenu Molhos', 'href="/site/pages/produtos/molhos/index.html"'],
   ['submenu Conservas', 'href="/site/pages/produtos/conservas/index.html"'],
+  ['submenu Geleias', 'href="/site/pages/produtos/geleias/index.html"'],
+  ['submenu Pastosas', 'href="/site/pages/produtos/pastosas/index.html"'],
   ['Produtos naturais', 'Produtos naturais'],
   ['submenu Farinhas(PN)', 'href="/site/pages/produtos/produtosNaturais/farinhas/index.html"'],
   ['submenu Castanhas(PN)', 'href="/site/pages/produtos/produtosNaturais/castanhas/index.html"'],
   ['submenu Chás(PN)', 'href="/site/pages/produtos/produtosNaturais/chas/index.html"'],
+  ['submenu Sementes(PN)', 'href="/site/pages/produtos/produtosNaturais/sementes/index.html"'],
+  ['submenu Liofilizados(PN)', 'href="/site/pages/produtos/produtosNaturais/liofilizados/index.html"'],
+  ['submenu Aveias(PN)', 'href="/site/pages/produtos/produtosNaturais/aveias/index.html"'],
+  ['submenu Desidratados(PN)', 'href="/site/pages/produtos/produtosNaturais/desidratados/index.html"'],
   ['Temperos', 'href="/site/pages/produtos/temperos/index.html"'],
   ['Outros', 'Outros'],
   ['submenu Azeites', 'href="/site/pages/produtos/azeites/index.html"'],
   ['submenu Vinagres', 'href="/site/pages/produtos/vinagres/index.html"'],
   ['submenu Produtos de limpeza', 'href="/site/pages/produtos/produtosDeLimpeza/index.html"'],
   ['submenu Kits', 'href="/site/pages/produtos/kits/index.html"'],
+  ['submenu Melados', 'href="/site/pages/produtos/melados/index.html"'],
+  ['submenu Mantegas', 'href="/site/pages/produtos/mantegas/index.html"'],
+  ['submenu Sal', 'href="/site/pages/produtos/sal/index.html"'],
+  ['submenu Farofas', 'href="/site/pages/produtos/farofas/index.html"'],
+  ['submenu Mel', 'href="/site/pages/produtos/mel/index.html"'],
+  ['submenu Tira gostos', 'href="/site/pages/produtos/tira-gostos/index.html"'],
   ['Sobre', 'href="/site/pages/sobre/index.html"']
 ];
 
@@ -71,16 +83,28 @@ const CHECK_MOBILE = [
   ['Molhos e Conservas', 'Molhos e Conservas'],
   ['submenu Molhos', 'href="/site/pages/produtos/molhos/index.html"'],
   ['submenu Conservas', 'href="/site/pages/produtos/conservas/index.html"'],
+  ['submenu Geleias', 'href="/site/pages/produtos/geleias/index.html"'],
+  ['submenu Pastosas', 'href="/site/pages/produtos/pastosas/index.html"'],
   ['Produtos naturais', 'Produtos naturais'],
   ['submenu Farinhas(PN)', 'href="/site/pages/produtos/produtosNaturais/farinhas/index.html"'],
   ['submenu Castanhas(PN)', 'href="/site/pages/produtos/produtosNaturais/castanhas/index.html"'],
   ['submenu Chás(PN)', 'href="/site/pages/produtos/produtosNaturais/chas/index.html"'],
+  ['submenu Sementes(PN)', 'href="/site/pages/produtos/produtosNaturais/sementes/index.html"'],
+  ['submenu Liofilizados(PN)', 'href="/site/pages/produtos/produtosNaturais/liofilizados/index.html"'],
+  ['submenu Aveias(PN)', 'href="/site/pages/produtos/produtosNaturais/aveias/index.html"'],
+  ['submenu Desidratados(PN)', 'href="/site/pages/produtos/produtosNaturais/desidratados/index.html"'],
   ['Temperos', 'href="/site/pages/produtos/temperos/index.html"'],
   ['Outros', 'Outros'],
   ['submenu Azeites', 'href="/site/pages/produtos/azeites/index.html"'],
   ['submenu Vinagres', 'href="/site/pages/produtos/vinagres/index.html"'],
   ['submenu Produtos de limpeza', 'href="/site/pages/produtos/produtosDeLimpeza/index.html"'],
   ['submenu Kits', 'href="/site/pages/produtos/kits/index.html"'],
+  ['submenu Melados', 'href="/site/pages/produtos/melados/index.html"'],
+  ['submenu Mantegas', 'href="/site/pages/produtos/mantegas/index.html"'],
+  ['submenu Sal', 'href="/site/pages/produtos/sal/index.html"'],
+  ['submenu Farofas', 'href="/site/pages/produtos/farofas/index.html"'],
+  ['submenu Mel', 'href="/site/pages/produtos/mel/index.html"'],
+  ['submenu Tira gostos', 'href="/site/pages/produtos/tira-gostos/index.html"'],
   ['Sobre', 'href="/site/pages/sobre/index.html"']
 ];
 
@@ -136,6 +160,24 @@ test('todos os links do menu (desktop) apontam para arquivos existentes', () => 
   }
 });
 
+test('Outros: nenhum submenu com Farofas contém Farinhas (Farinhas só em Produtos naturais)', () => {
+  for (const file of htmlFiles) {
+    const html = readFileSync(file, 'utf-8');
+    for (const marker of ['<ul class="submenu"', '<ul class="submenu-mobile"']) {
+      let i = 0;
+      while ((i = html.indexOf(marker, i)) !== -1) {
+        const close = html.indexOf('</ul>', i);
+        const window = html.slice(i, close === -1 ? undefined : close);
+        if (window.includes('href="/site/pages/produtos/farofas/index.html"')) {
+          assert.ok(!window.includes('produtosNaturais/farinhas/index.html'),
+            file + ': dropdown Outros contém Farinhas');
+        }
+        i += marker.length;
+      }
+    }
+  }
+});
+
 test('subcategorias: nenhuma categoria nova com data-categoria quebrada', () => {
   const cases = [
     ['site/pages/produtos/molhos/index.html', 'molhos'],
@@ -143,7 +185,19 @@ test('subcategorias: nenhuma categoria nova com data-categoria quebrada', () => 
     ['site/pages/produtos/azeites/index.html', 'azeites'],
     ['site/pages/produtos/vinagres/index.html', 'vinagres'],
     ['site/pages/produtos/produtosDeLimpeza/index.html', 'produtos-de-limpeza'],
-    ['site/pages/produtos/kits/index.html', 'kits']
+    ['site/pages/produtos/kits/index.html', 'kits'],
+    ['site/pages/produtos/geleias/index.html', 'geleias'],
+    ['site/pages/produtos/pastosas/index.html', 'pastosas'],
+    ['site/pages/produtos/produtosNaturais/sementes/index.html', 'sementes'],
+    ['site/pages/produtos/produtosNaturais/liofilizados/index.html', 'liofilizados'],
+    ['site/pages/produtos/produtosNaturais/aveias/index.html', 'aveias'],
+    ['site/pages/produtos/produtosNaturais/desidratados/index.html', 'desidratados'],
+    ['site/pages/produtos/melados/index.html', 'melados'],
+    ['site/pages/produtos/mantegas/index.html', 'mantegas'],
+    ['site/pages/produtos/sal/index.html', 'sal'],
+    ['site/pages/produtos/farofas/index.html', 'farofas'],
+    ['site/pages/produtos/mel/index.html', 'mel'],
+    ['site/pages/produtos/tira-gostos/index.html', 'tira-gostos']
   ];
   for (const [rel, slug] of cases) {
     const file = path.join(SITE_DIR, rel.slice('site/'.length));

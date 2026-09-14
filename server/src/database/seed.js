@@ -13,7 +13,19 @@ export async function seedDatabase() {
     ['Vinagres', 'vinagres'],
     ['Produtos de limpeza', 'produtos-de-limpeza'],
     ['Outros', 'outros'],
-    ['Kits', 'kits']
+    ['Kits', 'kits'],
+    ['Geleias', 'geleias'],
+    ['Pastosas', 'pastosas'],
+    ['Sementes', 'sementes'],
+    ['Liofilizados', 'liofilizados'],
+    ['Aveias', 'aveias'],
+    ['Desidratados', 'desidratados'],
+    ['Melados', 'melados'],
+    ['Mantegas', 'mantegas'],
+    ['Sal', 'sal'],
+    ['Farofas', 'farofas'],
+    ['Mel', 'mel'],
+    ['Tira gostos', 'tira-gostos']
   ];
 
   const adminEmail = process.env.ADMIN_EMAIL;

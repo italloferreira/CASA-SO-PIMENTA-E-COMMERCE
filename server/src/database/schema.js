@@ -234,7 +234,19 @@ export async function createTables() {
       ('Conservas', 'conservas'),
       ('Azeites', 'azeites'),
       ('Vinagres', 'vinagres'),
-      ('Produtos de limpeza', 'produtos-de-limpeza')
+      ('Produtos de limpeza', 'produtos-de-limpeza'),
+      ('Geleias', 'geleias'),
+      ('Pastosas', 'pastosas'),
+      ('Sementes', 'sementes'),
+      ('Liofilizados', 'liofilizados'),
+      ('Aveias', 'aveias'),
+      ('Desidratados', 'desidratados'),
+      ('Melados', 'melados'),
+      ('Mantegas', 'mantegas'),
+      ('Sal', 'sal'),
+      ('Farofas', 'farofas'),
+      ('Mel', 'mel'),
+      ('Tira gostos', 'tira-gostos')
     ON CONFLICT (slug) DO NOTHING;
   `);
 
