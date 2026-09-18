@@ -25,7 +25,11 @@ export async function seedDatabase() {
     ['Sal', 'sal'],
     ['Farofas', 'farofas'],
     ['Mel', 'mel'],
-    ['Tira gostos', 'tira-gostos']
+    ['Tira gostos', 'tira-gostos'],
+    ['Cocos', 'cocos'],
+    ['Grãos', 'graos'],
+    ['Granjeados', 'granjeados'],
+    ['Açúcares', 'acucares']
   ];
 
   const adminEmail = process.env.ADMIN_EMAIL;

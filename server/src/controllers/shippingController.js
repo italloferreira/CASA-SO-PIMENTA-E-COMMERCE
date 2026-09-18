@@ -13,7 +13,7 @@ const CACHE_MAX_SIZE = 500;
 
 const DEFAULT_WEIGHT_LIGHT = 0.1;
 const DEFAULT_WEIGHT_HEAVY = 0.3;
-const LIGHT_CATEGORIES = ['farinhas', 'castanhas', 'temperos', 'chas'];
+const LIGHT_CATEGORIES = ['farinhas', 'castanhas', 'temperos', 'chas', 'graos', 'cocos'];
 
 function getDefaultWeight(categorySlug) {
   if (categorySlug && LIGHT_CATEGORIES.includes(categorySlug.toLowerCase())) {

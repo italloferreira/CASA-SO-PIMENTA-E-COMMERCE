@@ -246,7 +246,11 @@ export async function createTables() {
       ('Sal', 'sal'),
       ('Farofas', 'farofas'),
       ('Mel', 'mel'),
-      ('Tira gostos', 'tira-gostos')
+      ('Tira gostos', 'tira-gostos'),
+      ('Cocos', 'cocos'),
+      ('Grãos', 'graos'),
+      ('Granjeados', 'granjeados'),
+      ('Açúcares', 'acucares')
     ON CONFLICT (slug) DO NOTHING;
   `);
 

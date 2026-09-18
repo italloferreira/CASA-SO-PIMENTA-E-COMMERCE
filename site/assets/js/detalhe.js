@@ -3,7 +3,7 @@
 var escHtml = window.escapeHtml || function (s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;') : ''; };
 
 /* categorias vendidas a granel cujo detalhe exibe a medida padrão */
-var CATEGORIAS_COM_MEDIDA_100G = ['farinhas', 'castanhas', 'chas', 'temperos', 'produtos-de-limpeza'];
+var CATEGORIAS_COM_MEDIDA_100G = ['farinhas', 'castanhas', 'chas', 'temperos', 'produtos-de-limpeza', 'graos', 'cocos'];
 
 document.addEventListener('DOMContentLoaded', function () {
   const params = new URLSearchParams(window.location.search);

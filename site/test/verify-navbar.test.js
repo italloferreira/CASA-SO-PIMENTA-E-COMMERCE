@@ -63,6 +63,8 @@ const CHECK_DESKTOP = [
   ['submenu Liofilizados(PN)', 'href="/site/pages/produtos/produtosNaturais/liofilizados/index.html"'],
   ['submenu Aveias(PN)', 'href="/site/pages/produtos/produtosNaturais/aveias/index.html"'],
   ['submenu Desidratados(PN)', 'href="/site/pages/produtos/produtosNaturais/desidratados/index.html"'],
+  ['submenu Cocos(PN)', 'href="/site/pages/produtos/produtosNaturais/cocos/index.html"'],
+  ['submenu Grãos(PN)', 'href="/site/pages/produtos/produtosNaturais/graos/index.html"'],
   ['Temperos', 'href="/site/pages/produtos/temperos/index.html"'],
   ['Outros', 'Outros'],
   ['submenu Azeites', 'href="/site/pages/produtos/azeites/index.html"'],
@@ -75,6 +77,8 @@ const CHECK_DESKTOP = [
   ['submenu Farofas', 'href="/site/pages/produtos/farofas/index.html"'],
   ['submenu Mel', 'href="/site/pages/produtos/mel/index.html"'],
   ['submenu Tira gostos', 'href="/site/pages/produtos/tira-gostos/index.html"'],
+  ['submenu Granjeados', 'href="/site/pages/produtos/outro/granjeados/index.html"'],
+  ['submenu Açúcares', 'href="/site/pages/produtos/outro/acucares/index.html"'],
   ['Sobre', 'href="/site/pages/sobre/index.html"']
 ];
 
@@ -93,6 +97,8 @@ const CHECK_MOBILE = [
   ['submenu Liofilizados(PN)', 'href="/site/pages/produtos/produtosNaturais/liofilizados/index.html"'],
   ['submenu Aveias(PN)', 'href="/site/pages/produtos/produtosNaturais/aveias/index.html"'],
   ['submenu Desidratados(PN)', 'href="/site/pages/produtos/produtosNaturais/desidratados/index.html"'],
+  ['submenu Cocos(PN)', 'href="/site/pages/produtos/produtosNaturais/cocos/index.html"'],
+  ['submenu Grãos(PN)', 'href="/site/pages/produtos/produtosNaturais/graos/index.html"'],
   ['Temperos', 'href="/site/pages/produtos/temperos/index.html"'],
   ['Outros', 'Outros'],
   ['submenu Azeites', 'href="/site/pages/produtos/azeites/index.html"'],
@@ -105,6 +111,8 @@ const CHECK_MOBILE = [
   ['submenu Farofas', 'href="/site/pages/produtos/farofas/index.html"'],
   ['submenu Mel', 'href="/site/pages/produtos/mel/index.html"'],
   ['submenu Tira gostos', 'href="/site/pages/produtos/tira-gostos/index.html"'],
+  ['submenu Granjeados', 'href="/site/pages/produtos/outro/granjeados/index.html"'],
+  ['submenu Açúcares', 'href="/site/pages/produtos/outro/acucares/index.html"'],
   ['Sobre', 'href="/site/pages/sobre/index.html"']
 ];
 
@@ -197,7 +205,11 @@ test('subcategorias: nenhuma categoria nova com data-categoria quebrada', () => 
     ['site/pages/produtos/sal/index.html', 'sal'],
     ['site/pages/produtos/farofas/index.html', 'farofas'],
     ['site/pages/produtos/mel/index.html', 'mel'],
-    ['site/pages/produtos/tira-gostos/index.html', 'tira-gostos']
+    ['site/pages/produtos/tira-gostos/index.html', 'tira-gostos'],
+    ['site/pages/produtos/produtosNaturais/cocos/index.html', 'cocos'],
+    ['site/pages/produtos/produtosNaturais/graos/index.html', 'graos'],
+    ['site/pages/produtos/outro/granjeados/index.html', 'granjeados'],
+    ['site/pages/produtos/outro/acucares/index.html', 'acucares']
   ];
   for (const [rel, slug] of cases) {
     const file = path.join(SITE_DIR, rel.slice('site/'.length));
