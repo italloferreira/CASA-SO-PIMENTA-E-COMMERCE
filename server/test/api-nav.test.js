@@ -64,6 +64,33 @@ test('produtos por categoria retornam 200 para todas as novas categorias', async
   }
 });
 
+function normalizarNome(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+test('produtos de categorias retornam em ordem alfabética (ignorando acentos)', async () => {
+  let categoriasComProduto = 0;
+
+  for (const c of categories) {
+    const res = await fetch(API_BASE + '/api/products?category=' + encodeURIComponent(c.slug) + '&limit=1000');
+    assert.equal(res.status, 200, 'GET produtos da categoria ' + c.slug + ' deve retornar 200');
+    const data = await res.json();
+
+    if (data.total < 2) continue;
+    categoriasComProduto++;
+
+    const nomes = data.products.map((p) => normalizarNome(p.name));
+    for (let i = 1; i < nomes.length; i++) {
+      assert.ok(
+        nomes[i - 1] <= nomes[i],
+        'categoria ' + c.slug + ' fora de ordem alfabética: "' + data.products[i - 1].name + '" veio antes de "' + data.products[i].name + '"'
+      );
+    }
+  }
+
+  assert.ok(categoriasComProduto >= 1, 'deveria existir pelo menos 1 categoria com 2+ produtos para validar a ordenação');
+});
+
 test('categoria antiga "pimentas" não quebra a API (retorna vazio)', async () => {
   const data = await getProductsByCategory('pimentas');
   assert.ok(Array.isArray(data.products), 'products deve ser array');

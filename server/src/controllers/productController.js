@@ -27,6 +27,10 @@ export async function listProducts(req, res) {
     const limitVal = Math.min(Math.max(parseInt(limit) || 20, 1), 1000);
     const offsetVal = Math.max(parseInt(offset) || 0, 0);
 
+    const orderClause = category
+      ? ` ORDER BY translate(lower(products.name), 'áàâãäåéèêëíìîïóòôõöúùûüç', 'aaaaaaeeeeiiiiooooouuuuc') ASC`
+      : ` ORDER BY products.created_at DESC`;
+
     const countResult = await pool.query(`
       SELECT COUNT(*) AS total
       FROM products
@@ -50,7 +54,7 @@ export async function listProducts(req, res) {
       FROM products
       LEFT JOIN categories ON categories.id = products.category_id
       ${whereClause}
-      ORDER BY products.created_at DESC
+      ${orderClause}
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}
     `;
 
