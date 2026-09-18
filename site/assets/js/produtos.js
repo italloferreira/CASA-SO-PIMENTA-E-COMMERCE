@@ -39,10 +39,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var disponivel = estaDisponivel(produto);
 
+    var ehGranel = window.CATEGORIAS_GRANEL_100G && window.CATEGORIAS_GRANEL_100G.indexOf(produto.category_slug) !== -1;
+
     return '<div class="cartao' + (disponivel ? '' : ' indisponivel') + '">' +
       (disponivel ? '' : '<div class="overlay-indisponivel"><span>Indisponível</span></div>') +
       '<img src="' + imgSrc + '" alt="' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '" loading="lazy">' +
       '<h3>' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '</h3>' +
+      (ehGranel ? '<p class="unidade-de-medida">100g</p>' : '') +
       '<p>' + precoHtml + '</p>' +
       '<div>' +
         '<button class="add-carrinho-botao"' + (disponivel ? ' data-product-id="' + produto.id + '" data-product-name="' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '" data-product-price="' + venda + '" data-product-img="' + imgSrc + '" data-product-type="produto" data-product-categoria="' + categoria + '"' : ' disabled') + '>' +

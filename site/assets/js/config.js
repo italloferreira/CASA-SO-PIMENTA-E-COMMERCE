@@ -1,4 +1,8 @@
 /* config.js — URL base da API */
+
+/* categorias vendidas a granel — fonte unica usada por produtos.js e detalhe.js */
+window.CATEGORIAS_GRANEL_100G = ['farinhas', 'castanhas', 'chas', 'sementes', 'liofilizados', 'aveias', 'desidratados', 'cocos', 'graos', 'temperos', 'farofas', 'produtos-de-limpeza', 'sal', 'tira-gostos', 'granjeados', 'acucares'];
+
 /* Troque a URL de producao antes do deploy */
 var API_BASE_URL = (function () {
   var host = window.location.hostname;
