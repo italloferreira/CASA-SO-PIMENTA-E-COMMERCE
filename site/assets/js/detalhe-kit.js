@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
     container.innerHTML = `
       <div class="produto-detalhe-card">
         <div class="produto-detalhe-img">
-          <img src="${imgSrc}" alt="${escHtml(kit.name)}">
+          <img src="${imgSrc}" alt="${escHtml(kit.name)}" decoding="async">
         </div>
 
         <div class="produto-detalhe-info">

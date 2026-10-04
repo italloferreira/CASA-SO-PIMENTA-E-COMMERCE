@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     return '<div class="cartao' + (disponivel ? '' : ' indisponivel') + '">' +
       (disponivel ? '' : '<div class="overlay-indisponivel"><span>Indisponível</span></div>') +
-      '<img src="' + imgSrc + '" alt="' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '" loading="lazy">' +
+      '<img src="' + imgSrc + '" alt="' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '" loading="lazy" decoding="async">' +
       '<h3>' + (window.escapeHtml ? window.escapeHtml(produto.name) : produto.name) + '</h3>' +
       (ehGranel ? '<p class="unidade-de-medida">100g</p>' : '') +
       '<p>' + precoHtml + '</p>' +

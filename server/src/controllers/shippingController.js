@@ -1,6 +1,7 @@
 import { pool } from '../database/connection.js';
 import { selectBox } from '../config/boxes.js';
 import { getAccessToken } from './melhorEnvioController.js';
+import { calculateCartWeight } from '../utils/cartWeight.js';
 import crypto from 'crypto';
 
 const MELHOR_ENVIO_API = process.env.MELHOR_ENVIO_ENV === 'production'
@@ -10,17 +11,6 @@ const MELHOR_ENVIO_API = process.env.MELHOR_ENVIO_ENV === 'production'
 const ORIGIN_CEP = (process.env.ORIGIN_CEP || '').replace(/\D/g, '');
 const CACHE_DURATION_MS = 15 * 60 * 1000;
 const CACHE_MAX_SIZE = 500;
-
-const DEFAULT_WEIGHT_LIGHT = 0.1;
-const DEFAULT_WEIGHT_HEAVY = 0.3;
-const LIGHT_CATEGORIES = ['farinhas', 'castanhas', 'temperos', 'chas', 'graos', 'cocos'];
-
-function getDefaultWeight(categorySlug) {
-  if (categorySlug && LIGHT_CATEGORIES.includes(categorySlug.toLowerCase())) {
-    return DEFAULT_WEIGHT_LIGHT;
-  }
-  return DEFAULT_WEIGHT_HEAVY;
-}
 
 const freightCache = new Map();
 
@@ -72,34 +62,7 @@ export async function calculateShipping(req, res) {
     let totalWeight = 0;
 
     if (cart && cart.length > 0) {
-      for (const item of cart) {
-        let unitWeight = 0;
-        if (item.product_id) {
-          const result = await pool.query(`
-            SELECT p.weight, c.slug as category_slug
-            FROM products p
-            LEFT JOIN categories c ON c.id = p.category_id
-            WHERE p.id = $1
-          `, [item.product_id]);
-          if (result.rows[0]) {
-            const stored = Number(result.rows[0].weight) || 0;
-            unitWeight = stored > 0 ? stored : getDefaultWeight(result.rows[0].category_slug);
-          }
-        } else if (item.kit_id) {
-          const kitItems = await pool.query(`
-            SELECT p.weight, c.slug as category_slug, ki.quantity
-            FROM kit_items ki
-            JOIN products p ON p.id = ki.product_id
-            LEFT JOIN categories c ON c.id = p.category_id
-            WHERE ki.kit_id = $1
-          `, [item.kit_id]);
-          for (const ki of kitItems.rows) {
-            const stored = Number(ki.weight) || 0;
-            unitWeight += (stored > 0 ? stored : getDefaultWeight(ki.category_slug)) * (Number(ki.quantity) || 1);
-          }
-        }
-        totalWeight += unitWeight * (item.quantity || 1);
-      }
+      totalWeight = await calculateCartWeight(pool, cart);
     }
 
     const cached = getFromCache(destCep);

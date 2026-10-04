@@ -33,13 +33,13 @@ document.addEventListener('DOMContentLoaded', function () {
       <div class="produto-detalhe-card">
         <div class="produto-galeria">
           <div class="produto-detalhe-img">
-            <img id="produtoImagemPrincipal" src="${imgSrc}" alt="${escHtml(produto.name)}">
+            <img id="produtoImagemPrincipal" src="${imgSrc}" alt="${escHtml(produto.name)}" decoding="async">
           </div>
 
           ${imagens.length > 1 ? `
           <div class="produto-galeria-miniaturas">
             ${imagens.map(function (url, i) {
-              return '<button type="button" class="produto-miniatura' + (i === 0 ? ' ativa' : '') + '" data-img="' + i + '"><img src="' + imgUrl(url) + '" alt="' + escHtml(produto.name) + '"></button>';
+              return '<button type="button" class="produto-miniatura' + (i === 0 ? ' ativa' : '') + '" data-img="' + i + '"><img src="' + imgUrl(url) + '" alt="' + escHtml(produto.name) + '" loading="lazy" decoding="async"></button>';
             }).join('')}
           </div>
           ` : ''}

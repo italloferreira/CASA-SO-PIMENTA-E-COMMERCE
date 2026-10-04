@@ -23,7 +23,7 @@ function renderProductCard(prod) {
 
   return '<div class="cartao' + (disponivel ? '' : ' indisponivel') + '">' +
     (disponivel ? '' : '<div class="overlay-indisponivel"><span>Indisponível</span></div>') +
-    '<img class="cartao-img" src="' + imgSrc + '" alt="' + escH(prod.name) + '" style="cursor:pointer;">' +
+    '<img class="cartao-img" src="' + imgSrc + '" alt="' + escH(prod.name) + '" loading="lazy" decoding="async" style="cursor:pointer;">' +
     '<h1 class="cartao-h1">' + escH(prod.name) + '</h1>' +
     '<div class="cartao-valor">' + precoHtml + '</div>' +
     '<div class="conteiner-botões-kit">' +
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       banners.forEach(function (banner, index) {
-        slidesContainer.innerHTML += '<div class="slide"><img src="' + imgUrl(banner.image_url) + '" alt="' + escH(banner.title || 'Slide ' + (index + 1)) + '"></div>';
+        slidesContainer.innerHTML += '<div class="slide"><img src="' + imgUrl(banner.image_url) + '" alt="' + escH(banner.title || 'Slide ' + (index + 1)) + '" decoding="async"></div>';
       });
 
       totalSlides = banners.length;
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       cartoesSection.innerHTML += '<div class="cartao">' +
-        '<img class="cartao-img" src="' + imgSrc + '" alt="' + escH(kit.name) + '">' +
+        '<img class="cartao-img" src="' + imgSrc + '" alt="' + escH(kit.name) + '" loading="lazy" decoding="async">' +
         '<h1 class="cartao-h1">' + escH(kit.name) + '</h1>' +
         '<div class="cartao-valor"><p>R$</p><h3>' + valorFormatado + '</h3></div>' +
         produtosHtml +

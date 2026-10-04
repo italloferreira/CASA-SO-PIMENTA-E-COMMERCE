@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -62,6 +63,8 @@ app.use(cookieParser());
 
 app.use(morgan('short'));
 
+app.use(compression({ threshold: 1024 }));
+
 app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/categories', categoryRoutes);
@@ -95,7 +98,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const siteDir = path.resolve(__dirname, '../../site');
 
 app.use('/site', helmet({ contentSecurityPolicy: false }));
-app.use('/site', express.static(siteDir, { index: 'index.html' }));
+app.use('/site', express.static(siteDir, {
+  index: 'index.html',
+  etag: true,
+  lastModified: true,
+  maxAge: '1h',
+  setHeaders: function (res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    } else if (/\.(css|js)$/.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+  }
+}));
 
 app.get('/', (req, res) => {
   res.json({
@@ -139,8 +154,10 @@ async function start() {
   }
 
   try {
-    await createTables();
-    await seedDatabase();
+    if (process.env.NODE_ENV === 'production' || process.env.RUN_MIGRATIONS === 'true') {
+      await createTables();
+      await seedDatabase();
+    }
     app.listen(PORT, () => {
       console.log(`Servidor rodando em http://localhost:${PORT}`);
     });
