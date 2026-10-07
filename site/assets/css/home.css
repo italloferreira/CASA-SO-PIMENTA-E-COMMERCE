@@ -251,6 +251,7 @@ main{
     align-items: center;
 
     padding-top: 3%;
+    
 }
 
 .carrossel-container{
@@ -261,6 +262,7 @@ main{
     display: flex;
     justify-content: center;
     align-items: center;
+    
 }
 
 .carrossel{

@@ -503,7 +503,8 @@ window.selecionarPagamento = function (el) {
   el.classList.add('selecionado');
   metodoPagamento = el.getAttribute('data-metodo');
 
-  document.getElementById('detalhesPix').style.display = metodoPagamento === 'pix' ? '' : 'none';
+  var elPix = document.getElementById('detalhesPix');
+  if (elPix) elPix.style.display = metodoPagamento === 'pix' ? '' : 'none';
   document.getElementById('detalhesCartao').style.display = metodoPagamento === 'cartao' ? '' : 'none';
 
 
